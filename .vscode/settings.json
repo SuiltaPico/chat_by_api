@@ -1,0 +1,7 @@
+{
+  "tailwindCSS.experimental.configFile": ".vscode/tailwind.config.cjs",
+  "tailwindCSS.emmetCompletions": true,
+  "files.associations": {
+    "*.css": "tailwindcss",
+  },
+}
