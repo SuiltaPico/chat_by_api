@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import { Quasar } from "quasar";
 import quasarLang from "quasar/lang/zh-CN";
 import quasarIconSet from "quasar/icon-set/mdi-v6";
+import "./styles/color"
 
 // Import icon libraries
 import "@quasar/extras/mdi-v6/mdi-v6.css";
