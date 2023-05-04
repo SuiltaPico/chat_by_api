@@ -12,6 +12,7 @@ import { any, fix_compo_batch, c } from "../common/utils";
 import use_main_store from "../store/main_store";
 import { ChatBodyInput } from "../components/ChatBodyInput";
 import { useRouter } from "vue-router";
+import { app_body_width } from "../common/display";
 
 // const res = await openai.createChatCompletion({
 //   model: "gpt-3.5-turbo",
@@ -30,7 +31,7 @@ export const IndexBody = defineComponent({
       <div class="flex flex-col relative grow">
         <IndexBodyMain />
         <ChatBodyInput
-          class="absolute bottom-[2rem] self-center xl:w-[60%] xl:max-w-[800px]"
+          class={"fixed bottom-[2rem] self-center" + app_body_width}
           onSubmit={async () => {
             const promot = main_store.chat_body_input.promot;
 

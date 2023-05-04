@@ -279,7 +279,7 @@ export const ChatBody = defineComponent({
             {messages.value.map((msg, index) => (
               <ChatItem message={msg} index={index}></ChatItem>
             ))}
-            <div id="ChatBodyBottom" class="h-[12rem]"></div>
+            <div id="ChatBodyBottom" class="h-[16rem]"></div>
           </div>
           <ChatBodyInput
             class={"fixed bottom-[2rem] self-center" + app_body_width}
