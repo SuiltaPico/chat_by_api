@@ -39,7 +39,10 @@ export const ChatBodyInput = defineComponent({
       const chat_body_input = main_store.chat_body_input;
 
       return (
-        <div class="fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg" {...attrs}>
+        <div
+          class="fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg"
+          {...attrs}
+        >
           <div class="frow gap-3 items-center">
             <QInput
               {...c`ChatBodyInput`}
@@ -123,7 +126,8 @@ export const ChatBodyInput = defineComponent({
               {...c`select-none text-zinc-200`}
               {...refvmodel(brief_mode)}
               label={brief_mode.value ? "简略模式" : "详细模式"}
-              color="primary" dense
+              color="primary"
+              dense
             ></QToggle>
           </div>
         </div>

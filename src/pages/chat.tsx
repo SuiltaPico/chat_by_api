@@ -6,7 +6,7 @@ import MarkdownIt from "markdown-it";
 import markdown_it_highlightjs from "markdown-it-highlightjs";
 // import { Configuration } from "openai";
 import { OpenAIApi, Configuration } from "openai-edge";
-import { QIcon, QPage } from "quasar";
+import { QBtn, QIcon, QPage } from "quasar";
 import { computed, defineComponent, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { app_body_width, app_body_width_loose } from "../common/display";
@@ -29,6 +29,20 @@ md.use(markdown_it_katex, {
 async function generate_next(index: number) {
   const main_store = use_main_store();
   const { chat_body_input, curry_chat } = main_store;
+
+  const msg = main_store.curry_chat.messages[index] as ServerMessage;
+  const apply_update_chat_record_messages = _.throttle(async () => {
+    await main_store.update_chat_record_messages(main_store.curry_chat.id!);
+  }, 100);
+
+  if (main_store.settings.apikeys.keys.length === 0) {
+    msg.error = {
+      err_type: "no_api_key",
+    };
+
+    await apply_update_chat_record_messages();
+    return;
+  }
 
   const cfg = new Configuration({
     apiKey: main_store.settings.apikeys.keys[0].key,
@@ -54,15 +68,12 @@ async function generate_next(index: number) {
   const decoder = new TextDecoder();
   const reader = body.getReader();
 
-  const apply_update_chat_record_messages = _.throttle(async () => {
-    await main_store.update_chat_record_messages(main_store.curry_chat.id!);
-  }, 100);
-
   let message_result = ref("");
   watch(message_result, async () => {
     main_store.curry_chat.messages[index].content = message_result.value;
     await apply_update_chat_record_messages();
   });
+
   async function readStream() {
     while (true) {
       const { done, value } = await reader.read();
@@ -94,7 +105,7 @@ async function generate_next(index: number) {
             }
           } catch {
             console.log("error", it);
-            const msg = main_store.curry_chat.messages[index] as ServerMessage;
+
             if (typeof it === "object") {
               if (it.error != undefined) {
                 msg.error = {
@@ -137,6 +148,7 @@ async function generate_next(index: number) {
 export const ChatItem = defineComponent({
   props: ["message", "index"],
   setup(props: { message: Message; index: number }) {
+    const router = useRouter();
     return () => {
       const { message, index } = props;
       return (
@@ -200,6 +212,22 @@ export const ChatItem = defineComponent({
                               ></ErrorContainer>
                             );
                           }
+                        } else if (err.err_type === "no_api_key") {
+                          return (
+                            <ErrorContainer
+                              title="无 API-KEY"
+                              content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
+                            >
+                              <QBtn
+                                color="primary"
+                                onClick={() => {
+                                  router.push({ name: "settings" });
+                                }}
+                              >
+                                立即前往
+                              </QBtn>
+                            </ErrorContainer>
+                          );
                         }
                         return (
                           <ErrorContainer
@@ -275,6 +303,7 @@ export const ChatBody = defineComponent({
                 },
                 content: "",
               });
+              main_store.chat_body_input.promot = "";
               await main_store.update_chat_record_messages(chatid);
               window.location.href = "#ChatBodyBottom";
               await generate_next(messages.length - 1);

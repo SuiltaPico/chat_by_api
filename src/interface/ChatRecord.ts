@@ -34,7 +34,8 @@ export interface ServerMessage {
   error?:
     | ServerMessagesAPIError
     | ServerMessagesOtherAPIError
-    | ServerMessagesOtherStringError;
+    | ServerMessagesOtherStringError
+    | ServerMessagesNoAPIKEYError;
 }
 
 export interface ServerMessagesAPIError {
@@ -53,6 +54,10 @@ export interface ServerMessagesOtherAPIError {
 export interface ServerMessagesOtherStringError {
   err_type: "others_string";
   content: string;
+}
+
+export interface ServerMessagesNoAPIKEYError {
+  err_type: "no_api_key";
 }
 
 export interface ResponseMeta {
