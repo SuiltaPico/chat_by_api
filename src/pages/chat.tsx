@@ -248,6 +248,14 @@ export const ChatItem = defineComponent({
   },
 });
 
+export const ChatBodyTopBar = defineComponent({
+  setup() {
+    return () => {
+      return <div></div>;
+    };
+  },
+});
+
 export const ChatBody = defineComponent({
   setup() {
     const main_store = use_main_store();
@@ -275,6 +283,7 @@ export const ChatBody = defineComponent({
     return () => {
       return (
         <div class="fcol relative grow items-center text-zinc-100">
+          <ChatBodyTopBar></ChatBodyTopBar>
           <div class={["fcol w-full items-center"]}>
             {messages.value.map((msg, index) => (
               <ChatItem message={msg} index={index}></ChatItem>
