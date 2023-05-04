@@ -1,23 +1,23 @@
+import markdown_it_katex from "@vscode/markdown-it-katex";
+import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
+import _ from "lodash";
+import MarkdownIt from "markdown-it";
+import markdown_it_highlightjs from "markdown-it-highlightjs";
+// import { Configuration } from "openai";
+import { OpenAIApi, Configuration } from "openai-edge";
 import { QIcon, QPage } from "quasar";
 import { computed, defineComponent, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { app_body_width, app_body_width_loose } from "../common/display";
 import { c, promise_with_ref } from "../common/utils";
 import { ChatBodyInput } from "../components/ChatBodyInput";
-import use_main_store from "../store/main_store";
-import { useRoute, useRouter } from "vue-router";
-import { Message, ServerMessage } from "../interface/ChatRecord";
-import { app_body_width, app_body_width_loose } from "../common/display";
-import { Configuration } from "openai";
-import { OpenAIApi } from "openai-edge";
-import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
-import _, { functions } from "lodash";
-import MarkDownIt from "markdown-it";
-import markdown_it_highlightjs from "markdown-it-highlightjs";
-import "highlight.js/styles/github-dark.css";
-import markdown_it_katex from "@vscode/markdown-it-katex";
-import "katex/dist/katex.min.css";
 import ErrorContainer from "../components/ErrorContainer";
+import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
+import { Message, ServerMessage } from "../interface/ChatRecord";
+import use_main_store from "../store/main_store";
 
-const md = new MarkDownIt({
+const md = new MarkdownIt({
   html: false,
 });
 md.use(markdown_it_highlightjs, {});
@@ -172,13 +172,14 @@ export const ChatItem = defineComponent({
                     <img
                       src="/ChatGPT.svg"
                       alt=""
-                      class="min-w-[18px] max-w-[18px]"
+                      class="min-w-[20px] max-w-[20px]"
                     />
                   </div>
                   <div class="pt-[0.15rem] whitespace-pre-wrap w-full">
                     <div
                       class="mdblock"
                       v-html={md.render(message.content)}
+                      // v-html={message.content}
                     ></div>
                     {(() => {
                       const err = message.error;

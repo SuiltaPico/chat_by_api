@@ -127,7 +127,7 @@ code {
 }
 
 .mdblock {
-  @apply fcol;
+  @apply fcol gap-4;
   & p {
     margin: 0;
   }

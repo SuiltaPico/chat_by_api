@@ -11,7 +11,6 @@ import autoprefixer from "autoprefixer";
 import tailwindcss from "tailwindcss";
 import tailwindcss_nesting from "tailwindcss/nesting";
 
-
 /** --- [START] polyfill for node.js lib --- */
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
@@ -22,9 +21,14 @@ const polyfill_rollup_options_plugins = [
   // Enable rollup polyfills plugin
   // used during production bundling
   nodePolyfills({
-    include: ["node_modules/**/*.js", "../../node_modules/**/*.js"],
+    include: [
+      "node_modules/pouchdb/*.js",
+      "../../node_modules/pouchdb/*.js",
+      "node_modules/pouchdb-find/*.js",
+      "../../node_modules/pouchdb-find/*.js",
+    ],
   }),
-  cjs(),
+  // cjs(),
 ];
 
 const polyfill_alias = {
@@ -75,7 +79,7 @@ export default defineConfig({
     crossOriginIsolation(),
   ],
   server: {
-    hmr: true
+    hmr: true,
   },
   build: {
     rollupOptions: {
@@ -101,9 +105,7 @@ export default defineConfig({
       define: {
         ...polyfill_esbuild_options_define,
       },
-      plugins: [
-        ...polyfill_esbuild_options_plugins,
-      ],
+      plugins: [...polyfill_esbuild_options_plugins],
     },
   },
 });

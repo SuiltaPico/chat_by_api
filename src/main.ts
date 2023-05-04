@@ -19,7 +19,7 @@ import "./styles/style.css";
 
 import router from "./router/router";
 
-import App from "./App.tsx";
+import App from "./App";
 
 const app = createApp(App);
 

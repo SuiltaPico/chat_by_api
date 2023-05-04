@@ -39,7 +39,7 @@ export const ChatBodyInput = defineComponent({
       const chat_body_input = main_store.chat_body_input;
 
       return (
-        <div class="fcol gap-3" {...attrs}>
+        <div class="fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg" {...attrs}>
           <div class="frow gap-3 items-center">
             <QInput
               {...c`ChatBodyInput`}
@@ -103,7 +103,7 @@ export const ChatBodyInput = defineComponent({
               </div>
             </div>
             <QSelect
-              {...c`min-w-[140px] bg-zinc-700`}
+              {...c`min-w-[140px] bg-zinc-800`}
               modelValue={model.value}
               onUpdate:modelValue={(m) => {
                 if (typeof m != "string") {
