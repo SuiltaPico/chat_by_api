@@ -8,6 +8,10 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      // fix for pouchdb
+      var global = (global === undefined) ? window : global;
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

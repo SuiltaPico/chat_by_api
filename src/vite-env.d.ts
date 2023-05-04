@@ -5,3 +5,8 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+declare module '@vscode/markdown-it-katex' {
+  export default ()=>any
+}
+

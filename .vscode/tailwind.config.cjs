@@ -35,7 +35,7 @@ for (const [name, path] of Object.entries(ts_src)) {
 
 /** @type {import("tailwindcss").Config} */
 module.exports = {
-  content: ["./src/**/*.{html,vue}"],
+  content: ["./src/**/*.{html,vue,tsx}"],
   theme: {
     extend: {
       colors: module_map.get("colors").default.main

@@ -1,3 +1,134 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+}
+
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: decimal;
+}
+
+ol li {
+  @apply flex;
+}
+
+ol li p {
+  @apply inline-block;
+}
+
+code {
+  @apply bg-zinc-900 bg-opacity-20 p-1 mx-1 rounded
+}
+
+.q-menu--dark {
+  box-shadow: none;
+  @apply border border-zinc-500 rounded rounded-t-none;
+}
+
+.q-dark {
+  @apply bg-zinc-900;
+}
+
+.q-item--active {
+  @apply text-[#4ea7ff];
+}
+
+.default-bg {
+  @apply bg-zinc-700;
+}
+
+.frow {
+  @apply flex flex-row;
+}
+
+.fcol {
+  @apply flex flex-col;
+}
+
+.ChatRecordSelectionItem {
+  @apply text-white px-3 py-3 text-base flex flex-row;
+  @apply gap-4 items-center rounded;
+  @apply cursor-pointer transition-all;
+  @apply items-center box-border border-zinc-500 rounded-l-none;
+  transition-duration: 0.1s;
+
+  & .q-icon {
+    @apply text-zinc-400 transition-all;
+  }
+  &:hover {
+    @apply bg-zinc-700;
+  }
+  &:hover > .q-icon {
+    @apply text-zinc-200;
+  }
+  &.Active {
+    @apply bg-zinc-800 border-l-[0.3rem] border-l-zinc-500;
+    & > .ButtonGroup {
+      display: flex;
+    }
+  }
+  & > .ButtonGroup {
+    display: none;
+    & > .BtnIcon:hover {
+      @apply text-white;
+    }
+    & > .BtnIcon:active {
+      @apply text-zinc-300;
+    }
+  }
+}
+
+.ChatRecordSelectionNewChat:active,
+.ChatRecordSelectionSettings:active {
+  @apply bg-zinc-700;
+}
+
+.ChatRecordSelectionNewChat {
+  @apply border border-zinc-500 select-none;
+  &:hover {
+    @apply border-zinc-500;
+  }
+}
+
+.ChatRecordSelectionSettings {
+  @apply text-white select-none;
+}
+
+.ChatBodyInput {
+  @apply bg-zinc-800 border border-zinc-500 rounded-t-md shadow-xl grow;
+  @apply min-h-[3.2rem] max-h-[60vh] overflow-y-auto;
+
+  & .q-field__control {
+    @apply min-h-[3.2rem];
+  }
+
+  &.q-field--focused {
+    @apply border-zinc-500;
+  }
+
+  &.q-field--filled.q-field--dark.q-field--highlighted .q-field__control::before {
+    background-color: #ffffff08
+  }
+
+  &.q-textarea .q-field__native {
+    padding-bottom: 17px;
+  }
+}
+
+.error_container {
+  @apply fcol text-base border border-red-500 bg-[#944e4e] p-4 rounded;
+}
+
+.mdblock {
+  @apply fcol;
+  & p {
+    margin: 0;
+  }
+}
