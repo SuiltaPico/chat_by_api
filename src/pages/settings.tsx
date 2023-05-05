@@ -1,4 +1,4 @@
-import { QBtn, QIcon, QInput, QPage, QSelect } from "quasar";
+import { QBtn, QIcon, QInput, QPage, QSelect, QToggle } from "quasar";
 import { defineComponent, ref } from "vue";
 import { batch_set_ref, c, promise_with_ref, refvmodel } from "../common/utils";
 import use_main_store from "../store/main_store";
@@ -56,7 +56,7 @@ export const APIKEY_Manager = defineComponent({
             }
           }
         );
-      }, 200)();
+      }, 100)();
     }
 
     return () => {
@@ -69,7 +69,7 @@ export const APIKEY_Manager = defineComponent({
           {err.value ? <div class="error_container">{err.value}</div> : ""}
           <div class="fcol gap-2">
             <div>添加新的 API-KEY</div>
-            <div class="frow gap-4 items-center">
+            <div class="frow gap-4 items-center pl-4">
               <QSelect
                 {...refvmodel(new_key_type)}
                 options={new_key_type_option}
@@ -125,7 +125,7 @@ export const APIKEY_Manager = defineComponent({
           <div class="fcol gap-2">
             <div>缓存的 API-KEY（目前仅支持使用第一个）</div>
             {settings.apikeys.keys.map((it, i, keys) => (
-              <div class="frow gap-4 items-center">
+              <div class="frow gap-4 items-center pl-4">
                 <div>{i + 1}.</div>
                 <QSelect
                   modelValue={it.source}
@@ -189,9 +189,69 @@ export const APIKEY_Manager = defineComponent({
   },
 });
 
+export const OpenAI = defineComponent({
+  setup() {
+    const ms = use_main_store();
+    async function apply_editing() {
+      _.debounce(async () => {
+        console.log(ms.settings);
+        await ms.set_settings("open_ai");
+      }, 100)();
+    }
+
+    return () => {
+      const open_ai = ms.settings.open_ai;
+      console.log(open_ai);
+
+      return (
+        <div class="fcol gap-6">
+          <div class="text-xl font-bold">OpenAI</div>
+          <div class="fcol gap-4">
+            <div>第三方 API 设置</div>
+            <div class="frow gap-4 pl-4">
+              <QInput
+                {...c`grow`}
+                modelValue={open_ai.api_base_path}
+                onUpdate:modelValue={(it) => {
+                  open_ai.api_base_path = String(it);
+                  apply_editing();
+                }}
+                label="base_path"
+                filled
+                dark
+                color="secondary"
+              ></QInput>
+              <QInput
+                {...c`grow`}
+                modelValue={open_ai.api_version}
+                onUpdate:modelValue={(it) => {
+                  open_ai.api_version = String(it);
+                  apply_editing();
+                }}
+                label="api_version"
+                filled
+                dark
+                color="secondary"
+              ></QInput>
+            </div>
+          </div>
+        </div>
+      );
+    };
+  },
+});
+
 export const About = defineComponent({
   setup() {
     const update_log = [
+      {
+        version: "0.1.1",
+        content: `
+* 增加了设置的 OpenAI 的 baseurl、api_version 选项。
+* 修复了排版错误。
+* 增加了生成时连接中断的报错提示。
+        `,
+      },
       {
         version: "0.1.0",
         content: `
@@ -218,16 +278,7 @@ export const About = defineComponent({
           <details>
             <summary>版本描述</summary>
             <div class="fcol gap-4 m-2">
-              <div>hoho，你居然会点进来。</div>
-              <div>
-                目前还有好多功能没实现啊……哦对了，那个
-                <QBtn icon="mdi-dots-horizontal" flat></QBtn>
-                按钮的功能暂时没加上。
-              </div>
-              <div>
-                下一个版本会有的（大概）。会放一些允许你修改
-                promot、删除什么的功能。
-              </div>
+              <div>hoho。</div>
             </div>
           </details>
           <details class="frow gap-2">
@@ -254,6 +305,7 @@ export default defineComponent({
         <QPage {...c`frow default-bg text-zinc-200 justify-center`}>
           <div class="fcol default-bg xl:w-[60%] pt-8 gap-12">
             <APIKEY_Manager></APIKEY_Manager>
+            <OpenAI></OpenAI>
             <About></About>
           </div>
         </QPage>

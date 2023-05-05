@@ -5,7 +5,7 @@ import ChatRecord, {
   ChatRecordMeta,
   Message,
 } from "../interface/ChatRecord";
-import Settings, { SettingItem } from "../interface/Settings";
+import Settings, { APIKeysSetting, SettingItem } from "../interface/Settings";
 import _ from "lodash";
 
 PouchDB.plugin(PouchDBFind);
@@ -93,6 +93,11 @@ export const settings_default_value = {
   apikeys: {
     keys: [],
   },
+  open_ai: {
+    api_type: "",
+    api_base_path: "",
+    api_version: "",
+  },
 } as Settings;
 
 const settings_init = (async () => {
@@ -143,14 +148,14 @@ export class DBAPIKEYDuplicateError extends Error {
   }
 }
 
-export async function set_settings<T extends keyof Settings>(
+export async function set_settings<const T extends keyof Settings>(
   id: T,
   value: Settings[T]
 ) {
   console.log("set_settings", value);
 
   if (id === "apikeys") {
-    const duplicate_index_map = _.chain(value.keys)
+    const duplicate_index_map = _.chain((value as APIKeysSetting).keys)
       .cloneDeep()
       .map((v, i) => {
         return { ...v, index: i };
@@ -165,7 +170,7 @@ export async function set_settings<T extends keyof Settings>(
   }
   await dbs.settings.put({
     _id: id,
+    ...(value as SettingItem),
     _rev: await get_rev(id),
-    ...value,
   });
 }

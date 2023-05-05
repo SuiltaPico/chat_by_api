@@ -8,13 +8,15 @@ import { Configuration, OpenAIApi } from "openai-edge";
 import { QBtn, QIcon, QPage, useQuasar } from "quasar";
 import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
-import { c, promise_with_ref } from "../common/utils";
+import { c, non_empty_else, promise_with_ref } from "../common/utils";
 import { ChatBodyInput } from "../components/ChatBodyInput";
 import ErrorContainer from "../components/ErrorContainer";
 import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
 import { Message, ServerMessage, UserMessage } from "../interface/ChatRecord";
 import use_main_store from "../store/main_store";
 import copy from "copy-text-to-clipboard";
+
+import { OpenAIApi as cc } from "openai";
 
 const md = new MarkdownIt({
   html: false,
@@ -77,6 +79,18 @@ async function generate_next(index: number) {
 
   const cfg = new Configuration({
     apiKey: main_store.settings.apikeys.keys[0].key,
+    basePath: non_empty_else(
+      main_store.settings.open_ai.api_base_path,
+      undefined
+    ),
+    baseOptions: {
+      params: {
+        "api-version": non_empty_else(
+          main_store.settings.open_ai.api_version,
+          undefined
+        ),
+      },
+    },
   });
   const openai = new OpenAIApi(cfg);
 
@@ -123,8 +137,21 @@ async function generate_next(index: number) {
 
   async function readStream() {
     while (true) {
-      const { done, value } = await reader.read();
-      console.log(done, value);
+      let done, value, res;
+
+      try {
+        res = await reader.read();
+      } catch {
+        msg.error = {
+          err_type: "connection_abort",
+        };
+        await apply_update_chat_record_messages();
+        return;
+      }
+      done = res.done;
+      value = res.value;
+
+      // console.log(done, value);
       if (done) break;
       const raw_result = decoder.decode(value);
       const msg_clip = _.chain(raw_result)
@@ -156,7 +183,7 @@ async function generate_next(index: number) {
         .value();
 
       if (
-        window.scrollY + window.innerHeight + 5 >
+        window.scrollY + window.innerHeight + 10 >
         document.getElementById("app")!.clientHeight
       ) {
         window.location.href = "#ChatBodyBottom";
@@ -227,13 +254,40 @@ export const ChatItemUserMessage = defineComponent({
     const ms = use_main_store();
     return () => {
       const { message } = props;
+      // return (
+      //   <div class={["frow gap-4 flex-nowrap xl:w-[70%] xl:max-w-[900px]"]}>
+      //     <Avatar class="mt-[2px]" role={message.role}></Avatar>
+      //     <div class="whitespace-pre-wrap self-center grow overflow-y-auto">
+      //       {message.content}
+      //     </div>
+      //     <div class="frow gap self-top h-fit min-w-[7rem] max-w-[7rem] gap-1">
+      //       <QBtn
+      //         {...c`text-xs text-zinc-300 p-2`}
+      //         icon="mdi-import"
+      //         flat
+      //         onClick={() => {
+      //           ms.chat_body_input.promot = message.content;
+      //         }}
+      //       ></QBtn>
+      //       <QBtn
+      //         {...c`text-xs text-zinc-300 p-2`}
+      //         icon="mdi-dots-horizontal"
+      //         flat
+      //       ></QBtn>
+      //     </div>
+      //   </div>
+      // );
       return (
-        <div class={["frow gap-4 flex-nowrap xl:w-[70%] xl:max-w-[900px]"]}>
+        <div
+          class={[
+            "frow gap-4 flex-nowrap w-[90vw] xl:w-[55vw] xl:max-w-[900px]",
+          ]}
+        >
           <Avatar class="mt-[2px]" role={message.role}></Avatar>
-          <div class="whitespace-pre-wrap self-center grow">
+          <div class="whitespace-pre-wrap self-center grow overflow-y-auto">
             {message.content}
           </div>
-          <div class="frow gap self-top h-fit min-w-[7rem] max-w-[7rem] gap-1">
+          <div class="frow gap self-top h-fit min-w-[6rem] max-w-[6rem] gap-1">
             <QBtn
               {...c`text-xs text-zinc-300 p-2`}
               icon="mdi-import"
@@ -271,6 +325,14 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
                 raw={JSON.stringify(err)}
               ></ErrorContainer>
             );
+          } else if (err.type === "server_error") {
+            return (
+              <ErrorContainer
+                title="服务器错误"
+                content={`服务器发生错误，请查看 “详细信息”。`}
+                raw={JSON.stringify(err)}
+              ></ErrorContainer>
+            );
           } else {
             return <ErrorContainer raw={JSON.stringify(err)}></ErrorContainer>;
           }
@@ -299,8 +361,20 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
               raw={err.content}
             ></ErrorContainer>
           );
+        } else if (err.err_type === "connection_abort") {
+          return (
+            <ErrorContainer
+              title="连接中断"
+              content="与服务器的连接中断了，需要重新生成。"
+            ></ErrorContainer>
+          );
         }
-        return <ErrorContainer raw={JSON.stringify(err)}></ErrorContainer>;
+        return (
+          <ErrorContainer
+            title="请求失败"
+            raw={JSON.stringify(err)}
+          ></ErrorContainer>
+        );
       }
     };
   },
@@ -316,9 +390,13 @@ export const ChatItemServerMessage = defineComponent({
       const { message, index } = props;
       const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
       return (
-        <div class={["frow gap-4 flex-nowrap xl:w-[70%] xl:max-w-[900px]"]}>
+        <div
+          class={[
+            "frow gap-4 flex-nowrap w-[90vw] xl:w-[80vw] xl:max-w-[900px]",
+          ]}
+        >
           <Avatar role={message.role}></Avatar>
-          <div class="pt-[0.15rem] whitespace-pre-wrap grow shrink">
+          <div class="fcol pt-[0.15rem] whitespace-pre-wrap grow shrink gap-2">
             <div
               class="mdblock"
               v-html={md.render(message.content)}
@@ -328,7 +406,7 @@ export const ChatItemServerMessage = defineComponent({
               message={message}
             ></ChatItemServerMessageErrorHandler>
           </div>
-          <div class="fcol self-top h-fit min-w-[7rem] max-w-[7rem] gap-4 my-[-0.25rem]">
+          <div class="fcol self-top h-fit min-w-[6rem] max-w-[6rem] gap-4 my-[-0.25rem]">
             <div class="frow items-center gap-1">
               <QBtn
                 {...c`text-xs text-zinc-300 p-2`}
@@ -342,10 +420,9 @@ export const ChatItemServerMessage = defineComponent({
                     qs.notify({
                       position: "top-right",
                       message: msg,
-                      "color": "primary",
+                      color: "primary",
                       timeout: 200,
-                      progress: true,
-                      "type": "info"
+                      type: "info",
                     });
 
                   if (result) {
@@ -384,7 +461,7 @@ export const ChatItem = defineComponent({
       return (
         <div
           class={[
-            "fcol w-full items-center py-5",
+            "fcol w-full items-center py-4",
             {
               "bg-zinc-600": index % 2 == 0,
               "bg-[rgb(105,105,114)]": index % 2 == 1,
@@ -454,13 +531,25 @@ export const ChatBody = defineComponent({
     );
     return () => {
       return (
-        <div class="fcol relative grow items-center text-zinc-100">
-          <ChatBodyTopBar></ChatBodyTopBar>
-          <div class={["fcol w-full items-center"]}>
+        <div class="fcol relative grow text-zinc-100 h-min flex-nowrap">
+          {/* <ChatBodyTopBar></ChatBodyTopBar> */}
+          <div class={["fcol w-full"]}>
             {messages.value.map((msg, index) => (
               <ChatItem message={msg} index={index}></ChatItem>
             ))}
-            <div id="ChatBodyBottom" class="min-h-[4rem]"></div>
+            {/* {_.range(0, 100).map(() => (
+              // <div class="fcol w-full items-center py-4">
+                <ChatItemUserMessage
+                  message={{
+                    message_type: "user",
+                    role: "user",
+                    created: 0,
+                    content: "你好",
+                  }}
+                ></ChatItemUserMessage>
+            ))} */}
+
+            <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
           <ChatBodyInput
             class={"fixed bottom-[2rem] self-center"}
@@ -502,7 +591,7 @@ export default defineComponent({
   setup(props) {
     const main_store = use_main_store();
     return () => (
-      <QPage {...c`default-bg flex flex-col h-full`}>
+      <QPage {...c`default-bg flex flex-col h-[100vh] overflow-y-scroll`}>
         <ChatBody></ChatBody>
       </QPage>
     );

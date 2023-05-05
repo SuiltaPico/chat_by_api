@@ -29,6 +29,14 @@ export function batch_set_ref<T, U extends T>(new_value: U, ...arr: Ref<T>[]) {
   });
 }
 
+/** 非空字符串或 `_else` */
+export function non_empty_else<T>(s: string, _else: T) {
+  if (s.length > 0) {
+    return s;
+  }
+  return _else;
+}
+
 /** 在 `fn` 的 `Promise` 完成前后更改 `loading_ref` 的状态。
  *
  * * 完成前：`loading_ref.value = true;`

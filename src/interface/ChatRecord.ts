@@ -36,7 +36,8 @@ export interface ServerMessage {
     | ServerMessagesOtherAPIError
     | ServerMessagesOtherStringError
     | ServerMessagesNoAPIKEYError
-    | ServerMessagesConnectionError;
+    | ServerMessagesConnectionError
+    | ServerMessagesConnectionAbortError;
 }
 
 export interface ServerMessagesAPIError {
@@ -64,6 +65,10 @@ export interface ServerMessagesNoAPIKEYError {
 export interface ServerMessagesConnectionError {
   err_type: "connection_error";
   content: string;
+}
+
+export interface ServerMessagesConnectionAbortError {
+  err_type: "connection_abort";
 }
 
 export interface ResponseMeta {
