@@ -1,8 +1,8 @@
 import { createApp } from "vue";
-import { Quasar } from "quasar";
+import { Quasar, Notify } from "quasar";
 import quasarLang from "quasar/lang/zh-CN";
 import quasarIconSet from "quasar/icon-set/mdi-v6";
-import "./styles/color"
+import "./styles/color";
 
 // Import icon libraries
 import "@quasar/extras/mdi-v6/mdi-v6.css";
@@ -23,13 +23,18 @@ import App from "./App";
 
 const app = createApp(App);
 
-app.use(createPinia())
-app.use(router)
+app.use(createPinia());
+app.use(router);
 
 app.use(Quasar, {
-  plugins: {}, // import Quasar plugins and add here
+  plugins: { Notify }, // import Quasar plugins and add here
   lang: quasarLang,
   iconSet: quasarIconSet,
+  config: {
+    notify: {
+      /* look at QuasarConfOptions from the API card */
+    },
+  },
 });
 
 app.mount("#app");

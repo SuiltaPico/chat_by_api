@@ -1,4 +1,5 @@
 import { RouteRecordRaw } from "vue-router";
+import use_main_store from "../store/main_store.ts";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -12,13 +13,17 @@ const routes: RouteRecordRaw[] = [
     component: () => import("../pages/chat.tsx"),
     // 当 chatid 为空时，跳转到首页
     beforeEnter: (to, from, next) => {
+      const ms = use_main_store();
+      // [impl: use_raw_render]
+      ms.curry_chat.use_raw_render = {};
+
       if (!to.params.chatid) {
         next("/");
       } else {
         next();
       }
     },
-    props: true
+    props: true,
   },
   {
     name: "settings",

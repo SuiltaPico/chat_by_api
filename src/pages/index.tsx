@@ -1,18 +1,13 @@
+import { QPage } from "quasar";
 import { defineComponent, ref } from "vue";
-import type { RenderFunction, SetupContext } from "vue";
-import { Configuration, OpenAIApi } from "openai";
-import _ from "lodash";
-import { QBtn, QIcon, QPage, QSpace } from "quasar";
 
-import type ChatRecord from "../interface/ChatRecord";
-import type { Message } from "../interface/ChatRecord";
 import { define_component_with_prop } from "../common/define_component";
-import { any, fix_compo_batch, c } from "../common/utils";
+import { c } from "../common/utils";
+import type { Message } from "../interface/ChatRecord";
 
-import use_main_store from "../store/main_store";
-import { ChatBodyInput } from "../components/ChatBodyInput";
 import { useRouter } from "vue-router";
-import { app_body_width } from "../common/display";
+import { ChatBodyInput } from "../components/ChatBodyInput";
+import use_main_store from "../store/main_store";
 
 // const res = await openai.createChatCompletion({
 //   model: "gpt-3.5-turbo",
@@ -31,11 +26,11 @@ export const IndexBody = defineComponent({
       <div class="flex flex-col relative grow">
         <IndexBodyMain />
         <ChatBodyInput
-          class={"fixed bottom-[2rem] self-center" + app_body_width}
+          class={"fixed bottom-[2rem] self-center"}
           onSubmit={async () => {
             const promot = main_store.chat_body_input.promot;
+            if (promot.length === 0) return;
 
-            console.log("submit");
             const chatid = await main_store.new_chat_record(
               promot.slice(0, 10) + (promot.length > 10 ? "…" : ""),
               Date.now()

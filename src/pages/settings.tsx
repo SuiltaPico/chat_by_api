@@ -7,6 +7,11 @@ import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import _ from "lodash";
 import { watch } from "fs";
 import { DBAPIKEYDuplicateError } from "../store/db_api";
+import MarkdownIt from "markdown-it";
+
+const md = new MarkdownIt({
+  html: false,
+});
 
 export const APIKEY_Manager = defineComponent({
   setup() {
@@ -57,6 +62,7 @@ export const APIKEY_Manager = defineComponent({
     return () => {
       const settings = main_store.settings;
       console.log(settings);
+      // TODO: 压缩这里的代码
       return (
         <div class="fcol gap-6">
           <div class="text-xl font-bold">API-KEY 管理</div>
@@ -117,7 +123,7 @@ export const APIKEY_Manager = defineComponent({
             </div>
           </div>
           <div class="fcol gap-2">
-            <div>缓存的 API-KEY</div>
+            <div>缓存的 API-KEY（目前仅支持使用第一个）</div>
             {settings.apikeys.keys.map((it, i, keys) => (
               <div class="frow gap-4 items-center">
                 <div>{i + 1}.</div>
@@ -185,17 +191,56 @@ export const APIKEY_Manager = defineComponent({
 
 export const About = defineComponent({
   setup() {
+    const update_log = [
+      {
+        version: "0.1.0",
+        content: `
+* 小重构了chat页面，修复了“错误提示”错误的问题。
+* 添加了服务端消息的复制和用户消息的引入到输入框。
+* 添加了 LICENSE，随便选了个 AGPL v3。
+* 添加了预导入 ChatGPT 图标的，不然每次打开 chat 页面，ChatGPT 图标都要卡一下。
+* 瞎折腾一下午我也不记得加了些什么了，，
+        `,
+      },
+      {
+        version: "0.0.0",
+        content: `忘记干了什么了，反正是踩了很多vue-tsx的坑。`,
+      },
+    ];
     return () => (
       <div class="fcol gap-6">
         <div class="text-xl font-bold">关于</div>
         <div class="fcol gap-2">
           <div class="frow gap-2">
             <div class="text-md font-bold">版本</div>
-            <div>0.0.1</div>
+            <div>{update_log[0].version}</div>
           </div>
-          <div class="frow gap-2">
-            <div>目前还有好多问题啊，凑合着用吧。</div>
-          </div>
+          <details>
+            <summary>版本描述</summary>
+            <div class="fcol gap-4 m-2">
+              <div>hoho，你居然会点进来。</div>
+              <div>
+                目前还有好多功能没实现啊……哦对了，那个
+                <QBtn icon="mdi-dots-horizontal" flat></QBtn>
+                按钮的功能暂时没加上。
+              </div>
+              <div>
+                下一个版本会有的（大概）。会放一些允许你修改
+                promot、删除什么的功能。
+              </div>
+            </div>
+          </details>
+          <details class="frow gap-2">
+            <summary>更新日志</summary>
+            <div class="p-4">
+              {update_log.map((it) => (
+                <div>
+                  <div class="font-bold">{it.version}</div>
+                  <div class="p-2" v-html={md.render(it.content)}></div>
+                </div>
+              ))}
+            </div>
+          </details>
         </div>
       </div>
     );

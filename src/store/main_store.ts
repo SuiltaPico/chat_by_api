@@ -20,7 +20,7 @@ const use_main_store = defineStore("main", () => {
   const chat_body_input = ref({
     promot: "",
     model: "gpt-3.5-turbo",
-    brief_mode: true,
+    brief_mode: false,
     require_next: false,
   });
 
@@ -61,7 +61,10 @@ const use_main_store = defineStore("main", () => {
   const curry_chat = reactive({
     id: undefined as undefined | string,
     messages: [] as Message[],
-    status: ""
+    status: "",
+    /** 状态：使用原始渲染。
+     * [req: use_raw_render]：当页面变动时清空。 */
+    use_raw_render: {} as Record<number, boolean>,
   });
 
   async function sync_db() {

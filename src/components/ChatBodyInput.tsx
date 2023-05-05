@@ -15,11 +15,12 @@ import {
   brief_mode_models as openai_brief_mode_models,
 } from "../common/from_openai";
 import _ from "lodash";
+import { app_body_width } from "../common/display";
 
 export const ChatBodyInput = defineComponent({
   props: ["submit_btn_loading"],
   emits: ["submit"],
-  setup(props: { submit_btn_loading?: boolean }, { attrs, emit }) {
+  setup(props: { submit_btn_loading?: boolean }, ctx) {
     const main_store = use_main_store();
 
     const models = openai_models.chat_completions;
@@ -37,10 +38,12 @@ export const ChatBodyInput = defineComponent({
     const promot = toRef(main_store.chat_body_input, "promot");
     return () => {
       const chat_body_input = main_store.chat_body_input;
-
+      const { attrs, emit } = ctx;
       return (
         <div
-          class="fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg"
+          class={
+            "fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg xl:w-[80%] xl:max-w-[800px]"
+          }
           {...attrs}
         >
           <div class="frow gap-3 items-center">
@@ -122,13 +125,13 @@ export const ChatBodyInput = defineComponent({
               dense
               filled
             ></QSelect>
-            <QToggle
+            {/* <QToggle
               {...c`select-none text-zinc-200`}
               {...refvmodel(brief_mode)}
               label={brief_mode.value ? "简略模式" : "详细模式"}
               color="primary"
               dense
-            ></QToggle>
+            ></QToggle> */}
           </div>
         </div>
       );

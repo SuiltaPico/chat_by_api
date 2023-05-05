@@ -15,6 +15,7 @@ specifiers:
   '@volar/vue-language-plugin-pug': ^1.6.2
   '@vscode/markdown-it-katex': ^1.0.0
   autoprefixer: ^10.4.14
+  copy-text-to-clipboard: ^3.1.0
   highlight.js: ^11.8.0
   katex: ^0.16.7
   lodash: ^4.17.21
@@ -41,6 +42,7 @@ specifiers:
 dependencies:
   '@quasar/extras': 1.16.3
   '@vscode/markdown-it-katex': 1.0.0
+  copy-text-to-clipboard: 3.1.0
   highlight.js: 11.8.0
   katex: 0.16.7
   lodash: 4.17.21
@@ -1447,6 +1449,11 @@ packages:
   /convert-source-map/1.9.0:
     resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
     dev: true
+
+  /copy-text-to-clipboard/3.1.0:
+    resolution: {integrity: sha512-PFM6BnjLnOON/lB3ta/Jg7Ywsv+l9kQGD4TWDCSlRBGmqnnTM5MrDkhAFgw+8HZt0wW6Q2BBE4cmy9sq+s9Qng==}
+    engines: {node: '>=12'}
+    dev: false
 
   /core-util-is/1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}

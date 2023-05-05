@@ -1,24 +1,15 @@
-import { computed, defineComponent, ref } from "vue";
-import type { RenderFunction, SetupContext } from "vue";
-import { Configuration, OpenAIApi } from "openai";
-import PouchDB from "pouchdb";
-import _ from "lodash";
 import {
-  QBtn,
   QDrawer,
   QInnerLoading,
   QLayout,
-  QPage,
-  QPageContainer,
+  QPageContainer
 } from "quasar";
+import { defineComponent } from "vue";
 
-import type { Message } from "./interface/ChatRecord";
-import { define_component_with_prop } from "./common/define_component";
-import { any, fix_compo_batch } from "./common/utils";
 import { RouterView } from "vue-router";
 
-import use_main_store from "./store/main_store";
 import { ChatRecordSelection } from "./components/ChatRecordSelection";
+import use_main_store from "./store/main_store";
 
 export default defineComponent({
   setup() {
