@@ -183,7 +183,7 @@ async function generate_next(index: number) {
         .value();
 
       if (
-        window.scrollY + window.innerHeight + 10 >
+        window.scrollY + window.innerHeight + 32 >
         document.getElementById("app")!.clientHeight
       ) {
         window.location.href = "#ChatBodyBottom";
@@ -254,29 +254,6 @@ export const ChatItemUserMessage = defineComponent({
     const ms = use_main_store();
     return () => {
       const { message } = props;
-      // return (
-      //   <div class={["frow gap-4 flex-nowrap xl:w-[70%] xl:max-w-[900px]"]}>
-      //     <Avatar class="mt-[2px]" role={message.role}></Avatar>
-      //     <div class="whitespace-pre-wrap self-center grow overflow-y-auto">
-      //       {message.content}
-      //     </div>
-      //     <div class="frow gap self-top h-fit min-w-[7rem] max-w-[7rem] gap-1">
-      //       <QBtn
-      //         {...c`text-xs text-zinc-300 p-2`}
-      //         icon="mdi-import"
-      //         flat
-      //         onClick={() => {
-      //           ms.chat_body_input.promot = message.content;
-      //         }}
-      //       ></QBtn>
-      //       <QBtn
-      //         {...c`text-xs text-zinc-300 p-2`}
-      //         icon="mdi-dots-horizontal"
-      //         flat
-      //       ></QBtn>
-      //     </div>
-      //   </div>
-      // );
       return (
         <div
           class={[
@@ -397,11 +374,7 @@ export const ChatItemServerMessage = defineComponent({
         >
           <Avatar role={message.role}></Avatar>
           <div class="fcol pt-[0.15rem] whitespace-pre-wrap grow shrink gap-2">
-            <div
-              class="mdblock"
-              v-html={md.render(message.content)}
-              // v-html={message.content}
-            ></div>
+            <div class="mdblock" v-html={md.render(message.content)}></div>
             <ChatItemServerMessageErrorHandler
               message={message}
             ></ChatItemServerMessageErrorHandler>
@@ -418,7 +391,7 @@ export const ChatItemServerMessage = defineComponent({
                   const result = copy(message.content);
                   const notify = (msg: string) =>
                     qs.notify({
-                      position: "top-right",
+                      position: "top",
                       message: msg,
                       color: "primary",
                       timeout: 200,
@@ -445,7 +418,6 @@ export const ChatItemServerMessage = defineComponent({
                 size="xs"
               ></QToggle> */}
             </div>
-            {/* <div class="frow"></div> */}
           </div>
         </div>
       );
@@ -537,17 +509,6 @@ export const ChatBody = defineComponent({
             {messages.value.map((msg, index) => (
               <ChatItem message={msg} index={index}></ChatItem>
             ))}
-            {/* {_.range(0, 100).map(() => (
-              // <div class="fcol w-full items-center py-4">
-                <ChatItemUserMessage
-                  message={{
-                    message_type: "user",
-                    role: "user",
-                    created: 0,
-                    content: "你好",
-                  }}
-                ></ChatItemUserMessage>
-            ))} */}
 
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
@@ -591,7 +552,7 @@ export default defineComponent({
   setup(props) {
     const main_store = use_main_store();
     return () => (
-      <QPage {...c`default-bg flex flex-col h-[100vh] overflow-y-scroll`}>
+      <QPage {...c`default-bg flex flex-col`}>
         <ChatBody></ChatBody>
       </QPage>
     );

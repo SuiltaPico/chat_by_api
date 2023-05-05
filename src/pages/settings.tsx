@@ -245,6 +245,13 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.1.2",
+        content: `
+* 更人性化的聊天窗口滚动
+* 更人性化的复制提醒
+`
+      },
+      {
         version: "0.1.1",
         content: `
 * 增加了设置的 OpenAI 的 baseurl、api_version 选项。
