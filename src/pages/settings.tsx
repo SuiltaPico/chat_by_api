@@ -244,6 +244,12 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.1.4",
+        content: `
+* 点击聊天窗口的头像可以切换身份。
+`
+      },
+      {
         version: "0.1.3",
         content: `
 * 修复了切换页面渲染滞留。
