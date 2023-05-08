@@ -27,6 +27,7 @@ app.use(createPinia());
 app.use(router);
 
 app.use(Quasar, {
+  directives: {},
   plugins: { Notify }, // import Quasar plugins and add here
   lang: quasarLang,
   iconSet: quasarIconSet,

@@ -244,10 +244,17 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.2.0",
+        content: `
+* 增加了删除功能。
+* 加速了聊天页面加载速度（取而代之的是更慢的网站启动速度）。
+`,
+      },
+      {
         version: "0.1.4",
         content: `
 * 点击聊天窗口的头像可以切换身份。
-`
+`,
       },
       {
         version: "0.1.3",
@@ -259,7 +266,7 @@ export const About = defineComponent({
 * 增加了更多错误情况的描述文本。
 * 更函数式编程了（？）
 * 修复了 \`<li>\` 使用 \`display: flex;\` 导致的错误排版。
-`
+`,
       },
       {
         version: "0.1.2",

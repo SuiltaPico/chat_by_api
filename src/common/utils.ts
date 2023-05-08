@@ -14,6 +14,11 @@ export function c(s: TemplateStringsArray) {
   return { class: s.join("") } as any;
 }
 
+export function st(s: TemplateStringsArray) {
+  return { style: s.join("") } as any;
+}
+
+
 /** 类似 `v-model`。双向绑定的时候帮你偷个懒。 */
 export function refvmodel<T>(v: Ref<T>) {
   return {

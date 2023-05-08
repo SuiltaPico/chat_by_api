@@ -10,19 +10,18 @@ body {
   @apply bg-zinc-600;
 }
 
+ul,
 ol {
-  margin: 0;
-  padding: 0;
+  @apply fcol ml-4;
+}
+
+ol {
   list-style: decimal;
 }
 
 ul {
   padding: initial;
-  @apply list-disc ml-8;
-}
-
-ol li {
-  /* @apply flex; */
+  @apply list-disc;
 }
 
 ol li p {
@@ -35,6 +34,10 @@ code {
 
 pre {
   @apply whitespace-pre-wrap;
+}
+
+.quick {
+  --q-transition-duration: 0.1s !important;
 }
 
 .q-menu--dark {
@@ -69,7 +72,6 @@ pre {
 .fcol {
   @apply flex flex-col;
 }
-
 
 .ChatRecordSelectionItem {
   @apply text-white px-3 py-3 text-base flex flex-row;
@@ -143,10 +145,17 @@ pre {
 }
 
 .Avatar {
-  @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer;
+  @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer relative;
+  @apply after:w-full after:h-full after:absolute after:left-0 after:top-0;
+  @apply after:bg-white after:bg-opacity-0 after:transition-all;
+    &:hover {
+  @apply after:bg-opacity-10;
+  }
 }
 
-
+.Avatar_system {
+  @apply bg-[#c74b4b];
+}
 
 .error_container {
   @apply fcol text-base border border-red-500 bg-[#944e4e] p-4 rounded;

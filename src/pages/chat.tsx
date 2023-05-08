@@ -5,7 +5,7 @@ import _ from "lodash";
 import MarkdownIt from "markdown-it";
 import markdown_it_highlightjs from "markdown-it-highlightjs";
 import { Configuration, OpenAIApi } from "openai-edge";
-import { QBtn, QIcon, QPage, useQuasar } from "quasar";
+import { QBtn, QIcon, QPage, QPopupProxy, useQuasar } from "quasar";
 import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
@@ -234,7 +234,7 @@ export const Avatar = defineComponent({
             {...attrs}
             {...emit_attr}
             name="mdi-account"
-            size="1.2rem"
+            size="1.25rem"
           ></QIcon>
         );
       } else if (role === "assistant") {
@@ -243,18 +243,18 @@ export const Avatar = defineComponent({
             <img
               src="/ChatGPT.svg"
               alt=""
-              class="min-w-[20px] min-h-[20px] max-w-[20px]"
+              class="min-w-[1.25rem] min-h-[1.25rem] max-w-[1.25rem]"
             />
           </div>
         );
       } else if (role === "system") {
         return (
           <QIcon
-            {...c`Avatar`}
+            {...c`Avatar Avatar_system`}
             {...attrs}
             {...emit_attr}
             name="mdi-laptop"
-            size="1.2rem"
+            size="1.25rem"
           ></QIcon>
         );
       } else {
@@ -264,7 +264,7 @@ export const Avatar = defineComponent({
             {...attrs}
             {...emit_attr}
             name="mdi-help-box-outline"
-            size="1.2rem"
+            size="1.25rem"
           ></QIcon>
         );
       }
@@ -272,9 +272,24 @@ export const Avatar = defineComponent({
   },
 });
 
-export const ChatItemUserMessage = defineComponent({
-  props: ["message", "chatid"],
-  setup(props: { message: UserMessage; chatid: string }) {
+export const ChatItemUserMessage = defineComponent<
+  {
+    message: UserMessage;
+    chatid: string;
+  },
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    delete: () => void;
+  }
+>({
+  props: any(["message", "chatid"]),
+  emits: ["delete"],
+  setup(props, ctx) {
     const ms = use_main_store();
     return () => {
       const { message, chatid } = props;
@@ -309,7 +324,11 @@ export const ChatItemUserMessage = defineComponent({
               {...c`text-xs text-zinc-300 p-2`}
               icon="mdi-dots-horizontal"
               flat
-            ></QBtn>
+            >
+              <ChatItemMorePop
+                onDelete={() => ctx.emit("delete")}
+              ></ChatItemMorePop>
+            </QBtn>
           </div>
         </div>
       );
@@ -426,22 +445,43 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
   },
 });
 
-export const ChatItemServerMessage = defineComponent({
-  props: ["message", "index"],
-  setup(props: { message: ServerMessage; index: number }) {
+export const ChatItemServerMessage = defineComponent<
+  {
+    message: ServerMessage;
+    chatid: string;
+    index: number;
+  },
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    delete: () => void;
+  }
+>({
+  props: any(["message", "index", "chatid"]),
+  setup(props, ctx) {
     const ms = use_main_store();
     const qs = useQuasar();
 
     return () => {
-      const { message, index } = props;
-      const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
+      const { message, index, chatid } = props;
+      // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
       return (
         <div
           class={[
             "frow gap-4 flex-nowrap w-[90vw] xl:w-[80vw] xl:max-w-[900px]",
           ]}
         >
-          <Avatar role={message.role}></Avatar>
+          <Avatar
+            role={message.role}
+            onUpdate:role={(role) => {
+              message.role = role;
+              ms.update_chat_record_messages(chatid);
+            }}
+          ></Avatar>
           <div class="fcol pt-[0.15rem] whitespace-pre-wrap grow shrink gap-2">
             <div class="mdblock" v-html={md.render(message.content)}></div>
             <ChatItemServerMessageErrorHandler
@@ -455,8 +495,6 @@ export const ChatItemServerMessage = defineComponent({
                 icon="mdi-content-copy"
                 flat
                 onClick={() => {
-                  console.log(qs);
-
                   const result = copy(message.content);
                   const notify = (msg: string) =>
                     qs.notify({
@@ -478,7 +516,11 @@ export const ChatItemServerMessage = defineComponent({
                 {...c`text-xs text-zinc-300 p-2`}
                 icon="mdi-dots-horizontal"
                 flat
-              ></QBtn>
+              >
+                <ChatItemMorePop
+                  onDelete={() => ctx.emit("delete")}
+                ></ChatItemMorePop>
+              </QBtn>
               {/* <QToggle
                 {...c`h-fit p-0 text-sm`}
                 {...refvmodel(use_raw_render)}
@@ -494,13 +536,61 @@ export const ChatItemServerMessage = defineComponent({
   },
 });
 
-export const ChatItem = defineComponent<{
-  message: Message;
-  index: number;
-  chatid: string;
-}>({
-  props: ["message", "index", "chatid"] as any as undefined,
-  setup(props) {
+export const ChatItemMorePop = defineComponent<
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    delete: () => void;
+  }
+>({
+  setup(_, ctx) {
+    return () => (
+      <QPopupProxy {...c`bg-zinc-800 text-white select-none quick`}>
+        <QBtn
+          unelevated
+          onClick={() => {
+            ctx.emit("delete");
+          }}
+        >
+          <div class="frow gap-3 items-center text-base pr-1 w-[8rem]">
+            <QIcon {...c`text-sm`} name="mdi-delete" size="1.2rem"></QIcon>
+            <div>删除</div>
+          </div>
+        </QBtn>
+        {{
+          ...Maybe.of(ctx.slots.default)
+            .map((slot) => slot())
+            .unwrap_or(<div></div>),
+        }}
+      </QPopupProxy>
+    );
+  },
+});
+
+export const ChatItem = defineComponent<
+  {
+    message: Message;
+    index: number;
+    chatid: string;
+  },
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    delete: () => void;
+  }
+>({
+  props: any(["message", "index", "chatid"]),
+  emits: ["delete"],
+  setup(props, ctx) {
     return () => {
       const { message, index, chatid } = props;
       return (
@@ -519,12 +609,20 @@ export const ChatItem = defineComponent<{
                 <ChatItemUserMessage
                   message={message}
                   chatid={chatid}
+                  onDelete={() => {
+                    ctx.emit("delete");
+                  }}
                 ></ChatItemUserMessage>
               );
             } else if (message.message_type === "server") {
               return (
                 <ChatItemServerMessage
                   message={message}
+                  chatid={chatid}
+                  index={index}
+                  onDelete={() => {
+                    ctx.emit("delete");
+                  }}
                 ></ChatItemServerMessage>
               );
             }
@@ -546,29 +644,26 @@ export const ChatBodyTopBar = defineComponent({
 
 export const ChatBody = defineComponent({
   setup() {
-    const main_store = use_main_store();
+    const ms = use_main_store();
     const router = useRouter();
     const route = computed(() => router.currentRoute.value);
     const chat_id = computed(() => route.value.params.chatid as string);
     const loading_messages = ref(false);
-    const messages = computed(() => main_store.curry_chat.messages);
+    const messages = computed(() => ms.curry_chat.messages);
     watch(
       chat_id,
       () => {
         promise_with_ref(async () => {
-          main_store.curry_chat.id = chat_id.value;
-          await main_store.sync_db();
+          ms.curry_chat.id = chat_id.value;
+          await ms.sync_db();
           // 处理对话不存在的情况
-          if (
-            chat_id.value !== undefined &&
-            main_store.curry_chat.id === undefined
-          ) {
+          if (chat_id.value !== undefined && ms.curry_chat.id === undefined) {
             router.push({
               name: "index",
             });
           }
-          if (main_store.chat_body_input.require_next === true) {
-            main_store.chat_body_input.require_next = false;
+          if (ms.chat_body_input.require_next === true) {
+            ms.chat_body_input.require_next = false;
             await generate_next(messages.value.length - 1);
           }
         }, loading_messages);
@@ -578,13 +673,22 @@ export const ChatBody = defineComponent({
       }
     );
     return () => {
-      const chatid = main_store.curry_chat.id!;
+      const chatid = ms.curry_chat.id!;
       return (
         <div class="fcol relative grow text-zinc-100 h-min flex-nowrap">
           {/* <ChatBodyTopBar></ChatBodyTopBar> */}
           <div class={["fcol w-full"]}>
             {messages.value.map((msg, index) => (
-              <ChatItem message={msg} index={index} chatid={chatid}></ChatItem>
+              <ChatItem
+                message={msg}
+                index={index}
+                chatid={chatid}
+                onDelete={() => {
+                  console.log("delete");
+                  messages.value.splice(index, 1);
+                  ms.update_chat_record_messages(chatid);
+                }}
+              ></ChatItem>
             ))}
 
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
@@ -593,10 +697,10 @@ export const ChatBody = defineComponent({
             class={"fixed bottom-[2rem] self-center"}
             submit_btn_loading={loading_messages.value}
             onSubmit={async () => {
-              const { promot } = main_store.chat_body_input;
+              const { promot } = ms.chat_body_input;
               if (promot.length === 0) return;
 
-              const messages = main_store.curry_chat.messages;
+              const messages = ms.curry_chat.messages;
               messages.push({
                 message_type: "user",
                 role: "user",
@@ -608,12 +712,12 @@ export const ChatBody = defineComponent({
                 role: "assistant",
                 created: Date.now(),
                 request_config: {
-                  model: main_store.chat_body_input.model,
+                  model: ms.chat_body_input.model,
                 },
                 content: "",
               });
-              main_store.chat_body_input.sended();
-              await main_store.update_chat_record_messages(chatid);
+              ms.chat_body_input.sended();
+              await ms.update_chat_record_messages(chatid);
               window.location.href = "#ChatBodyBottom";
               await generate_next(messages.length - 1);
             }}

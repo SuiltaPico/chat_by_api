@@ -1,5 +1,7 @@
 import { RouteRecordRaw } from "vue-router";
 import use_main_store from "../store/main_store.ts";
+import chat_page from "../pages/chat.tsx";
+import settings_page from "../pages/settings.tsx";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -10,7 +12,7 @@ const routes: RouteRecordRaw[] = [
   {
     name: "chat",
     path: "/chat/:chatid?",
-    component: () => import("../pages/chat.tsx"),
+    component: () => Promise.resolve(chat_page),
     // 当 chatid 为空时，跳转到首页
     beforeEnter: (to, from, next) => {
       const ms = use_main_store();
@@ -30,7 +32,7 @@ const routes: RouteRecordRaw[] = [
   {
     name: "settings",
     path: "/settings",
-    component: () => import("../pages/settings.tsx"),
+    component: () => Promise.resolve(settings_page),
   },
 ];
 
