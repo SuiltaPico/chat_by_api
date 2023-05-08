@@ -17,16 +17,18 @@ export type ChatRecordForStorage = Omit<ChatRecord, "id">;
 
 export type Message = UserMessage | ServerMessage;
 
+export type Role = "user" | "assistant" | "system" | "unknown";
+
 export interface UserMessage {
   message_type: "user";
-  role: string;
+  role: Role;
   created: number;
   content: string;
 }
 
 export interface ServerMessage {
   message_type: "server";
-  role: string;
+  role: Role;
   created: number;
   request_config: Omit<CreateChatCompletionRequest, "messages">;
   response_meta?: ResponseMeta;

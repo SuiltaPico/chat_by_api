@@ -22,6 +22,13 @@ const use_main_store = defineStore("main", () => {
     model: "gpt-3.5-turbo",
     brief_mode: false,
     require_next: false,
+    sended: (new_chat?: boolean) => {
+      const cbi = chat_body_input.value;
+      cbi.promot = "";
+      if (new_chat) {
+        cbi.require_next = true;
+      }
+    },
   });
 
   const chat_records_meta = ref<ChatRecordMeta[]>(chat_records_default_value);

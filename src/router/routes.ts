@@ -16,6 +16,8 @@ const routes: RouteRecordRaw[] = [
       const ms = use_main_store();
       // [impl: use_raw_render]
       ms.curry_chat.use_raw_render = {};
+      ms.curry_chat.id = undefined;
+      ms.curry_chat.messages = [];
 
       if (!to.params.chatid) {
         next("/");

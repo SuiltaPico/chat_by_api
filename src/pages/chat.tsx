@@ -8,11 +8,23 @@ import { Configuration, OpenAIApi } from "openai-edge";
 import { QBtn, QIcon, QPage, useQuasar } from "quasar";
 import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
-import { c, non_empty_else, promise_with_ref } from "../common/utils";
+import {
+  Maybe,
+  any,
+  c,
+  non_empty_else,
+  promise_with_ref,
+  scroll_if_close_to,
+} from "../common/utils";
 import { ChatBodyInput } from "../components/ChatBodyInput";
 import ErrorContainer from "../components/ErrorContainer";
 import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
-import { Message, ServerMessage, UserMessage } from "../interface/ChatRecord";
+import {
+  Message,
+  Role,
+  ServerMessage,
+  UserMessage,
+} from "../interface/ChatRecord";
 import use_main_store from "../store/main_store";
 import copy from "copy-text-to-clipboard";
 
@@ -64,8 +76,10 @@ async function generate_next(index: number) {
   const { chat_body_input, curry_chat } = main_store;
 
   const msg = main_store.curry_chat.messages[index] as ServerMessage;
+  // 锁定chatid，不被变化影响
+  const chat_id = main_store.curry_chat.id!;
   const apply_update_chat_record_messages = _.throttle(async () => {
-    await main_store.update_chat_record_messages(main_store.curry_chat.id!);
+    await main_store.update_chat_record_messages(chat_id);
   }, 100);
 
   if (main_store.settings.apikeys.keys.length === 0) {
@@ -182,12 +196,7 @@ async function generate_next(index: number) {
         }, "")
         .value();
 
-      if (
-        window.scrollY + window.innerHeight + 32 >
-        document.getElementById("app")!.clientHeight
-      ) {
-        window.location.href = "#ChatBodyBottom";
-      }
+      scroll_if_close_to(document.getElementById("app")!, 32);
       message_result.value += msg_clip;
     }
   }
@@ -199,25 +208,38 @@ async function generate_next(index: number) {
 
 export const Avatar = defineComponent({
   props: ["role"],
-  setup(props: { role: string }, ctx) {
+  emits: ["update:role"],
+  setup(props: { role: Role }, ctx) {
+    const part_eq = function <T>(a: T) {
+      return _.partial(_.eq, a);
+    };
+    const next = _.cond<Role, Role>([
+      [part_eq("user"), _.constant("assistant")],
+      [part_eq("assistant"), _.constant("system")],
+      [part_eq("system"), _.constant("user")],
+      [_.stubTrue, _.constant("user")],
+    ]);
+    const emit_attr = any({
+      onClick: () => {
+        ctx.emit("update:role", next(props.role));
+      },
+    });
     return () => {
       const { role } = props;
       const { attrs } = ctx;
       if (role === "user") {
         return (
           <QIcon
-            {...c`text-zinc-100 bg-primary p-[0.4rem] rounded`}
+            {...c`Avatar`}
             {...attrs}
+            {...emit_attr}
             name="mdi-account"
             size="1.2rem"
           ></QIcon>
         );
       } else if (role === "assistant") {
         return (
-          <div
-            {...c`text-zinc-100 bg-primary p-[0.4rem] rounded h-fit`}
-            {...attrs}
-          >
+          <div {...c`Avatar h-fit`} {...attrs} {...emit_attr}>
             <img
               src="/ChatGPT.svg"
               alt=""
@@ -228,8 +250,9 @@ export const Avatar = defineComponent({
       } else if (role === "system") {
         return (
           <QIcon
-            {...c`text-zinc-100 bg-primary p-[0.4rem] rounded`}
+            {...c`Avatar`}
             {...attrs}
+            {...emit_attr}
             name="mdi-laptop"
             size="1.2rem"
           ></QIcon>
@@ -237,8 +260,9 @@ export const Avatar = defineComponent({
       } else {
         return (
           <QIcon
-            {...c`text-zinc-100 bg-primary p-[0.4rem] rounded`}
+            {...c`Avatar`}
             {...attrs}
+            {...emit_attr}
             name="mdi-help-box-outline"
             size="1.2rem"
           ></QIcon>
@@ -249,18 +273,25 @@ export const Avatar = defineComponent({
 });
 
 export const ChatItemUserMessage = defineComponent({
-  props: ["message"],
-  setup(props: { message: UserMessage }) {
+  props: ["message", "chatid"],
+  setup(props: { message: UserMessage; chatid: string }) {
     const ms = use_main_store();
     return () => {
-      const { message } = props;
+      const { message, chatid } = props;
       return (
         <div
           class={[
             "frow gap-4 flex-nowrap w-[90vw] xl:w-[55vw] xl:max-w-[900px]",
           ]}
         >
-          <Avatar class="mt-[2px]" role={message.role}></Avatar>
+          <Avatar
+            class="mt-[2px]"
+            role={message.role}
+            onUpdate:role={(role) => {
+              message.role = role;
+              ms.update_chat_record_messages(chatid);
+            }}
+          ></Avatar>
           <div class="whitespace-pre-wrap self-center grow overflow-y-auto">
             {message.content}
           </div>
@@ -271,6 +302,7 @@ export const ChatItemUserMessage = defineComponent({
               flat
               onClick={() => {
                 ms.chat_body_input.promot = message.content;
+                ms.update_chat_record_messages(chatid);
               }}
             ></QBtn>
             <QBtn
@@ -292,67 +324,104 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
     return () => {
       const { message } = props;
       const err = message.error;
-      console.log(err);
-      if (err !== undefined) {
-        if (err.err_type === "api") {
-          if (err.code === "model_not_found") {
+      const err_str = JSON.stringify(err);
+      if (err === undefined) return;
+
+      if (err.err_type === "api") {
+        if (err.code === "model_not_found") {
+          return (
+            <ErrorContainer
+              content={`你的 API-KEY 无法使用当前模型 “${message.request_config.model}”，请尝试切换其它模型。`}
+              raw={err_str}
+            ></ErrorContainer>
+          );
+        } else if (err.type === "server_error") {
+          return (
+            <ErrorContainer
+              title="服务器错误"
+              content={`服务器发生错误，请查看 “详细信息”。`}
+              raw={err_str}
+            ></ErrorContainer>
+          );
+        } else if (err.type === "requests") {
+          const rate_limit_reg =
+            /Rate limit reached for (?<model_name>[^\s]+) in organization (?<organization_name>[^\s]+) on requests per min\. Limit: (?<limit>[^\.]+)\. Please try again in (?<retry_wait>[^\.]+)\. Contact us through our help center at help\.openai\.com if you continue to have issues\. Please add a payment method to your account to increase your rate limit\. Visit https:\/\/platform\.openai\.com\/account\/billing to add a payment method\./gm;
+
+          const rate_limit_groups = Maybe.of(err.message)
+            .map((s) => rate_limit_reg.exec(s))
+            .map((arr) => arr.groups).value;
+
+          if (rate_limit_groups) {
+            const group_getter = _.bind(_.get, {}, rate_limit_groups, _, _);
             return (
               <ErrorContainer
-                content={`你的 API-KEY 无法使用当前模型 “${message.request_config.model}”，请尝试切换其它模型。`}
-                raw={JSON.stringify(err)}
+                title="请求速率达到上限"
+                content={`组织 ${group_getter(
+                  "organization_name",
+                  "未知组织"
+                )} 中每分钟请求达到 ${group_getter(
+                  "model_name",
+                  "未知模型"
+                )} 的速率限制。限制：${group_getter(
+                  "limit",
+                  "未知模型"
+                )}。请在 ${group_getter(
+                  "retry_wait",
+                  "片刻"
+                )} 后重试。如果您仍然遇到问题，请通过我们的帮助中心 help.openai.com 联系我们。请向您的帐户添加付款方式以提高您的费率限制。访问 https://platform.openai.com/account/billing 添加支付方式。`}
+                raw={err_str}
               ></ErrorContainer>
             );
-          } else if (err.type === "server_error") {
-            return (
-              <ErrorContainer
-                title="服务器错误"
-                content={`服务器发生错误，请查看 “详细信息”。`}
-                raw={JSON.stringify(err)}
-              ></ErrorContainer>
-            );
-          } else {
-            return <ErrorContainer raw={JSON.stringify(err)}></ErrorContainer>;
           }
-        } else if (err.err_type === "no_api_key") {
+
           return (
             <ErrorContainer
-              title="无 API-KEY"
-              content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
-            >
-              <QBtn
-                color="primary"
-                unelevated
-                onClick={() => {
-                  router.push({ name: "settings" });
-                }}
-              >
-                立即前往
-              </QBtn>
-            </ErrorContainer>
-          );
-        } else if (err.err_type === "connection_error") {
-          return (
-            <ErrorContainer
-              title="连接出错"
-              content="请检查你的网络连接。如果网络连接正常，请检查你所处区域的网络是否能流畅访问 chat.openai.com。"
-              raw={err.content}
+              title="服务器拒绝了请求"
+              raw={err_str}
             ></ErrorContainer>
           );
-        } else if (err.err_type === "connection_abort") {
-          return (
-            <ErrorContainer
-              title="连接中断"
-              content="与服务器的连接中断了，需要重新生成。"
-            ></ErrorContainer>
-          );
+        } else {
+          return <ErrorContainer title="错误" raw={err_str}></ErrorContainer>;
         }
+      } else if (err.err_type === "no_api_key") {
         return (
           <ErrorContainer
-            title="请求失败"
-            raw={JSON.stringify(err)}
+            title="无 API-KEY"
+            content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
+          >
+            <QBtn
+              color="primary"
+              unelevated
+              onClick={() => {
+                router.push({ name: "settings" });
+              }}
+            >
+              立即前往
+            </QBtn>
+          </ErrorContainer>
+        );
+      } else if (err.err_type === "connection_error") {
+        return (
+          <ErrorContainer
+            title="连接出错"
+            content="请检查你的网络连接。如果网络连接正常，请检查你所处区域的网络是否能流畅访问 chat.openai.com。"
+            raw={err.content}
+          ></ErrorContainer>
+        );
+      } else if (err.err_type === "connection_abort") {
+        return (
+          <ErrorContainer
+            title="连接中断"
+            content="与服务器的连接中断了，需要重新生成。"
           ></ErrorContainer>
         );
       }
+      return (
+        <ErrorContainer
+          title="请求失败"
+          raw={JSON.stringify(err)}
+        ></ErrorContainer>
+      );
     };
   },
 });
@@ -425,11 +494,15 @@ export const ChatItemServerMessage = defineComponent({
   },
 });
 
-export const ChatItem = defineComponent({
-  props: ["message", "index"],
-  setup(props: { message: Message; index: number }) {
+export const ChatItem = defineComponent<{
+  message: Message;
+  index: number;
+  chatid: string;
+}>({
+  props: ["message", "index", "chatid"] as any as undefined,
+  setup(props) {
     return () => {
-      const { message, index } = props;
+      const { message, index, chatid } = props;
       return (
         <div
           class={[
@@ -443,7 +516,10 @@ export const ChatItem = defineComponent({
           {(() => {
             if (message.message_type === "user") {
               return (
-                <ChatItemUserMessage message={message}></ChatItemUserMessage>
+                <ChatItemUserMessage
+                  message={message}
+                  chatid={chatid}
+                ></ChatItemUserMessage>
               );
             } else if (message.message_type === "server") {
               return (
@@ -492,8 +568,8 @@ export const ChatBody = defineComponent({
             });
           }
           if (main_store.chat_body_input.require_next === true) {
-            await generate_next(messages.value.length - 1),
-              (main_store.chat_body_input.require_next = false);
+            main_store.chat_body_input.require_next = false;
+            await generate_next(messages.value.length - 1);
           }
         }, loading_messages);
       },
@@ -502,12 +578,13 @@ export const ChatBody = defineComponent({
       }
     );
     return () => {
+      const chatid = main_store.curry_chat.id!;
       return (
         <div class="fcol relative grow text-zinc-100 h-min flex-nowrap">
           {/* <ChatBodyTopBar></ChatBodyTopBar> */}
           <div class={["fcol w-full"]}>
             {messages.value.map((msg, index) => (
-              <ChatItem message={msg} index={index}></ChatItem>
+              <ChatItem message={msg} index={index} chatid={chatid}></ChatItem>
             ))}
 
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
@@ -519,7 +596,6 @@ export const ChatBody = defineComponent({
               const { promot } = main_store.chat_body_input;
               if (promot.length === 0) return;
 
-              const chatid = main_store.curry_chat.id!;
               const messages = main_store.curry_chat.messages;
               messages.push({
                 message_type: "user",
@@ -536,7 +612,7 @@ export const ChatBody = defineComponent({
                 },
                 content: "",
               });
-              main_store.chat_body_input.promot = "";
+              main_store.chat_body_input.sended();
               await main_store.update_chat_record_messages(chatid);
               window.location.href = "#ChatBodyBottom";
               await generate_next(messages.length - 1);

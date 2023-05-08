@@ -22,7 +22,7 @@ ul {
 }
 
 ol li {
-  @apply flex;
+  /* @apply flex; */
 }
 
 ol li p {
@@ -69,6 +69,7 @@ pre {
 .fcol {
   @apply flex flex-col;
 }
+
 
 .ChatRecordSelectionItem {
   @apply text-white px-3 py-3 text-base flex flex-row;
@@ -140,6 +141,12 @@ pre {
     padding-bottom: 17px;
   }
 }
+
+.Avatar {
+  @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer;
+}
+
+
 
 .error_container {
   @apply fcol text-base border border-red-500 bg-[#944e4e] p-4 rounded;

@@ -37,7 +37,8 @@ export const ChatBodyInput = defineComponent({
     const brief_mode = toRef(main_store.chat_body_input, "brief_mode");
     const promot = toRef(main_store.chat_body_input, "promot");
     return () => {
-      const chat_body_input = main_store.chat_body_input;
+      console.log("ChatBodyInput render");
+      
       const { attrs, emit } = ctx;
       return (
         <div

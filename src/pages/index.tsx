@@ -54,7 +54,7 @@ export const IndexBody = defineComponent({
               },
             ]);
 
-            main_store.chat_body_input.require_next = true;
+            main_store.chat_body_input.sended(true);
 
             router.push({
               name: "chat",

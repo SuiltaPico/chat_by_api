@@ -5,7 +5,6 @@ import use_main_store from "../store/main_store";
 import { APIKeySource } from "../interface/Settings";
 import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import _ from "lodash";
-import { watch } from "fs";
 import { DBAPIKEYDuplicateError } from "../store/db_api";
 import MarkdownIt from "markdown-it";
 
@@ -245,11 +244,23 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.1.3",
+        content: `
+* 修复了切换页面渲染滞留。
+* 更更人性化的聊天窗口滚动。
+* 修复了文本生成时不能在编辑器编辑的 bug。
+* 修复了首次对话的时候输入框不会清空的 bug。
+* 增加了更多错误情况的描述文本。
+* 更函数式编程了（？）
+* 修复了 \`<li>\` 使用 \`display: flex;\` 导致的错误排版。
+`
+      },
+      {
         version: "0.1.2",
         content: `
 * 更人性化的聊天窗口滚动
 * 更人性化的复制提醒
-`
+`,
       },
       {
         version: "0.1.1",

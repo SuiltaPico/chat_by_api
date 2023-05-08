@@ -37,6 +37,17 @@ export function non_empty_else<T>(s: string, _else: T) {
   return _else;
 }
 
+/** 如果离得很近，就滚动到最下面。 */
+export function scroll_if_close_to(el: HTMLElement, delta: number) {
+  if (window.scrollY + window.innerHeight + delta > el.clientHeight) {
+    window.scrollTo({
+      top: el.clientHeight,
+    });
+    return true;
+  }
+  return false;
+}
+
 /** 在 `fn` 的 `Promise` 完成前后更改 `loading_ref` 的状态。
  *
  * * 完成前：`loading_ref.value = true;`
@@ -56,6 +67,39 @@ export async function promise_with_ref(
     await error_callback(e);
   }
   loading_ref.value = false;
+}
+
+export type Nil = undefined | null;
+export type NotNil<T> = Exclude<T, null | undefined>;
+
+export class Maybe<T> {
+  value: T | Nil;
+  constructor(value?: T) {
+    this.value = value;
+  }
+  static of<T>(value?: T): Maybe<T> {
+    return new Maybe(value);
+  }
+  unwrap_or<U>(_default: U) {
+    if (this.is_nil()) {
+      return _default;
+    }
+    return this.value;
+  }
+  map<U>(mapper: (value: NotNil<T>) => U) {
+    if (this.is_nil()) return Maybe.of<U>();
+    return Maybe.of(mapper(this.value as NotNil<T>));
+  }
+  chain<U>(wraper: (value: NotNil<T>) => Maybe<U>) {
+    if (this.is_nil()) return Maybe.of<U>();
+    return wraper(this.value as NotNil<T>);
+  }
+  is_nil() {
+    return _.isNil(this.value);
+  }
+  is_some() {
+    return _.isNil(this.value);
+  }
 }
 
 export function fix_compo<T>(c: T) {
