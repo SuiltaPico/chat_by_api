@@ -1,5 +1,6 @@
 import {
   QBtn,
+  QBtnGroup,
   QIcon,
   QInput,
   QSelect,
@@ -38,16 +39,16 @@ export const ChatBodyInput = defineComponent({
     const promot = toRef(main_store.chat_body_input, "promot");
     return () => {
       console.log("ChatBodyInput render");
-      
+
       const { attrs, emit } = ctx;
       return (
         <div
-          class={
-            "fcol gap-3 bg-zinc-800 bg-opacity-[.85] p-4 rounded-lg drop-shadow-lg xl:w-[80%] xl:max-w-[800px]"
-          }
+          class={[
+            "fcol gap-2 lg:gap-3 bg-zinc-800 bg-opacity-[.85] max-md:p-3 p-4 rounded-lg drop-shadow-lg fit-width",
+          ]}
           {...attrs}
         >
-          <div class="frow gap-3 items-center">
+          <div class="frow gap-2 lg:gap-3 items-center">
             <QInput
               {...c`ChatBodyInput`}
               {...refvmodel(promot)}
@@ -59,9 +60,10 @@ export const ChatBodyInput = defineComponent({
               autogrow
             ></QInput>
             <QBtn
-              {...c`w-[4rem] h-[3rem]`}
+              {...c`w-[3.5rem] h-[3rem]`}
               icon="mdi-send"
               color="primary"
+              size=""
               loading={props.submit_btn_loading}
               unelevated
               dense
@@ -72,7 +74,14 @@ export const ChatBodyInput = defineComponent({
           </div>
 
           <div class="frow rounded-full items-center text-zinc-400 gap-4">
-            <div class="frow items-center">
+            <QBtn
+              {...c`w-[2.5rem] h-[2.5rem] text-zinc-300`}
+              icon="mdi-swap-horizontal"
+              unelevated
+              flat
+            ></QBtn>
+
+            <div class="frow items-center flex-wrap">
               <div>状态：</div>
               <div class="frow w-fit p-1.5 rounded-full items-center gap-2 text-[0.8rem]">
                 {(() => {
@@ -126,6 +135,7 @@ export const ChatBodyInput = defineComponent({
               dense
               filled
             ></QSelect>
+
             {/* <QToggle
               {...c`select-none text-zinc-200`}
               {...refvmodel(brief_mode)}

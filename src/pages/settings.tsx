@@ -244,6 +244,13 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.2.1",
+        content: `
+* 增加了更好的模型过载的错误提示。
+* 增加了移动端适配（标题栏、对话输入和展示）
+`
+      },
+      {
         version: "0.2.0",
         content: `
 * 增加了删除功能。
@@ -295,7 +302,7 @@ export const About = defineComponent({
       },
       {
         version: "0.0.0",
-        content: `忘记干了什么了，反正是踩了很多vue-tsx的坑。`,
+        content: `忘记干了什么了，反正是踩了很多 vue-tsx 的坑。`,
       },
     ];
     return () => (

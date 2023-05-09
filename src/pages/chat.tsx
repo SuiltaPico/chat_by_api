@@ -5,7 +5,15 @@ import _ from "lodash";
 import MarkdownIt from "markdown-it";
 import markdown_it_highlightjs from "markdown-it-highlightjs";
 import { Configuration, OpenAIApi } from "openai-edge";
-import { QBtn, QIcon, QPage, QPopupProxy, useQuasar } from "quasar";
+import {
+  QBtn,
+  QIcon,
+  QInput,
+  QPage,
+  QPopupProxy,
+  QSpace,
+  useQuasar,
+} from "quasar";
 import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
@@ -14,6 +22,7 @@ import {
   c,
   non_empty_else,
   promise_with_ref,
+  refvmodel,
   scroll_if_close_to,
 } from "../common/utils";
 import { ChatBodyInput } from "../components/ChatBodyInput";
@@ -113,6 +122,8 @@ async function generate_next(index: number) {
   let res = {
     body: null as ReadableStream<Uint8Array> | null,
   };
+
+  console.log(Messages_to_OpenAI_Messages(curry_chat.messages, true));
 
   try {
     res = await openai.createChatCompletion({
@@ -294,11 +305,7 @@ export const ChatItemUserMessage = defineComponent<
     return () => {
       const { message, chatid } = props;
       return (
-        <div
-          class={[
-            "frow gap-4 flex-nowrap w-[90vw] xl:w-[55vw] xl:max-w-[900px]",
-          ]}
-        >
+        <div class={["ChatItem-wraper"]}>
           <Avatar
             class="mt-[2px]"
             role={message.role}
@@ -307,10 +314,11 @@ export const ChatItemUserMessage = defineComponent<
               ms.update_chat_record_messages(chatid);
             }}
           ></Avatar>
-          <div class="whitespace-pre-wrap self-center grow overflow-y-auto">
+          <div class="ChatItem-content">
             {message.content}
           </div>
-          <div class="frow gap self-top h-fit min-w-[6rem] max-w-[6rem] gap-1">
+          <QSpace></QSpace>
+          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 place-self-end">
             <QBtn
               {...c`text-xs text-zinc-300 p-2`}
               icon="mdi-import"
@@ -355,6 +363,22 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
             ></ErrorContainer>
           );
         } else if (err.type === "server_error") {
+          const model_overloaded_reg =
+            /That model is currently overloaded with other requests\. You can retry your request,[^ ]* or contact us through our help center at help\.openai\.com if the error persists\./gm;
+          const model_overloaded_result = Maybe.of(err.message).map((s) =>
+            model_overloaded_reg.exec(s)
+          ).value;
+
+          if (model_overloaded_result) {
+            return (
+              <ErrorContainer
+                title="模型过载"
+                content={`当前模型因其他请求而过载。您可以重试您的请求，或者如果错误仍然存​​在，请通过我们的帮助中心 help.openai.com 与我们联系。`}
+                raw={err_str}
+              ></ErrorContainer>
+            );
+          }
+
           return (
             <ErrorContainer
               title="服务器错误"
@@ -470,11 +494,7 @@ export const ChatItemServerMessage = defineComponent<
       const { message, index, chatid } = props;
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
       return (
-        <div
-          class={[
-            "frow gap-4 flex-nowrap w-[90vw] xl:w-[80vw] xl:max-w-[900px]",
-          ]}
-        >
+        <div class={["ChatItem-wraper"]}>
           <Avatar
             role={message.role}
             onUpdate:role={(role) => {
@@ -482,13 +502,14 @@ export const ChatItemServerMessage = defineComponent<
               ms.update_chat_record_messages(chatid);
             }}
           ></Avatar>
-          <div class="fcol pt-[0.15rem] whitespace-pre-wrap grow shrink gap-2">
+          <div class="ChatItem-content">
             <div class="mdblock" v-html={md.render(message.content)}></div>
             <ChatItemServerMessageErrorHandler
               message={message}
             ></ChatItemServerMessageErrorHandler>
           </div>
-          <div class="fcol self-top h-fit min-w-[6rem] max-w-[6rem] gap-4 my-[-0.25rem]">
+          <QSpace></QSpace>
+          <div class="fcol flex-nowrap self-top h-fit min-w-[5rem] max-w-[5rem] gap-4 my-[-0.25rem]">
             <div class="frow items-center gap-1">
               <QBtn
                 {...c`text-xs text-zinc-300 p-2`}
@@ -572,6 +593,11 @@ export const ChatItemMorePop = defineComponent<
   },
 });
 
+const ChatItem_gen_color = (index: number) => ({
+  "bg-zinc-600": index % 2 == 0,
+  "bg-[rgb(105,105,114)]": index % 2 == 1,
+});
+
 export const ChatItem = defineComponent<
   {
     message: Message;
@@ -595,13 +621,7 @@ export const ChatItem = defineComponent<
       const { message, index, chatid } = props;
       return (
         <div
-          class={[
-            "fcol w-full items-center py-4",
-            {
-              "bg-zinc-600": index % 2 == 0,
-              "bg-[rgb(105,105,114)]": index % 2 == 1,
-            },
-          ]}
+          class={["fcol w-full items-center max-md:py-4 py-5", ChatItem_gen_color(index)]}
         >
           {(() => {
             if (message.message_type === "user") {
@@ -641,6 +661,35 @@ export const ChatBodyTopBar = defineComponent({
     };
   },
 });
+
+// export const ChatBodyAdd = defineComponent<{
+//   index: number
+// }>({
+//   props: any(["index"]),
+//   setup(props) {
+//     const ms = use_main_store()
+//     const promot = ref()
+//     return () => {
+//       return (
+//         <div
+//           class={["fcol w-full items-center py-4", ChatItem_gen_color(props.index)]}
+//         >
+//           <Avatar role={"system"}></Avatar>
+//           <QInput
+//               {...c`ChatBodyInput`}
+//               {...refvmodel(promot)}
+//               type="textarea"
+//               color="secondary"
+//               dark
+//               filled
+//               placeholder="在这里输入消息。"
+//               autogrow
+//             ></QInput>
+//         </div>
+//       );
+//     };
+//   },
+// });
 
 export const ChatBody = defineComponent({
   setup() {
@@ -684,13 +733,12 @@ export const ChatBody = defineComponent({
                 index={index}
                 chatid={chatid}
                 onDelete={() => {
-                  console.log("delete");
                   messages.value.splice(index, 1);
                   ms.update_chat_record_messages(chatid);
                 }}
               ></ChatItem>
             ))}
-
+            {/* <ChatBodyAdd index={messages.value.length}></ChatBodyAdd> */}
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
           <ChatBodyInput

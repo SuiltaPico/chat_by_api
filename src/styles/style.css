@@ -7,7 +7,7 @@ body {
   width: 100%;
   height: 100%;
   font-size: 16px;
-  @apply bg-zinc-600;
+  @apply bg-zinc-700;
 }
 
 ul,
@@ -62,7 +62,7 @@ pre {
 }
 
 .default-bg {
-  @apply bg-zinc-700;
+  @apply bg-[#535458];
 }
 
 .frow {
@@ -71,6 +71,18 @@ pre {
 
 .fcol {
   @apply flex flex-col;
+}
+
+.app-header {
+  @apply bg-zinc-800 border-b border-zinc-600;
+}
+
+.fit-width {
+  @apply md:w-[75%] w-[90%] lg:w-[90%] max-w-[800px] xl:w-[80%];
+}
+
+.record-fit-width {
+  @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[900px] xl:w-[80%];
 }
 
 .ChatRecordSelectionItem {
@@ -124,10 +136,10 @@ pre {
 
 .ChatBodyInput {
   @apply bg-zinc-800 border border-zinc-500 rounded-t-md shadow-xl grow;
-  @apply min-h-[3.2rem] max-h-[60vh] overflow-y-auto;
+  @apply min-h-[3rem] max-h-[35vh] overflow-y-auto;
 
   & .q-field__control {
-    @apply min-h-[3.2rem];
+    @apply min-h-[3rem];
   }
 
   &.q-field--focused {
@@ -144,12 +156,20 @@ pre {
   }
 }
 
+.ChatItem-wraper {
+  @apply frow gap-x-4 gap-y-3 max-md:flex-wrap record-fit-width
+}
+
+.ChatItem-content {
+  @apply fcol whitespace-pre-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1
+}
+
 .Avatar {
   @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer relative;
   @apply after:w-full after:h-full after:absolute after:left-0 after:top-0;
   @apply after:bg-white after:bg-opacity-0 after:transition-all;
-    &:hover {
-  @apply after:bg-opacity-10;
+  &:hover {
+    @apply after:bg-opacity-10;
   }
 }
 
