@@ -13,11 +13,14 @@ import {
   get_chat_record_messages,
   update_chat_record_messages,
 } from "./db_api";
+import { ChatBodyInputMode } from "../components/ChatBodyInput";
+import { QInput } from "quasar";
 
 const use_main_store = defineStore("main", () => {
   const is_loading = ref(true);
 
   const chat_body_input = ref({
+    mode: "generate" as ChatBodyInputMode,
     promot: "",
     model: "gpt-3.5-turbo",
     brief_mode: false,
@@ -29,6 +32,7 @@ const use_main_store = defineStore("main", () => {
         cbi.require_next = true;
       }
     },
+    inputter: undefined as undefined | QInput
   });
 
   const chat_records_meta = ref<ChatRecordMeta[]>(chat_records_default_value);

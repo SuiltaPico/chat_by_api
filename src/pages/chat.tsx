@@ -318,13 +318,14 @@ export const ChatItemUserMessage = defineComponent<
             {message.content}
           </div>
           <QSpace></QSpace>
-          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 place-self-end">
+          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1">
             <QBtn
               {...c`text-xs text-zinc-300 p-2`}
               icon="mdi-import"
               flat
               onClick={() => {
                 ms.chat_body_input.promot = message.content;
+                ms.chat_body_input.inputter?.focus()
                 ms.update_chat_record_messages(chatid);
               }}
             ></QBtn>
@@ -571,7 +572,7 @@ export const ChatItemMorePop = defineComponent<
 >({
   setup(_, ctx) {
     return () => (
-      <QPopupProxy {...c`bg-zinc-800 text-white select-none quick`}>
+      <QPopupProxy {...c`bg-zinc-800 text-white select-none quick`} breakpoint={0}>
         <QBtn
           unelevated
           onClick={() => {

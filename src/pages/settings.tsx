@@ -68,7 +68,7 @@ export const APIKEY_Manager = defineComponent({
           {err.value ? <div class="error_container">{err.value}</div> : ""}
           <div class="fcol gap-2">
             <div>添加新的 API-KEY</div>
-            <div class="frow gap-4 items-center pl-4">
+            <div class="frow flex-wrap gap-4 items-center pl-4">
               <QSelect
                 {...refvmodel(new_key_type)}
                 options={new_key_type_option}
@@ -124,7 +124,7 @@ export const APIKEY_Manager = defineComponent({
           <div class="fcol gap-2">
             <div>缓存的 API-KEY（目前仅支持使用第一个）</div>
             {settings.apikeys.keys.map((it, i, keys) => (
-              <div class="frow gap-4 items-center pl-4">
+              <div class="frow flex-wrap gap-4 items-center pl-4">
                 <div>{i + 1}.</div>
                 <QSelect
                   modelValue={it.source}
@@ -244,11 +244,20 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.2.2",
+        content: `
+* 增加设置页面的移动端适配。
+* 修复了移动端下按钮行为异常的问题。
+* 修复了移动端下点击对话中“更多”按钮时出现的异常界面。
+* 点击“导入到文本框”按钮会自动聚焦输入框。
+`,
+      },
+      {
         version: "0.2.1",
         content: `
 * 增加了更好的模型过载的错误提示。
 * 增加了移动端适配（标题栏、对话输入和展示）
-`
+`,
       },
       {
         version: "0.2.0",
@@ -340,8 +349,8 @@ export default defineComponent({
   setup() {
     return () => {
       return (
-        <QPage {...c`frow default-bg text-zinc-200 justify-center`}>
-          <div class="fcol default-bg xl:w-[60%] pt-8 gap-12">
+        <QPage {...c`frow default-bg text-zinc-200 justify-center p-4`}>
+          <div class="fcol default-bg record-fit-width pt-8 gap-12">
             <APIKEY_Manager></APIKEY_Manager>
             <OpenAI></OpenAI>
             <About></About>
