@@ -1,5 +1,6 @@
 import { RouteRecordRaw } from "vue-router";
 import use_main_store from "../store/main_store.ts";
+import index_page from "../pages/index.tsx";
 import chat_page from "../pages/chat.tsx";
 import settings_page from "../pages/settings.tsx";
 
@@ -7,7 +8,7 @@ const routes: RouteRecordRaw[] = [
   {
     name: "index",
     path: "/",
-    component: () => import("../pages/index.tsx"),
+    component: () => Promise.resolve(index_page),
   },
   {
     name: "chat",

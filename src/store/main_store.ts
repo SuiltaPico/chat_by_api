@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
-import ChatRecord, { ChatRecordMeta, Message } from "../interface/ChatRecord";
+import ChatRecord, {
+  ChatRecordMeta,
+  Message,
+  Role,
+  RoleWithoutUnknown,
+} from "../interface/ChatRecord";
 import Settings from "../interface/Settings";
 import {
   get_chat_records_meta,
@@ -32,7 +37,13 @@ const use_main_store = defineStore("main", () => {
         cbi.require_next = true;
       }
     },
-    inputter: undefined as undefined | QInput
+    inputter: undefined as undefined | QInput,
+    role: "user" as RoleWithoutUnknown,
+    temperature: 0.5,
+    presence_penalty: 0,
+    frequency_penalty: 0,
+    auto_max_tokens: true,
+    max_tokens: 2000,
   });
 
   const chat_records_meta = ref<ChatRecordMeta[]>(chat_records_default_value);
@@ -55,7 +66,10 @@ const use_main_store = defineStore("main", () => {
     return await get_chat_record_messages(id);
   }
 
-  async function _update_chat_record_messages(id: string, message?: Message[]) {
+  async function _update_chat_record_messages(
+    id: string,
+    message?: readonly Message[]
+  ) {
     if (message === undefined) {
       message = curry_chat.messages;
     }

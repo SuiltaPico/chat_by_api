@@ -71,7 +71,7 @@ export async function get_chat_record_messages(id: string) {
 
 export async function update_chat_record_messages(
   id: string,
-  messages: Message[]
+  messages: readonly Message[]
 ) {
   const db = dbs.chat_records;
 
@@ -79,7 +79,7 @@ export async function update_chat_record_messages(
 
   await db.put({
     ...latest,
-    messages,
+    messages: messages as Message[],
     last_modified: Date.now(),
   });
 }

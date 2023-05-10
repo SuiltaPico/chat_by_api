@@ -111,6 +111,9 @@ pre {
       display: flex;
     }
   }
+  & > .text {
+    @apply text-ellipsis overflow-hidden whitespace-nowrap;
+  }
   & > .ButtonGroup {
     display: none;
     & > .BtnIcon:hover {

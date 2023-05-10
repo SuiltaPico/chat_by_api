@@ -19,7 +19,7 @@ import use_main_store from "../store/main_store";
 export const IndexBody = defineComponent({
   props: ["messages"],
   setup(props: { messages: Message[] }, ctx) {
-    const main_store = use_main_store();
+    const ms = use_main_store();
     const router = useRouter();
 
     return () => (
@@ -28,40 +28,68 @@ export const IndexBody = defineComponent({
         <ChatBodyInput
           class={"fixed bottom-[2rem] self-center"}
           onSubmit={async () => {
-            const promot = main_store.chat_body_input.promot;
+            const mode = ms.chat_body_input.mode;
+            const promot = ms.chat_body_input.promot;
             if (promot.length === 0) return;
 
-            const chatid = await main_store.new_chat_record(
-              promot.slice(0, 10) + (promot.length > 10 ? "…" : ""),
+            const chatid = await ms.new_chat_record(
+              promot.slice(0, 50) + (promot.length > 50 ? "…" : ""),
               Date.now()
             );
 
-            await main_store.update_chat_record_messages(chatid, [
-              {
-                message_type: "user",
-                role: "user",
-                created: Date.now(),
-                content: promot,
-              },
-              {
-                message_type: "server",
-                role: "assistant",
-                created: Date.now(),
-                request_config: {
-                  model: main_store.chat_body_input.model,
+            if (mode === "generate") {
+              const generate_mode_messages = [
+                {
+                  message_type: "user",
+                  role: "user",
+                  created: Date.now(),
+                  content: promot,
                 },
-                content: "",
-              },
-            ]);
+                {
+                  message_type: "server",
+                  role: "assistant",
+                  created: Date.now(),
+                  request_config: {
+                    model: ms.chat_body_input.model,
+                  },
+                  content: "",
+                },
+              ] as const;
 
-            main_store.chat_body_input.sended(true);
-
-            router.push({
-              name: "chat",
-              params: {
+              await ms.update_chat_record_messages(
                 chatid,
-              },
-            });
+                generate_mode_messages
+              );
+
+              ms.chat_body_input.sended(true);
+
+              router.push({
+                name: "chat",
+                params: {
+                  chatid,
+                },
+              });
+            } else if (mode === "add") {
+              const add_mode_messages = [
+                {
+                  message_type: "user",
+                  role: ms.chat_body_input.role,
+                  created: Date.now(),
+                  content: promot,
+                },
+              ] as const;
+
+              await ms.update_chat_record_messages(chatid, add_mode_messages);
+
+              ms.chat_body_input.sended(false);
+
+              router.push({
+                name: "chat",
+                params: {
+                  chatid,
+                },
+              });
+            }
           }}
         />
       </div>

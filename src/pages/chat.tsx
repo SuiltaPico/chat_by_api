@@ -24,6 +24,7 @@ import {
   promise_with_ref,
   refvmodel,
   scroll_if_close_to,
+  scroll_to,
 } from "../common/utils";
 import { ChatBodyInput } from "../components/ChatBodyInput";
 import ErrorContainer from "../components/ErrorContainer";
@@ -37,7 +38,7 @@ import {
 import use_main_store from "../store/main_store";
 import copy from "copy-text-to-clipboard";
 
-import { OpenAIApi as cc } from "openai";
+import { not_undefined_or } from "../common/jsx_utils";
 
 const md = new MarkdownIt({
   html: false,
@@ -81,17 +82,17 @@ function openai_steam_error_to_error(data: string) {
 }
 
 async function generate_next(index: number) {
-  const main_store = use_main_store();
-  const { chat_body_input, curry_chat } = main_store;
+  const ms = use_main_store();
+  const { chat_body_input, curry_chat } = ms;
 
-  const msg = main_store.curry_chat.messages[index] as ServerMessage;
+  const msg = ms.curry_chat.messages[index] as ServerMessage;
   // 锁定chatid，不被变化影响
-  const chat_id = main_store.curry_chat.id!;
+  const chat_id = ms.curry_chat.id!;
   const apply_update_chat_record_messages = _.throttle(async () => {
-    await main_store.update_chat_record_messages(chat_id);
+    await ms.update_chat_record_messages(chat_id);
   }, 100);
 
-  if (main_store.settings.apikeys.keys.length === 0) {
+  if (ms.settings.apikeys.keys.length === 0) {
     msg.error = {
       err_type: "no_api_key",
     };
@@ -101,15 +102,12 @@ async function generate_next(index: number) {
   }
 
   const cfg = new Configuration({
-    apiKey: main_store.settings.apikeys.keys[0].key,
-    basePath: non_empty_else(
-      main_store.settings.open_ai.api_base_path,
-      undefined
-    ),
+    apiKey: ms.settings.apikeys.keys[0].key,
+    basePath: non_empty_else(ms.settings.open_ai.api_base_path, undefined),
     baseOptions: {
       params: {
         "api-version": non_empty_else(
-          main_store.settings.open_ai.api_version,
+          ms.settings.open_ai.api_version,
           undefined
         ),
       },
@@ -130,6 +128,12 @@ async function generate_next(index: number) {
       model: chat_body_input.model,
       messages: Messages_to_OpenAI_Messages(curry_chat.messages, true),
       stream: true,
+      temperature: ms.chat_body_input.temperature,
+      presence_penalty: ms.chat_body_input.presence_penalty,
+      frequency_penalty: ms.chat_body_input.frequency_penalty,
+      max_tokens: ms.chat_body_input.auto_max_tokens
+        ? undefined
+        : ms.chat_body_input.max_tokens,
     });
   } catch (e) {
     msg.error = {
@@ -156,7 +160,7 @@ async function generate_next(index: number) {
 
   let message_result = ref("");
   watch(message_result, async () => {
-    main_store.curry_chat.messages[index].content = message_result.value;
+    ms.curry_chat.messages[index].content = message_result.value;
     await apply_update_chat_record_messages();
   });
 
@@ -171,6 +175,7 @@ async function generate_next(index: number) {
           err_type: "connection_abort",
         };
         await apply_update_chat_record_messages();
+        curry_chat.status = "";
         return;
       }
       done = res.done;
@@ -314,9 +319,7 @@ export const ChatItemUserMessage = defineComponent<
               ms.update_chat_record_messages(chatid);
             }}
           ></Avatar>
-          <div class="ChatItem-content">
-            {message.content}
-          </div>
+          <div class="ChatItem-content">{message.content}</div>
           <QSpace></QSpace>
           <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1">
             <QBtn
@@ -325,7 +328,7 @@ export const ChatItemUserMessage = defineComponent<
               flat
               onClick={() => {
                 ms.chat_body_input.promot = message.content;
-                ms.chat_body_input.inputter?.focus()
+                ms.chat_body_input.inputter?.focus();
                 ms.update_chat_record_messages(chatid);
               }}
             ></QBtn>
@@ -572,7 +575,10 @@ export const ChatItemMorePop = defineComponent<
 >({
   setup(_, ctx) {
     return () => (
-      <QPopupProxy {...c`bg-zinc-800 text-white select-none quick`} breakpoint={0}>
+      <QPopupProxy
+        {...c`bg-zinc-800 text-white select-none quick`}
+        breakpoint={0}
+      >
         <QBtn
           unelevated
           onClick={() => {
@@ -622,9 +628,12 @@ export const ChatItem = defineComponent<
       const { message, index, chatid } = props;
       return (
         <div
-          class={["fcol w-full items-center max-md:py-4 py-5", ChatItem_gen_color(index)]}
+          class={[
+            "fcol w-full items-center max-md:py-4 py-5",
+            ChatItem_gen_color(index),
+          ]}
         >
-          {(() => {
+          {not_undefined_or(() => {
             if (message.message_type === "user") {
               return (
                 <ChatItemUserMessage
@@ -647,8 +656,7 @@ export const ChatItem = defineComponent<
                 ></ChatItemServerMessage>
               );
             }
-            return <div></div>;
-          })()}
+          })}
         </div>
       );
     };
@@ -749,26 +757,52 @@ export const ChatBody = defineComponent({
               const { promot } = ms.chat_body_input;
               if (promot.length === 0) return;
 
+              const mode = ms.chat_body_input.mode;
               const messages = ms.curry_chat.messages;
-              messages.push({
-                message_type: "user",
-                role: "user",
-                created: Date.now(),
-                content: promot,
-              });
-              messages.push({
-                message_type: "server",
-                role: "assistant",
-                created: Date.now(),
-                request_config: {
-                  model: ms.chat_body_input.model,
-                },
-                content: "",
-              });
-              ms.chat_body_input.sended();
-              await ms.update_chat_record_messages(chatid);
-              window.location.href = "#ChatBodyBottom";
-              await generate_next(messages.length - 1);
+
+              if (mode === "generate") {
+                const generate_mode_messages = [
+                  {
+                    message_type: "user",
+                    role: "user",
+                    created: Date.now(),
+                    content: promot,
+                  },
+                  {
+                    message_type: "server",
+                    role: "assistant",
+                    created: Date.now(),
+                    request_config: {
+                      model: ms.chat_body_input.model,
+                      temperature: ms.chat_body_input.temperature,
+                      presence_penalty: ms.chat_body_input.presence_penalty,
+                      frequency_penalty: ms.chat_body_input.frequency_penalty,
+                      max_tokens: ms.chat_body_input.auto_max_tokens
+                        ? undefined
+                        : ms.chat_body_input.max_tokens,
+                    },
+                    content: "",
+                  },
+                ] as const;
+                messages.push(...generate_mode_messages);
+                ms.chat_body_input.sended();
+                await ms.update_chat_record_messages(chatid);
+                scroll_to(document.getElementById("app")!);
+                await generate_next(messages.length - 1);
+              } else if (mode === "add") {
+                const mode_messages = [
+                  {
+                    message_type: "user",
+                    role: ms.chat_body_input.role,
+                    created: Date.now(),
+                    content: promot,
+                  },
+                ] as const;
+                messages.push(...mode_messages);
+                ms.chat_body_input.sended();
+                await ms.update_chat_record_messages(chatid);
+                scroll_to(document.getElementById("app")!);
+              }
             }}
           ></ChatBodyInput>
         </div>

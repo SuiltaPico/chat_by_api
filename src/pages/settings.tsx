@@ -244,6 +244,20 @@ export const About = defineComponent({
   setup() {
     const update_log = [
       {
+        version: "0.3.0",
+        content: `
+* 增加了温度、存在惩罚、重复惩罚、最大 token 数的设置。
+* 增加了对话记录的添加功能。
+* 优化了对话记录项标题的渲染。
+`,
+      },
+      {
+        version: "0.2.3",
+        content: `
+* 加速了主页面的加载速度。
+`,
+      },
+      {
         version: "0.2.2",
         content: `
 * 增加设置页面的移动端适配。

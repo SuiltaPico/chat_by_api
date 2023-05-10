@@ -15,7 +15,7 @@ export const ChatRecordSelection = defineComponent({
       // 受制于响应式系统，必须写在里面
       const route = useRoute();
       return (
-        <div {...attrs} {...c`flex flex-col flex-nowrap p-2 gap-2 h-full`}>
+        <div {...attrs} class="flex flex-col flex-nowrap p-2 gap-2 h-full">
           <div
             class={[
               "ChatRecordSelectionItem",
@@ -78,7 +78,7 @@ export const ChatRecordSelectionItem = defineComponent({
       return (
         <div class="ChatRecordSelectionItem" onClick={() => ctx.emit("click")}>
           <QIcon {...c`pt-[0.1rem]`} name="mdi-message-outline" size="1rem" />
-          <div>{record.name}</div>
+          <div class="text">{record.name}</div>
           <QSpace />
           <div class="ButtonGroup">
             <QIcon

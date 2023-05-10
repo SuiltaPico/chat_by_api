@@ -18,6 +18,7 @@ export type ChatRecordForStorage = Omit<ChatRecord, "id">;
 export type Message = UserMessage | ServerMessage;
 
 export type Role = "user" | "assistant" | "system" | "unknown";
+export type RoleWithoutUnknown = Exclude<Role, "unknown">
 
 export interface UserMessage {
   message_type: "user";
