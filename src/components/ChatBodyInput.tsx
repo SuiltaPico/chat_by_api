@@ -38,7 +38,7 @@ export const ChatBodyInputToolbarState = defineComponent({
       return (
         <div class="frow items-center flex-wrap">
           <div>状态：</div>
-          <div class="frow w-fit p-1.5 rounded-full items-center gap-2 text-[0.8rem]">
+          <div class="frow w-fit p-1.5 rounded-full items-center gap-2 text-[0.8rem] min-w-max">
             {not_undefined_or(() => {
               const { status } = ms.curry_chat;
               if (status === "") {
@@ -104,7 +104,7 @@ export const ChatBodyInputToolbar = defineComponent({
 
     return () => {
       return (
-        <div class="frow rounded-full items-center text-zinc-400 gap-3">
+        <div class="frow rounded-full flex-wrap items-center text-zinc-400 gap-3">
           <QBtn
             {...c`w-[2.5rem] h-[2.5rem] text-zinc-300`}
             icon="mdi-swap-horizontal"
@@ -129,28 +129,28 @@ export const ChatBodyInputToolbar = defineComponent({
             if (ms.chat_body_input.mode === "generate") {
               return tpl(
                 <ChatBodyInputToolbarState></ChatBodyInputToolbarState>,
-                <QSelect
-                  {...c`min-w-[140px] bg-zinc-800`}
-                  modelValue={model.value}
-                  onUpdate:modelValue={(m) => {
-                    if (typeof m != "string") {
-                      model.value = m.value;
-                    } else {
-                      model.value = m;
-                    }
-                  }}
-                  label="模型"
-                  color="secondary"
-                  options={models}
-                  dark
-                  dense
-                  filled
-                ></QSelect>,
                 <QBtn {...c`w-[2.5rem] h-[2.5rem]`} icon="mdi-tune" unelevated>
                   <QPopupProxy
                     {...c`min-w-[14rem] p-5 bg-zinc-800 text-zinc-200 gap-6 fcol quick shadow-2xl border border-zinc-600`}
                     breakpoint={0}
                   >
+                    <QSelect
+                      {...c`min-w-[140px] bg-zinc-800`}
+                      modelValue={model.value}
+                      onUpdate:modelValue={(m) => {
+                        if (typeof m != "string") {
+                          model.value = m.value;
+                        } else {
+                          model.value = m;
+                        }
+                      }}
+                      label="模型"
+                      color="secondary"
+                      options={models}
+                      dark
+                      dense
+                      filled
+                    ></QSelect>
                     <div class="fcol text-sm min-w-[6rem] px-1">
                       <div>温度：{temperature.value}</div>
                       <QSlider
@@ -186,7 +186,11 @@ export const ChatBodyInputToolbar = defineComponent({
                     </div>
                     <div class="fcol text-sm min-w-[6rem] gap-4 p-1">
                       <div>最大 token 数</div>
-                      <QToggle {...refvmodel(auto_max_tokens)} label="自动" dense></QToggle>
+                      <QToggle
+                        {...refvmodel(auto_max_tokens)}
+                        label="自动"
+                        dense
+                      ></QToggle>
                       <QInput
                         modelValue={max_tokens.value}
                         onUpdate:modelValue={(value) => {

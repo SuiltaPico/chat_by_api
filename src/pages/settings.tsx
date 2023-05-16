@@ -7,6 +7,7 @@ import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import _ from "lodash";
 import { DBAPIKEYDuplicateError } from "../store/db_api";
 import MarkdownIt from "markdown-it";
+import { useRouter } from "vue-router";
 
 const md = new MarkdownIt({
   html: false,
@@ -242,7 +243,16 @@ export const OpenAI = defineComponent({
 
 export const About = defineComponent({
   setup() {
+    const router = useRouter()
     const update_log = [
+      {
+        version: "0.3.1",
+        content: `
+* 将模型选项移动到了选项面板下。修复了移动端下输入框排版移除的问题。
+* 更新了项目信息和 \`README.md\`
+* 增加了源码的链接
+`,
+      },
       {
         version: "0.3.0",
         content: `
@@ -336,10 +346,10 @@ export const About = defineComponent({
             <div class="text-md font-bold">版本</div>
             <div>{update_log[0].version}</div>
           </div>
-          <details>
-            <summary>版本描述</summary>
+          <details open>
+            <summary>源代码</summary>
             <div class="fcol gap-4 m-2">
-              <div>hoho。</div>
+              <div><QBtn icon="mdi-github" size="1rem" flat href="https://github.com/SuiltaPico/chat_by_api"></QBtn></div>
             </div>
           </details>
           <details class="frow gap-2">

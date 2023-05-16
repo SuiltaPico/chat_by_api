@@ -1,5 +1,6 @@
 {
   "name": "chat_by_api",
+  "description": "一个尽可能方便的使用 LLM 模型的网页应用。",
   "private": true,
   "version": "0.0.0",
   "type": "module",
