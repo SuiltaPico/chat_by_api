@@ -18,9 +18,10 @@ export type ChatRecordForStorage = Omit<ChatRecord, "id">;
 export type Message = UserMessage | ServerMessage;
 
 export type Role = "user" | "assistant" | "system" | "unknown";
-export type RoleWithoutUnknown = Exclude<Role, "unknown">
+export type RoleWithoutUnknown = Exclude<Role, "unknown">;
 
 export interface UserMessage {
+  uuid?: string;
   message_type: "user";
   role: Role;
   created: number;
@@ -28,6 +29,7 @@ export interface UserMessage {
 }
 
 export interface ServerMessage {
+  uuid?: string;
   message_type: "server";
   role: Role;
   created: number;

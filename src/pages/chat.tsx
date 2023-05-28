@@ -1,9 +1,6 @@
-import markdown_it_katex from "@vscode/markdown-it-katex";
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
 import _ from "lodash";
-import MarkdownIt from "markdown-it";
-import markdown_it_highlightjs from "markdown-it-highlightjs";
 import { Configuration, OpenAIApi } from "openai-edge";
 import {
   QBtn,
@@ -14,7 +11,7 @@ import {
   QSpace,
   useQuasar,
 } from "quasar";
-import { computed, defineComponent, ref, toRef, watch } from "vue";
+import { Teleport, computed, defineComponent, ref, toRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   Maybe,
@@ -39,15 +36,9 @@ import use_main_store from "../store/main_store";
 import copy from "copy-text-to-clipboard";
 
 import { not_undefined_or } from "../common/jsx_utils";
+import { create_md } from "../common/md_render";
 
-const md = new MarkdownIt({
-  html: false,
-});
-md.use(markdown_it_highlightjs, {});
-md.use(markdown_it_katex, {
-  displayMode: "html",
-  throwOnError: false,
-});
+const md = create_md();
 
 function openai_steam_error_to_error(data: string) {
   console.log(data);
@@ -166,6 +157,10 @@ async function generate_next(index: number) {
 
   async function readStream() {
     while (true) {
+      if (ms.curry_chat.id !== chat_id) {
+        break;
+      }
+
       let done, value, res;
 
       try {
@@ -321,7 +316,7 @@ export const ChatItemUserMessage = defineComponent<
           ></Avatar>
           <div class="ChatItem-content">{message.content}</div>
           <QSpace></QSpace>
-          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1">
+          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 grow">
             <QBtn
               {...c`text-xs text-zinc-300 p-2`}
               icon="mdi-import"
@@ -342,6 +337,7 @@ export const ChatItemUserMessage = defineComponent<
               ></ChatItemMorePop>
             </QBtn>
           </div>
+          <div class="max-md:min-w-full h-0 max-md:block"></div>
         </div>
       );
     };
@@ -507,7 +503,7 @@ export const ChatItemServerMessage = defineComponent<
             }}
           ></Avatar>
           <div class="ChatItem-content">
-            <div class="mdblock" v-html={md.render(message.content)}></div>
+            <div class="mdblock">{md.render(message.content)}</div>
             <ChatItemServerMessageErrorHandler
               message={message}
             ></ChatItemServerMessageErrorHandler>
@@ -555,6 +551,7 @@ export const ChatItemServerMessage = defineComponent<
               ></QToggle> */}
             </div>
           </div>
+          <div class="max-md:min-w-full h-0 max-md:block"></div>
         </div>
       );
     };
@@ -735,7 +732,7 @@ export const ChatBody = defineComponent({
       return (
         <div class="fcol relative grow text-zinc-100 h-min flex-nowrap">
           {/* <ChatBodyTopBar></ChatBodyTopBar> */}
-          <div class={["fcol w-full"]}>
+          <div class={["fcol w-full page_container"]}>
             {messages.value.map((msg, index) => (
               <ChatItem
                 message={msg}
@@ -747,7 +744,6 @@ export const ChatBody = defineComponent({
                 }}
               ></ChatItem>
             ))}
-            {/* <ChatBodyAdd index={messages.value.length}></ChatBodyAdd> */}
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
           <ChatBodyInput

@@ -21,7 +21,14 @@ import {
   withDirectives,
 } from "vue";
 import use_main_store from "../store/main_store";
-import { ElementOfArray, any, as_props, c, refvmodel } from "../common/utils";
+import {
+  ElementOfArray,
+  any,
+  as_props,
+  c,
+  refvmodel,
+  slot,
+} from "../common/utils";
 import { models as openai_models } from "../common/from_openai";
 import _ from "lodash";
 import { not_undefined_or, tpl } from "../common/jsx_utils";
@@ -31,7 +38,7 @@ import { Avatar } from "../pages/chat";
 
 export type ChatBodyInputMode = "generate" | "add";
 
-export const ChatBodyInputToolbarState = defineComponent({
+export const ToolbarState = defineComponent({
   setup() {
     const ms = use_main_store();
     return () => {
@@ -68,17 +75,117 @@ export const ChatBodyInputToolbarState = defineComponent({
   },
 });
 
-export const ChatBodyInputToolbar = defineComponent({
+export const GenetateModeToolbarPopup = defineComponent({
   setup() {
     const ms = use_main_store();
+
     const models = openai_models.chat_completions;
     const model = toRef(ms.chat_body_input, "model");
-    const _role = toRef(ms.chat_body_input, "role");
     const temperature = toRef(ms.chat_body_input, "temperature");
     const presence_penalty = toRef(ms.chat_body_input, "presence_penalty");
     const frequency_penalty = toRef(ms.chat_body_input, "frequency_penalty");
     const auto_max_tokens = toRef(ms.chat_body_input, "auto_max_tokens");
     const max_tokens = toRef(ms.chat_body_input, "max_tokens");
+
+    const slider_list = [
+      {
+        ref: temperature,
+        name: "温度",
+        min: 0,
+        max: 2,
+      },
+      {
+        ref: presence_penalty,
+        name: "存在惩罚",
+        min: -2,
+        max: 2,
+      },
+      {
+        ref: frequency_penalty,
+        name: "重复惩罚",
+        min: -2,
+        max: 2,
+      },
+    ];
+
+    return () => {
+      return (
+        <QPopupProxy
+          {...c`min-w-[14rem] p-5 bg-zinc-800 text-zinc-200 gap-6 fcol quick shadow-2xl border border-zinc-600`}
+          breakpoint={0}
+        >
+          <QSelect
+            {...c`min-w-[140px] bg-zinc-800`}
+            modelValue={model.value}
+            onUpdate:modelValue={(m) => {
+              if (typeof m != "string") {
+                model.value = m.value;
+              } else {
+                model.value = m;
+              }
+            }}
+            label="模型"
+            color="secondary"
+            options={models}
+            dark
+            filled
+          ></QSelect>
+          {slider_list.map((s) => (
+            <div class="fcol text-sm min-w-[6rem] px-1">
+              <div>
+                {s.name}：{s.ref.value}
+              </div>
+              <QSlider
+                {...refvmodel(s.ref)}
+                min={s.min}
+                max={s.max}
+                step={0.01}
+                dark
+                dense
+              ></QSlider>
+            </div>
+          ))}
+          <div class="fcol text-sm min-w-[6rem] gap-4 p-1">
+            <div>最大 token 数</div>
+            <QToggle
+              {...refvmodel(auto_max_tokens)}
+              label="自动"
+              dense
+            ></QToggle>
+            <QInput
+              modelValue={max_tokens.value}
+              onUpdate:modelValue={(value) => {
+                max_tokens.value = parseInt(String(value));
+              }}
+              disable={auto_max_tokens.value}
+              label="最大回传 token 数"
+              color="secondary"
+              dark
+              filled
+            ></QInput>
+          </div>
+        </QPopupProxy>
+      );
+    };
+  },
+});
+
+export const GenetateModeToolbar = defineComponent({
+  setup() {
+    return () =>
+      tpl(
+        <ToolbarState></ToolbarState>,
+        <QBtn {...c`w-[2.5rem] h-[2.5rem]`} icon="mdi-tune" unelevated>
+          <GenetateModeToolbarPopup></GenetateModeToolbarPopup>
+        </QBtn>
+      );
+  },
+});
+export const AddModeToolbar = defineComponent({
+  setup() {
+    const ms = use_main_store();
+
+    const _role = toRef(ms.chat_body_input, "role");
 
     const raw_roles = {
       user: {
@@ -88,7 +195,7 @@ export const ChatBodyInputToolbar = defineComponent({
         description: "助理，即语言模型自己。",
       },
       system: {
-        description: "系统，可以一定程度上控制助理的行为。",
+        description: "系统，可以定义助理的行为。",
       },
     } as const satisfies Record<RoleWithoutUnknown, { description: string }>;
 
@@ -102,6 +209,71 @@ export const ChatBodyInputToolbar = defineComponent({
 
     const role = computed(() => roles.find((v) => v.value == _role.value));
 
+    function em_text(em: boolean) {
+      return em ? "text-primary" : "";
+    }
+
+    return () => {
+      return (
+        <QSelect
+          modelValue={role.value}
+          onUpdate:modelValue={(r) => {
+            _role.value = r.value;
+          }}
+          label="身份"
+          options={roles}
+          color="secondary"
+          dark
+          dense
+          filled
+        >
+          {{
+            ...slot(
+              "option",
+              (item: QSelectOptionSlotParam<ElementOfArray<typeof roles>>) => {
+                return (
+                  <QItem
+                    {...any({
+                      class: [
+                        `frow items-center gap-3 text-sm p-4`,
+                        em_text(item.selected),
+                      ],
+                    })}
+                    focused={item.selected}
+                    clickable
+                    onClick={() => {
+                      item.toggleOption(item.opt);
+                    }}
+                  >
+                    <Avatar role={item.label}></Avatar>
+                    <div class="fcol">
+                      <div>{item.label}</div>
+                      <div class={["text-zinc-400", em_text(item.selected)]}>
+                        {item.opt.description}
+                      </div>
+                    </div>
+                  </QItem>
+                );
+              }
+            ),
+          }}
+        </QSelect>
+      );
+    };
+  },
+});
+
+export const Toolbar = defineComponent({
+  setup() {
+    const ms = use_main_store();
+    const next = (mode: ChatBodyInputMode) =>
+      ((
+        {
+          generate: "add",
+          add: "generate",
+        } as const satisfies Record<ChatBodyInputMode, ChatBodyInputMode>
+      )[mode]);
+
     return () => {
       return (
         <div class="frow rounded-full flex-wrap items-center text-zinc-400 gap-3">
@@ -111,152 +283,15 @@ export const ChatBodyInputToolbar = defineComponent({
             unelevated
             flat
             onClick={() => {
-              const next = (mode: ChatBodyInputMode) =>
-                ((
-                  {
-                    generate: "add",
-                    add: "generate",
-                  } as const satisfies Record<
-                    ChatBodyInputMode,
-                    ChatBodyInputMode
-                  >
-                )[mode]);
               ms.chat_body_input.mode = next(ms.chat_body_input.mode);
             }}
           ></QBtn>
 
           {not_undefined_or(() => {
             if (ms.chat_body_input.mode === "generate") {
-              return tpl(
-                <ChatBodyInputToolbarState></ChatBodyInputToolbarState>,
-                <QBtn {...c`w-[2.5rem] h-[2.5rem]`} icon="mdi-tune" unelevated>
-                  <QPopupProxy
-                    {...c`min-w-[14rem] p-5 bg-zinc-800 text-zinc-200 gap-6 fcol quick shadow-2xl border border-zinc-600`}
-                    breakpoint={0}
-                  >
-                    <QSelect
-                      {...c`min-w-[140px] bg-zinc-800`}
-                      modelValue={model.value}
-                      onUpdate:modelValue={(m) => {
-                        if (typeof m != "string") {
-                          model.value = m.value;
-                        } else {
-                          model.value = m;
-                        }
-                      }}
-                      label="模型"
-                      color="secondary"
-                      options={models}
-                      dark
-                      dense
-                      filled
-                    ></QSelect>
-                    <div class="fcol text-sm min-w-[6rem] px-1">
-                      <div>温度：{temperature.value}</div>
-                      <QSlider
-                        {...refvmodel(temperature)}
-                        min={0}
-                        max={2}
-                        step={0.01}
-                        dark
-                        dense
-                      ></QSlider>
-                    </div>
-                    <div class="fcol text-sm min-w-[6rem] px-1">
-                      <div>存在惩罚：{presence_penalty.value}</div>
-                      <QSlider
-                        {...refvmodel(presence_penalty)}
-                        min={-2}
-                        max={2}
-                        step={0.01}
-                        dark
-                        dense
-                      ></QSlider>
-                    </div>
-                    <div class="fcol text-sm min-w-[6rem] px-1">
-                      <div>重复惩罚：{frequency_penalty.value}</div>
-                      <QSlider
-                        {...refvmodel(frequency_penalty)}
-                        min={-2}
-                        max={2}
-                        step={0.01}
-                        dark
-                        dense
-                      ></QSlider>
-                    </div>
-                    <div class="fcol text-sm min-w-[6rem] gap-4 p-1">
-                      <div>最大 token 数</div>
-                      <QToggle
-                        {...refvmodel(auto_max_tokens)}
-                        label="自动"
-                        dense
-                      ></QToggle>
-                      <QInput
-                        modelValue={max_tokens.value}
-                        onUpdate:modelValue={(value) => {
-                          max_tokens.value = parseInt(String(value));
-                        }}
-                        disable={auto_max_tokens.value}
-                        label="最大回传 token 数"
-                        color="secondary"
-                        dark
-                        filled
-                      ></QInput>
-                    </div>
-                  </QPopupProxy>
-                </QBtn>
-              );
+              return <GenetateModeToolbar></GenetateModeToolbar>;
             } else if (ms.chat_body_input.mode === "add") {
-              return tpl(
-                <QSelect
-                  modelValue={role.value}
-                  onUpdate:modelValue={(r) => {
-                    _role.value = r.value;
-                  }}
-                  label="身份"
-                  options={roles}
-                  color="secondary"
-                  dark
-                  dense
-                  filled
-                >
-                  {{
-                    option: (
-                      item: QSelectOptionSlotParam<ElementOfArray<typeof roles>>
-                    ) => {
-                      return (
-                        <QItem
-                          {...any({
-                            class: [
-                              `frow items-center gap-3 text-sm p-4`,
-                              item.selected ? "text-primary" : "",
-                            ],
-                          })}
-                          focused={item.selected}
-                          clickable
-                          onClick={() => {
-                            item.toggleOption(item.opt);
-                          }}
-                        >
-                          <Avatar role={item.label}></Avatar>
-                          <div class="fcol">
-                            <div>{item.label}</div>
-                            <div
-                              class={[
-                                "text-zinc-400",
-                                item.selected ? "text-primary" : "",
-                              ]}
-                            >
-                              {item.opt.description}
-                            </div>
-                            {}
-                          </div>
-                        </QItem>
-                      );
-                    },
-                  }}
-                </QSelect>
-              );
+              return <AddModeToolbar></AddModeToolbar>;
             }
           })}
         </div>
@@ -265,13 +300,13 @@ export const ChatBodyInputToolbar = defineComponent({
   },
 });
 
-type ChatBodyInputerProps = {
+type InputerProps = {
   submit_btn_loading?: boolean;
   promot: string;
   mode: ChatBodyInputMode;
 };
-export const ChatBodyInputer = defineComponent<
-  ChatBodyInputerProps,
+export const Inputer = defineComponent<
+  InputerProps,
   {},
   {},
   {},
@@ -280,15 +315,11 @@ export const ChatBodyInputer = defineComponent<
   {},
   {
     submit: () => void;
-    "Update:promot": (value: string) => void;
+    "update:promot": (value: string) => void;
   }
 >({
-  props: as_props<ChatBodyInputerProps>()([
-    "submit_btn_loading",
-    "promot",
-    "mode",
-  ]),
-  emits: ["submit", "Update:promot"],
+  props: as_props<InputerProps>()(["submit_btn_loading", "promot", "mode"]),
+  emits: ["submit", "update:promot"],
   setup(props, { emit }) {
     const inputter = ref<QInput>();
     const component_color = computed(() => {
@@ -320,7 +351,7 @@ export const ChatBodyInputer = defineComponent<
             {...c`ChatBodyInput`}
             modelValue={promot.value}
             onUpdate:modelValue={(value) => {
-              emit("Update:promot", String(value));
+              emit("update:promot", String(value));
             }}
             type="textarea"
             color={component_color.value}
@@ -361,13 +392,13 @@ export const ChatBodyInput = defineComponent({
           ]}
           {...attrs}
         >
-          <ChatBodyInputer
+          <Inputer
             {...props}
             {...refvmodel(promot, "promot")}
             mode={mode.value}
             onSubmit={() => emit("submit")}
-          ></ChatBodyInputer>
-          <ChatBodyInputToolbar></ChatBodyInputToolbar>
+          ></Inputer>
+          <Toolbar></Toolbar>
         </div>
       );
     };

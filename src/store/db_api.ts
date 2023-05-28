@@ -12,12 +12,16 @@ PouchDB.plugin(PouchDBFind);
 
 export const dbs = {
   chat_records: new PouchDB<ChatRecordForStorage>("chat_records", {
-    revs_limit: 0,
+    revs_limit: 1,
   }),
   settings: new PouchDB<SettingItem>("settings", {
-    revs_limit: 0,
+    revs_limit: 1,
   }),
 };
+
+export async function compact_dbs() {
+  await Promise.all(Object.values(dbs).map((db) => db.compact()));
+}
 
 export const chat_records_default_value = [] satisfies ChatRecordMeta[];
 

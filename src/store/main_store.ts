@@ -17,11 +17,37 @@ import {
   delete_chat_record,
   get_chat_record_messages,
   update_chat_record_messages,
+  compact_dbs,
 } from "./db_api";
 import { ChatBodyInputMode } from "../components/ChatBodyInput";
 import { QInput } from "quasar";
 
 const use_main_store = defineStore("main", () => {
+  const db_task: Promise<any> = Promise.resolve()
+    .then(async () => {
+      await sync_db();
+      await compact_dbs();
+    })
+    .catch((e) => {
+      throw e;
+    });
+
+  async function wait_db_task<T>(p: Promise<T>) {
+    const result = await db_task
+      .then(() => p)
+      .catch((e) => {
+        throw e;
+      });
+    return result;
+  }
+
+  async function wait_db_task_fn<T>(p: () => Promise<T>) {
+    const result = await db_task.then(p).catch((e) => {
+      throw e;
+    });
+    return result;
+  }
+
   const is_loading = ref(true);
 
   const chat_body_input = ref({
@@ -53,34 +79,40 @@ const use_main_store = defineStore("main", () => {
     id: T,
     value: Settings[T] = settings.value[id]
   ) {
-    await set_settings(id, value);
+    await wait_db_task(set_settings(id, value));
   }
 
   async function _new_chat_record(name: string, created: number) {
-    const id = await new_chat_record(name, created);
-    await sync_db();
-    return id;
+    return await wait_db_task_fn(async () => {
+      const id = await new_chat_record(name, created);
+      await sync_db();
+      return id;
+    });
   }
 
   async function _get_chat_record_messages(id: string) {
-    return await get_chat_record_messages(id);
+    return wait_db_task(get_chat_record_messages(id));
   }
 
   async function _update_chat_record_messages(
     id: string,
     message?: readonly Message[]
   ) {
+    console.log("id", id);
+
     if (message === undefined) {
       message = curry_chat.messages;
     }
-    await update_chat_record_messages(id, message);
-    // await sync_db();
+
+    await wait_db_task(update_chat_record_messages(id, message));
   }
 
   async function _delete_chat_record(id: string) {
-    await delete_chat_record(id);
-    curry_chat.id = undefined;
-    await sync_db();
+    await wait_db_task_fn(async () => {
+      await delete_chat_record(id);
+      curry_chat.id = undefined;
+      await sync_db();
+    });
   }
 
   const curry_chat = reactive({
@@ -92,6 +124,7 @@ const use_main_store = defineStore("main", () => {
     use_raw_render: {} as Record<number, boolean>,
   });
 
+  /** 不应该直接运行，应该使用 `wait_db_task` 加入事务队列中。  */
   async function sync_db() {
     console.log("sync");
     console.log("curry_chat.id", curry_chat.id);
@@ -111,10 +144,6 @@ const use_main_store = defineStore("main", () => {
     is_loading.value = false;
   }
 
-  const init_state = (async () => {
-    await sync_db();
-  })();
-
   return {
     chat_records_meta,
     settings,
@@ -123,7 +152,6 @@ const use_main_store = defineStore("main", () => {
     update_chat_record_messages: _update_chat_record_messages,
     delete_chat_record: _delete_chat_record,
     set_settings: _set_settings,
-    init_state,
     is_loading,
     curry_chat,
     chat_body_input,

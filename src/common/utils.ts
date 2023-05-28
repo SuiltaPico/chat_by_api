@@ -8,6 +8,21 @@ export function any(x: any) {
   return x as any;
 }
 
+export function try_it(fn: () => any, on_err: (e: any) => void) {
+  try {
+    fn();
+  } catch (e) {
+    on_err(e);
+  }
+}
+
+export function slot<N extends string, V>(name: N, value: V) {
+  return {
+    name,
+    value,
+  };
+}
+
 /** class 简写。
  *
  * 在 Component 的类型系统不支持 class 但是实际库实现层面上又支持的时候使用。 */
@@ -55,7 +70,7 @@ export function scroll_to(el: HTMLElement) {
 /** 如果离得很近，就滚动到最下面。 */
 export function scroll_if_close_to(el: HTMLElement, delta: number) {
   if (window.scrollY + window.innerHeight + delta > el.clientHeight) {
-    scroll_to(el)
+    scroll_to(el);
     return true;
   }
   return false;

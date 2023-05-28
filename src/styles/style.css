@@ -12,7 +12,7 @@ body {
 
 ul,
 ol {
-  @apply fcol ml-4;
+  @apply ml-4;
 }
 
 ol {
@@ -20,20 +20,25 @@ ol {
 }
 
 ul {
-  padding: initial;
   @apply list-disc;
 }
 
-ol li p {
-  @apply inline-block;
+ol > li,
+ul > li {
+  @apply list-item h-fit whitespace-normal;
 }
 
-code {
-  @apply bg-zinc-900 bg-opacity-20 p-1 mx-1 rounded;
-}
+pre.hljs {
+  @apply whitespace-pre p-4 py-6 frow flex-nowrap rounded gap-3 relative;
 
-pre {
-  @apply whitespace-pre-wrap;
+  & > .hl_line_number {
+    @apply px-2 min-w-fit border-zinc-600 select-none text-right text-zinc-400;
+  }
+
+  & > code {
+    @apply overflow-x-auto bg-opacity-20 pb-1 grow;
+    scrollbar-width: thin;
+  }
 }
 
 .quick {
@@ -61,7 +66,7 @@ pre {
   transition-duration: 0.2s;
 }
 
-.q-focus-helper{
+.q-focus-helper {
   outline: none !important;
 }
 
@@ -81,12 +86,16 @@ pre {
   @apply bg-zinc-800 border-b border-zinc-600;
 }
 
+.page_container {
+  @apply max-lg:max-w-[100vw];
+}
+
 .fit-width {
-  @apply md:w-[75%] w-[90%] lg:w-[90%] max-w-[800px] xl:w-[80%];
+  @apply max-sm:w-[80vw] md:w-[75%] w-[90%] lg:w-[90%] max-w-[800px] xl:w-[80%];
 }
 
 .record-fit-width {
-  @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[900px] xl:w-[80%];
+  @apply md:w-[80%] w-[90%] lg:w-[90%] max-w-[1000px] xl:w-[80%];
 }
 
 .ChatRecordSelectionItem {
@@ -164,11 +173,11 @@ pre {
 }
 
 .ChatItem-wraper {
-  @apply frow gap-x-4 gap-y-3 max-md:flex-wrap record-fit-width
+  @apply frow gap-x-4 gap-y-3 max-md:flex-wrap record-fit-width;
 }
 
 .ChatItem-content {
-  @apply fcol whitespace-pre-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1
+  @apply fcol flex-wrap whitespace-pre-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1;
 }
 
 .Avatar {
@@ -189,8 +198,5 @@ pre {
 }
 
 .mdblock {
-  @apply fcol gap-4;
-  & p {
-    margin: 0;
-  }
+  @apply gap-4 fcol w-full;
 }

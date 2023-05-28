@@ -243,8 +243,17 @@ export const OpenAI = defineComponent({
 
 export const About = defineComponent({
   setup() {
-    const router = useRouter()
     const update_log = [
+      {
+        version: "1.0.0",
+        content: `
+* 优化了模型选项的表现。
+* 优化了数据库的写入模式。
+* 极大地优化了储存模式，放弃了以往的所有修订版本。
+* 修复了有序和无序列表的显示问题。
+* 为代码块添加了行号和复制按钮
+`
+      },
       {
         version: "0.3.1",
         content: `

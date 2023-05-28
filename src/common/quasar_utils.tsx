@@ -1,6 +1,7 @@
-import { QIcon } from "quasar";
+import { QIcon, QVueGlobals, useQuasar } from "quasar";
 import { Ref } from "vue";
 import { any } from "./utils";
+import copy from "copy-text-to-clipboard";
 
 export interface QSelectOptionSlotParam<Option> {
   focused: boolean;
@@ -35,4 +36,22 @@ export function passwd_slot(showing: Ref<boolean>, attrs: any = {}) {
       ></QIcon>
     ),
   };
+}
+
+export function copy_with_notify(qs: QVueGlobals, content: string) {
+  const result = copy(content);
+  const notify = (msg: string) =>
+    qs.notify({
+      position: "top",
+      message: msg,
+      color: "primary",
+      timeout: 200,
+      type: "info",
+    });
+
+  if (result) {
+    notify("复制成功");
+  } else {
+    notify("复制失败");
+  }
 }
