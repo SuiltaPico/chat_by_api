@@ -81,7 +81,7 @@ export const create_md = () => {
         const qs = useQuasar();
 
         (fence_node.children as VNodeArrayChildren).push(
-          <div class="absolute top-2 right-2">
+          <div class="absolute top-4 right-4">
             <QBtn
               {...c`text-zinc-500 hover:text-zinc-400`}
               icon="mdi-content-copy"

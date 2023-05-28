@@ -240,10 +240,18 @@ export const OpenAI = defineComponent({
     };
   },
 });
-
+// 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
 export const About = defineComponent({
   setup() {
     const update_log = [
+      {
+        version: "1.0.1",
+        content: `
+* 代码块界面改善。
+* 有序和无序列表显示改善。
+* 修复了 \`.mdblock\` 出现异常滚动条的问题。
+`
+      },
       {
         version: "1.0.0",
         content: `

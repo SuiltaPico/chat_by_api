@@ -25,11 +25,11 @@ ul {
 
 ol > li,
 ul > li {
-  @apply list-item h-fit whitespace-normal;
+  @apply list-item h-fit whitespace-normal p-0.5 m-0;
 }
 
 pre.hljs {
-  @apply whitespace-pre p-4 py-6 frow flex-nowrap rounded gap-3 relative;
+  @apply whitespace-pre p-3 py-6 frow flex-nowrap rounded gap-3 relative w-full;
 
   & > .hl_line_number {
     @apply px-2 min-w-fit border-zinc-600 select-none text-right text-zinc-400;
@@ -177,7 +177,7 @@ pre.hljs {
 }
 
 .ChatItem-content {
-  @apply fcol flex-wrap whitespace-pre-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1;
+  @apply fcol flex-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1;
 }
 
 .Avatar {
@@ -198,5 +198,5 @@ pre.hljs {
 }
 
 .mdblock {
-  @apply gap-4 fcol w-full;
+  @apply gap-4 fcol w-full overflow-hidden;
 }
