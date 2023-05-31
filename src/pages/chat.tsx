@@ -481,9 +481,6 @@ export const ServerMessageItem = defineComponent<
 
       return (
         <div class="chat_item">
-          <div class="chat_item_header hidden">
-            <div>{message.request_config.model}</div>
-          </div>
           <div class="chat_item_main">
             <Avatar
               role={message.role}

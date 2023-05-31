@@ -1,5 +1,12 @@
 export default [
   {
+    version: "2.0.3",
+    content: `
+### Fixed
+* 修复了类型错误，无法编译的问题。
+`,
+  },
+  {
     version: "2.0.2",
     content: `
 ### Fixed

@@ -31,6 +31,7 @@ export interface UserMessage {
 
 interface _RequestConfig {
   api_source?: string;
+  model: string;
 }
 
 export interface OpenAIRequestConfig
