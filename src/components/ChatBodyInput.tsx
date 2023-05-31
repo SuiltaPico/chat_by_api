@@ -388,7 +388,7 @@ export const ChatBodyInput = defineComponent({
       return (
         <div
           class={[
-            "fcol frow max-md:gap-2 gap-3 bg-zinc-800 bg-opacity-[.85] p-3 rounded-lg drop-shadow-lg fit-width",
+            "fcol frow max-md:gap-2 gap-3 bg-zinc-800 bg-opacity-[.9] p-3 rounded-lg drop-shadow-lg fit-width",
           ]}
           {...attrs}
         >

@@ -4,11 +4,15 @@ import _ from "lodash";
 import { Configuration, OpenAIApi } from "openai-edge";
 import {
   QBtn,
+  QCheckbox,
   QIcon,
   QInput,
   QPage,
   QPopupProxy,
+  QSelect,
   QSpace,
+  QToggle,
+  QTooltip,
   useQuasar,
 } from "quasar";
 import { Teleport, computed, defineComponent, ref, toRef, watch } from "vue";
@@ -16,6 +20,7 @@ import { useRouter } from "vue-router";
 import {
   Maybe,
   any,
+  as_props,
   c,
   non_empty_else,
   promise_with_ref,
@@ -35,8 +40,12 @@ import {
 import use_main_store from "../store/main_store";
 import copy from "copy-text-to-clipboard";
 
-import { not_undefined_or } from "../common/jsx_utils";
-import { create_md } from "../common/md_render";
+import { insert_slot, not_undefined_or, tpl } from "../common/jsx_utils";
+import { create_md, highlight } from "../common/md_render";
+
+import dayjs from "dayjs";
+import { copy_with_notify } from "../common/quasar_utils";
+import { calendar } from "../common/date";
 
 const md = create_md();
 
@@ -283,7 +292,7 @@ export const Avatar = defineComponent({
   },
 });
 
-export const ChatItemUserMessage = defineComponent<
+export const UserMessageItem = defineComponent<
   {
     message: UserMessage;
     chatid: string;
@@ -302,49 +311,66 @@ export const ChatItemUserMessage = defineComponent<
   emits: ["delete"],
   setup(props, ctx) {
     const ms = use_main_store();
+    const qs = useQuasar();
+
+    const more_popup_showing = ref(false);
+
     return () => {
       const { message, chatid } = props;
       return (
-        <div class={["ChatItem-wraper"]}>
-          <Avatar
-            class="mt-[2px]"
-            role={message.role}
-            onUpdate:role={(role) => {
-              message.role = role;
-              ms.update_chat_record_messages(chatid);
-            }}
-          ></Avatar>
-          <div class="ChatItem-content">{message.content}</div>
-          <QSpace></QSpace>
-          <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 grow">
-            <QBtn
-              {...c`text-xs text-zinc-300 p-2`}
-              icon="mdi-import"
-              flat
-              onClick={() => {
-                ms.chat_body_input.promot = message.content;
-                ms.chat_body_input.inputter?.focus();
+        <div class="chat_item">
+          <div class="chat_item_main">
+            <Avatar
+              class="mt-[2px]"
+              role={message.role}
+              onUpdate:role={(role) => {
+                message.role = role;
                 ms.update_chat_record_messages(chatid);
               }}
-            ></QBtn>
-            <QBtn
-              {...c`text-xs text-zinc-300 p-2`}
-              icon="mdi-dots-horizontal"
-              flat
-            >
-              <ChatItemMorePop
-                onDelete={() => ctx.emit("delete")}
-              ></ChatItemMorePop>
-            </QBtn>
+            ></Avatar>
+            <div class="content">{message.content}</div>
+            <QSpace></QSpace>
+            <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 grow">
+              <QBtn
+                {...c`text-xs text-zinc-300 p-2`}
+                icon="mdi-import"
+                flat
+                onClick={() => {
+                  ms.chat_body_input.promot = message.content;
+                  ms.chat_body_input.inputter?.focus();
+                  ms.update_chat_record_messages(chatid);
+                }}
+              ></QBtn>
+              <QBtn
+                {...c`text-xs text-zinc-300 p-2`}
+                icon="mdi-dots-horizontal"
+                flat
+              >
+                <MorePopup
+                  {...refvmodel(more_popup_showing, "show")}
+                  message={message}
+                  onDelete={() => ctx.emit("delete")}
+                >
+                  <MorePopupBtn
+                    icon="mdi-content-copy"
+                    label="复制"
+                    onClick={() => {
+                      copy_with_notify(qs, message.content);
+                      more_popup_showing.value = false;
+                    }}
+                  ></MorePopupBtn>
+                </MorePopup>
+              </QBtn>
+            </div>
+            <div class="max-md:min-w-full h-0 max-md:block"></div>
           </div>
-          <div class="max-md:min-w-full h-0 max-md:block"></div>
         </div>
       );
     };
   },
 });
 
-export const ChatItemServerMessageErrorHandler = defineComponent({
+export const ServerMessageErrorHandler = defineComponent({
   props: ["message"],
   setup(props: { message: ServerMessage }) {
     const router = useRouter();
@@ -469,7 +495,7 @@ export const ChatItemServerMessageErrorHandler = defineComponent({
   },
 });
 
-export const ChatItemServerMessage = defineComponent<
+export const ServerMessageItem = defineComponent<
   {
     message: ServerMessage;
     chatid: string;
@@ -489,77 +515,109 @@ export const ChatItemServerMessage = defineComponent<
   setup(props, ctx) {
     const ms = use_main_store();
     const qs = useQuasar();
+    const mdblock = ref<HTMLDivElement>();
+
+    const more_popup_showing = ref(false);
 
     return () => {
       const { message, index, chatid } = props;
+      const rendered_content = ms.use_markdown_render
+        ? md.render(message.content)
+        : md.render_as_fence(message.content);
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
       return (
-        <div class={["ChatItem-wraper"]}>
-          <Avatar
-            role={message.role}
-            onUpdate:role={(role) => {
-              message.role = role;
-              ms.update_chat_record_messages(chatid);
-            }}
-          ></Avatar>
-          <div class="ChatItem-content">
-            <div class="mdblock">{md.render(message.content)}</div>
-            <ChatItemServerMessageErrorHandler
-              message={message}
-            ></ChatItemServerMessageErrorHandler>
+        <div class="chat_item">
+          <div class="chat_item_header hidden">
+            <div>{message.request_config.model}</div>
           </div>
-          <QSpace></QSpace>
-          <div class="fcol flex-nowrap self-top h-fit min-w-[5rem] max-w-[5rem] gap-4 my-[-0.25rem]">
-            <div class="frow items-center gap-1">
-              <QBtn
-                {...c`text-xs text-zinc-300 p-2`}
-                icon="mdi-content-copy"
-                flat
-                onClick={() => {
-                  const result = copy(message.content);
-                  const notify = (msg: string) =>
-                    qs.notify({
-                      position: "top",
-                      message: msg,
-                      color: "primary",
-                      timeout: 200,
-                      type: "info",
-                    });
+          <div class="chat_item_main">
+            <Avatar
+              role={message.role}
+              onUpdate:role={(role) => {
+                message.role = role;
+                ms.update_chat_record_messages(chatid);
+              }}
+            ></Avatar>
+            <div class="content">
+              <div class="mdblock" ref={mdblock}>
+                {rendered_content}
+              </div>
+              <ServerMessageErrorHandler
+                message={message}
+              ></ServerMessageErrorHandler>
+            </div>
+            <QSpace></QSpace>
+            <div class="fcol flex-nowrap self-top h-fit min-w-[5rem] max-w-[5rem] gap-4 my-[-0.25rem]">
+              <div class="frow items-center gap-1">
+                <QBtn
+                  {...c`text-xs text-zinc-300 p-2`}
+                  icon="mdi-content-copy"
+                  flat
+                  onClick={() => {
+                    copy_with_notify(qs, message.content);
+                  }}
+                ></QBtn>
+                <QBtn
+                  {...c`text-xs text-zinc-300 p-2`}
+                  icon="mdi-dots-horizontal"
+                  flat
+                >
+                  <MorePopup
+                    {...refvmodel(more_popup_showing, "show")}
+                    message={message}
+                    onDelete={() => ctx.emit("delete")}
+                  >
+                    <MorePopupBtn
+                      class="text-secondary"
+                      label="重新生成"
+                      icon="mdi-refresh"
+                    ></MorePopupBtn>
+                    <MorePopupBtn
+                      label="直接复制文本"
+                      icon="mdi-raw-off"
+                      onClick={() => {
+                        more_popup_showing.value = false;
 
-                  if (result) {
-                    notify("复制成功");
-                  } else {
-                    notify("复制失败");
-                  }
-                }}
-              ></QBtn>
-              <QBtn
-                {...c`text-xs text-zinc-300 p-2`}
-                icon="mdi-dots-horizontal"
-                flat
-              >
-                <ChatItemMorePop
-                  onDelete={() => ctx.emit("delete")}
-                ></ChatItemMorePop>
-              </QBtn>
-              {/* <QToggle
+                        const s = getSelection();
+
+                        if (!mdblock.value) {
+                          return;
+                        }
+
+                        s?.selectAllChildren(mdblock.value);
+
+                        if (s) {
+                          copy_with_notify(qs, s.toString());
+                          s.empty();
+                        }
+                      }}
+                    ></MorePopupBtn>
+                  </MorePopup>
+                </QBtn>
+                {/* <QToggle
                 {...c`h-fit p-0 text-sm`}
                 {...refvmodel(use_raw_render)}
                 label="MD"
                 color="secondary"
                 size="xs"
               ></QToggle> */}
+              </div>
             </div>
+            <div class="max-md:min-w-full h-0 max-md:block"></div>
           </div>
-          <div class="max-md:min-w-full h-0 max-md:block"></div>
         </div>
       );
     };
   },
 });
 
-export const ChatItemMorePop = defineComponent<
-  {},
+type MorePopupBtnProp = {
+  icon: string;
+  label: string;
+};
+
+export const MorePopupBtn = defineComponent<
+  MorePopupBtnProp,
   {},
   {},
   {},
@@ -567,37 +625,92 @@ export const ChatItemMorePop = defineComponent<
   {},
   {},
   {
-    delete: () => void;
+    click: () => void;
   }
 >({
-  setup(_, ctx) {
+  props: as_props<MorePopupBtnProp>()(["icon", "label"]),
+  emits: ["click"],
+  setup(props, ctx) {
     return () => (
-      <QPopupProxy
-        {...c`bg-zinc-800 text-white select-none quick`}
-        breakpoint={0}
-      >
-        <QBtn
-          unelevated
-          onClick={() => {
-            ctx.emit("delete");
-          }}
-        >
-          <div class="frow gap-3 items-center text-base pr-1 w-[8rem]">
-            <QIcon {...c`text-sm`} name="mdi-delete" size="1.2rem"></QIcon>
-            <div>删除</div>
-          </div>
-        </QBtn>
-        {{
-          ...Maybe.of(ctx.slots.default)
-            .map((slot) => slot())
-            .unwrap_or(<div></div>),
+      <QBtn
+        flat
+        onClick={() => {
+          ctx.emit("click");
         }}
-      </QPopupProxy>
+      >
+        <div class="main">
+          <QIcon name={props.icon} size="1.2rem"></QIcon>
+          <div>{props.label}</div>
+        </div>
+        {insert_slot(ctx.slots)}
+      </QBtn>
     );
   },
 });
 
-const ChatItem_gen_color = (index: number) => ({
+type MorePopupProps = {
+  show: boolean;
+  message: Message;
+};
+export const MorePopup = defineComponent<
+  MorePopupProps,
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    "update:show": (show: boolean) => void;
+    delete: () => void;
+  }
+>({
+  props: as_props<MorePopupProps>()(["message", "show"]),
+  emits: ["update:show", "delete"],
+  setup(props, ctx) {
+    return () => {
+      const message = props.message;
+      return (
+        <QPopupProxy
+          {...c`more_popup`}
+          modelValue={props.show}
+          onUpdate:modelValue={(show) => {
+            ctx.emit("update:show", show);
+          }}
+          breakpoint={0}
+        >
+          {Maybe.of(ctx.slots.default)
+            .map((slot) => slot())
+            .unwrap_or(<div></div>)}
+          {/* <MorePopupBtn
+            class="text-_negative"
+            label="删除"
+            icon="mdi-delete"
+            onClick={() => ctx.emit("delete")}
+          ></MorePopupBtn> */}
+          <MorePopupBtn icon="mdi-information-outline" label="信息">
+            <QTooltip>
+              <div class="p-2 px-4 text-zinc-200 w-full">
+                创建时间：{calendar(message.created)}
+              </div>
+              {not_undefined_or(() => {
+                if (message.message_type === "server") {
+                  return (
+                    <div class="p-2 px-4 text-zinc-200 w-full">
+                      模型：{message.request_config.model}
+                    </div>
+                  );
+                }
+              })}
+            </QTooltip>
+          </MorePopupBtn>
+        </QPopupProxy>
+      );
+    };
+  },
+});
+
+const item_gen_color = (index: number) => ({
   "bg-zinc-600": index % 2 == 0,
   "bg-[rgb(105,105,114)]": index % 2 == 1,
 });
@@ -626,31 +739,31 @@ export const ChatItem = defineComponent<
       return (
         <div
           class={[
-            "fcol w-full items-center max-md:py-4 py-5",
-            ChatItem_gen_color(index),
+            "frow w-full justify-center max-md:py-4 pt-4 py-5",
+            item_gen_color(index),
           ]}
         >
           {not_undefined_or(() => {
             if (message.message_type === "user") {
               return (
-                <ChatItemUserMessage
+                <UserMessageItem
                   message={message}
                   chatid={chatid}
                   onDelete={() => {
                     ctx.emit("delete");
                   }}
-                ></ChatItemUserMessage>
+                ></UserMessageItem>
               );
             } else if (message.message_type === "server") {
               return (
-                <ChatItemServerMessage
+                <ServerMessageItem
                   message={message}
                   chatid={chatid}
                   index={index}
                   onDelete={() => {
                     ctx.emit("delete");
                   }}
-                ></ChatItemServerMessage>
+                ></ServerMessageItem>
               );
             }
           })}
@@ -659,43 +772,6 @@ export const ChatItem = defineComponent<
     };
   },
 });
-
-export const ChatBodyTopBar = defineComponent({
-  setup() {
-    return () => {
-      return <div></div>;
-    };
-  },
-});
-
-// export const ChatBodyAdd = defineComponent<{
-//   index: number
-// }>({
-//   props: any(["index"]),
-//   setup(props) {
-//     const ms = use_main_store()
-//     const promot = ref()
-//     return () => {
-//       return (
-//         <div
-//           class={["fcol w-full items-center py-4", ChatItem_gen_color(props.index)]}
-//         >
-//           <Avatar role={"system"}></Avatar>
-//           <QInput
-//               {...c`ChatBodyInput`}
-//               {...refvmodel(promot)}
-//               type="textarea"
-//               color="secondary"
-//               dark
-//               filled
-//               placeholder="在这里输入消息。"
-//               autogrow
-//             ></QInput>
-//         </div>
-//       );
-//     };
-//   },
-// });
 
 export const ChatBody = defineComponent({
   setup() {
@@ -730,7 +806,7 @@ export const ChatBody = defineComponent({
     return () => {
       const chatid = ms.curry_chat.id!;
       return (
-        <div class="fcol relative grow text-zinc-100 h-min flex-nowrap">
+        <div class="fcol relative grow text-zinc-100 h-min flex-nowrap w-full">
           {/* <ChatBodyTopBar></ChatBodyTopBar> */}
           <div class={["fcol w-full page_container"]}>
             {messages.value.map((msg, index) => (
@@ -807,13 +883,45 @@ export const ChatBody = defineComponent({
   },
 });
 
+export const TopBar = defineComponent({
+  setup() {
+    const ms = use_main_store();
+    const use_markdown_render = toRef(ms, "use_markdown_render");
+    return () => {
+      return (
+        <div class="chat_top_bar">
+          {/* <QBtn icon="mdi-checkbox-multiple-outline" flat>
+            <QTooltip>多选</QTooltip>
+          </QBtn>
+          <QBtn icon="mdi-chat-plus" flat>
+            <QTooltip>插入</QTooltip>
+          </QBtn>
+          <QBtn {...c`text-_negative`} icon="mdi-delete" flat>
+            <QTooltip>删除</QTooltip>
+          </QBtn> */}
+          <QSpace></QSpace>
+          <QToggle {...refvmodel(use_markdown_render)}>
+            <QIcon name="mdi-language-markdown" size="1.6rem"></QIcon>
+          </QToggle>
+        </div>
+      );
+    };
+  },
+});
+
 export default defineComponent({
+  props: any(["chatid"]),
   setup(props) {
-    const main_store = use_main_store();
-    return () => (
-      <QPage {...c`default-bg flex flex-col`}>
-        <ChatBody></ChatBody>
-      </QPage>
-    );
+    const ms = use_main_store();
+    return () => {
+      return tpl(
+        <Teleport to="#app_header_slot">
+          <TopBar></TopBar>
+        </Teleport>,
+        <QPage {...c`default-bg flex flex-col`}>
+          <ChatBody></ChatBody>
+        </QPage>
+      );
+    };
   },
 });

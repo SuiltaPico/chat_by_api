@@ -1,0 +1,41 @@
+.chat_item {
+  @apply fcol record-fit-width gap-1;
+
+  & > .chat_item_header {
+    @apply frow text-xs text-zinc-400 gap-2
+  }
+
+  & > .chat_item_main {
+    @apply frow gap-x-4 gap-y-3 max-md:flex-wrap w-full;
+
+    & > .content {
+      @apply fcol flex-wrap self-center grow
+        overflow-y-auto min-w-[16rem] max-md:order-1;
+    }
+
+    & .mdblock {
+      @apply gap-4 fcol w-full overflow-hidden;
+    }
+  }
+}
+
+
+.more_popup {
+  @apply fcol bg-[#242428] text-white select-none quick 
+    rounded w-[12rem] py-1;
+
+  & > .q-btn {
+    @apply py-2;
+
+    & .main {
+      @apply frow gap-3 items-center text-base pr-1 w-[10rem];
+    }
+  }
+}
+
+#app_header_slot > .chat_top_bar {
+  @apply frow grow pr-2 text-zinc-300 max-md:text-zinc-200;
+  & > .q-btn .q-icon {
+    @apply max-md:text-[1.35rem];
+  }
+}

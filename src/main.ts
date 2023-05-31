@@ -2,7 +2,18 @@ import { createApp } from "vue";
 import { Quasar, Notify } from "quasar";
 import quasarLang from "quasar/lang/zh-CN";
 import quasarIconSet from "quasar/icon-set/mdi-v6";
-import "./styles/color";
+
+import dayjs from "dayjs";
+import isLeapYear from "dayjs/plugin/isLeapYear";
+import relativeTime from "dayjs/plugin/relativeTime";
+import calendar from "dayjs/plugin/calendar";
+import "dayjs/locale/zh-cn";
+
+dayjs.extend(isLeapYear);
+dayjs.extend(relativeTime)
+dayjs.extend(calendar)
+dayjs.locale("zh-cn");
+
 
 // Import icon libraries
 import "@quasar/extras/mdi-v6/mdi-v6.css";

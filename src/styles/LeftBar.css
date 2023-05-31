@@ -1,0 +1,99 @@
+.left_drawer > .left_bar {
+  @apply frow flex-nowrap h-full text-zinc-300;
+    & > .selection_container {
+    @apply fcol bg-zinc-900;
+
+
+    & .selection_item {
+      @apply py-3;
+      &[aria-selected="true"] {
+        @apply text-zinc-200 bg-zinc-100 bg-opacity-10;
+      }
+      & .q-tab__indicator {
+        transition-duration: 0.08s;
+      }
+    }
+  }
+
+  & > .details_container {
+    @apply fcol w-[calc(100%-56px)];
+
+    &.hide {
+      @apply hidden
+    }
+
+    & > .title {
+      @apply frow h-[2rem] items-center bg-slate-600 pl-2 rounded-b;
+    }
+
+    & > .chat_record_detail {
+      @apply flex flex-col grow flex-nowrap
+        py-2 px-2 gap-2
+        h-full bg-[#242428];
+
+      & > .top_btn_group {
+        @apply fcol gap-2;
+
+        & > .search {
+          @apply w-fit border border-zinc-300;
+        }
+      }
+
+      & > .container {
+        @apply fcol gap-1 flex-nowrap overflow-y-auto;
+      }
+
+      & .item {
+        @apply frow text-white px-3 py-3 text-base
+          gap-4 rounded
+          cursor-pointer transition-all
+          items-center box-border border-zinc-500
+          rounded-l-none;
+        transition-duration: 0.1s;
+
+        & .q-icon {
+          @apply text-zinc-400 transition-all;
+        }
+        &:hover {
+          @apply bg-zinc-700;
+        }
+        &:hover > .q-icon {
+          @apply text-zinc-200;
+        }
+        &.active > .q-icon {
+          @apply text-zinc-200;
+        }
+        &.active {
+          @apply bg-zinc-700 border-l-[0.3rem] border-l-zinc-400;
+          & > .btn_group {
+            display: flex;
+          }
+        }
+        & > .text {
+          @apply text-ellipsis overflow-hidden whitespace-nowrap;
+        }
+        & > .btn_group {
+          display: none;
+          & > .BtnIcon:hover {
+            @apply text-white;
+          }
+          & > .BtnIcon:active {
+            @apply text-zinc-300;
+          }
+        }
+
+        &.new_chat {
+          @apply border border-zinc-500 select-none rounded grow;
+
+          &.active {
+            @apply border-l-[0.3rem] border-zinc-400 rounded-l-none;
+          }
+
+          &:active {
+            @apply bg-zinc-700;
+          }
+        }
+      }
+    }
+  }
+}

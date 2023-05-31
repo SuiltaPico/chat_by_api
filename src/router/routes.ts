@@ -6,8 +6,9 @@ import settings_page from "../pages/settings.tsx";
 
 const routes: RouteRecordRaw[] = [
   {
-    name: "index",
-    path: "/",
+    name: "new_chat",
+    path: "/chat/new_chat",
+    alias: "/",
     component: () => Promise.resolve(index_page),
   },
   {
@@ -18,9 +19,7 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const ms = use_main_store();
       // [impl: use_raw_render]
-      ms.curry_chat.use_raw_render = {};
-      ms.curry_chat.id = undefined;
-      ms.curry_chat.messages = [];
+      ms.curry_chat.clear()
 
       if (!to.params.chatid) {
         next("/");

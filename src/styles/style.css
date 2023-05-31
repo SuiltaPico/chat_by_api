@@ -1,3 +1,6 @@
+@import url(./LeftBar.css);
+@import url(./Chat.css);
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,15 +32,27 @@ ul > li {
 }
 
 pre.hljs {
-  @apply whitespace-pre p-3 py-6 frow flex-nowrap rounded gap-3 relative w-full;
+  @apply whitespace-pre p-3 pb-4 fcol rounded relative w-full;
 
-  & > .hl_line_number {
-    @apply px-2 min-w-fit border-zinc-600 select-none text-right text-zinc-400;
+  & > .header {
+    @apply frow px-1 pb-1 text-zinc-500;
   }
 
-  & > code {
-    @apply overflow-x-auto bg-opacity-20 pb-1 grow;
-    scrollbar-width: thin;
+  & > .btn_group {
+    @apply absolute top-3 right-3 font-serif;
+  }
+
+  & > .container {
+    @apply frow flex-nowrap gap-3;
+
+    & > .hl_line_number {
+      @apply px-2 min-w-fit border-zinc-600 select-none text-right text-zinc-400;
+    }
+
+    & > code {
+      @apply overflow-x-auto bg-opacity-20 pb-1 grow;
+      scrollbar-width: thin;
+    }
   }
 }
 
@@ -59,7 +74,7 @@ pre.hljs {
 }
 
 .q-tooltip {
-  @apply bg-zinc-700 shadow-md;
+  @apply bg-zinc-700 shadow-md text-base;
 }
 
 .q-notification {
@@ -83,71 +98,32 @@ pre.hljs {
 }
 
 .app-header {
-  @apply bg-zinc-800 border-b border-zinc-600;
+  @apply frow bg-zinc-800 border-b border-zinc-600 h-[3.5rem]
+    items-center grow;
+
+  & .q-btn {
+    @apply text-[0.82rem] w-[4rem] max-md:w-[3.5rem] h-[3.45rem]
+      max-lg:text-zinc-400;
+  }
+  & > .menu_switch {
+    @apply lg:hidden;
+  }
+
+  & > #app_header_slot {
+    @apply grow;
+  }
 }
 
 .page_container {
-  @apply max-lg:max-w-[100vw];
+  @apply max-sm:max-w-[100vw] grow;
 }
 
 .fit-width {
-  @apply max-sm:w-[80vw] md:w-[75%] w-[90%] lg:w-[90%] max-w-[800px] xl:w-[80%];
+  @apply max-sm:w-[95vw] md:w-[75%] w-[90%] lg:w-[80%] max-w-[800px] xl:w-[80%];
 }
 
 .record-fit-width {
-  @apply md:w-[80%] w-[90%] lg:w-[90%] max-w-[1000px] xl:w-[80%];
-}
-
-.ChatRecordSelectionItem {
-  @apply text-white px-3 py-3 text-base flex flex-row;
-  @apply gap-4 items-center rounded;
-  @apply cursor-pointer transition-all;
-  @apply items-center box-border border-zinc-500 rounded-l-none;
-  transition-duration: 0.1s;
-
-  & .q-icon {
-    @apply text-zinc-400 transition-all;
-  }
-  &:hover {
-    @apply bg-zinc-700;
-  }
-  &:hover > .q-icon {
-    @apply text-zinc-200;
-  }
-  &.Active {
-    @apply bg-zinc-800 border-l-[0.3rem] border-l-zinc-500;
-    & > .ButtonGroup {
-      display: flex;
-    }
-  }
-  & > .text {
-    @apply text-ellipsis overflow-hidden whitespace-nowrap;
-  }
-  & > .ButtonGroup {
-    display: none;
-    & > .BtnIcon:hover {
-      @apply text-white;
-    }
-    & > .BtnIcon:active {
-      @apply text-zinc-300;
-    }
-  }
-}
-
-.ChatRecordSelectionNewChat:active,
-.ChatRecordSelectionSettings:active {
-  @apply bg-zinc-700;
-}
-
-.ChatRecordSelectionNewChat {
-  @apply border border-zinc-500 select-none;
-  &:hover {
-    @apply border-zinc-500;
-  }
-}
-
-.ChatRecordSelectionSettings {
-  @apply text-white select-none;
+  @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[1000px] xl:w-[80%];
 }
 
 .ChatBodyInput {
@@ -172,14 +148,6 @@ pre.hljs {
   }
 }
 
-.ChatItem-wraper {
-  @apply frow gap-x-4 gap-y-3 max-md:flex-wrap record-fit-width;
-}
-
-.ChatItem-content {
-  @apply fcol flex-wrap self-center grow overflow-y-auto min-w-[15rem] max-md:order-1;
-}
-
 .Avatar {
   @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer relative;
   @apply after:w-full after:h-full after:absolute after:left-0 after:top-0;
@@ -195,8 +163,4 @@ pre.hljs {
 
 .error_container {
   @apply fcol text-base border border-red-500 bg-[#944e4e] p-4 rounded;
-}
-
-.mdblock {
-  @apply gap-4 fcol w-full overflow-hidden;
 }

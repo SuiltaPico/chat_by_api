@@ -38,8 +38,9 @@ export function passwd_slot(showing: Ref<boolean>, attrs: any = {}) {
   };
 }
 
-export function copy_with_notify(qs: QVueGlobals, content: string) {
-  const result = copy(content);
+export async function copy_with_notify(qs: QVueGlobals, content: string) {
+  const result = navigator.clipboard.writeText(content);
+
   const notify = (msg: string) =>
     qs.notify({
       position: "top",
@@ -49,9 +50,10 @@ export function copy_with_notify(qs: QVueGlobals, content: string) {
       type: "info",
     });
 
-  if (result) {
+  try {
+    await result;
     notify("复制成功");
-  } else {
+  } catch {
     notify("复制失败");
   }
 }

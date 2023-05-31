@@ -1,4 +1,5 @@
-import { Comment, h } from "vue";
+import { Comment, Slots, h } from "vue";
+import { Maybe } from "./utils";
 
 export function not_undefined_or<T>(fn: () => any, _default?: T) {
   const result = fn();
@@ -6,11 +7,17 @@ export function not_undefined_or<T>(fn: () => any, _default?: T) {
     return result;
   }
   if (_default === undefined) {
-    return h(Comment, '')
-  } 
-  return _default
+    return h(Comment, "");
+  }
+  return _default;
 }
 
 export function tpl<const T extends any[]>(...el: T) {
-  return <>{el}</>
+  return <>{el}</>;
+}
+
+export function insert_slot(slot: Readonly<Slots>, name: string = "default") {
+  return Maybe.of(slot[name])
+    .map((it) => it())
+    .unwrap_or(h(Comment, ""));
 }

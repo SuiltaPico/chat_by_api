@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { reactive, ref, watch } from "vue";
+import { Component, reactive, ref, watch } from "vue";
 import ChatRecord, {
   ChatRecordMeta,
   Message,
@@ -22,7 +22,21 @@ import {
 import { ChatBodyInputMode } from "../components/ChatBodyInput";
 import { QInput } from "quasar";
 
+type LeftBarSize = "just-icon" | "grow" | "hidden";
+
 const use_main_store = defineStore("main", () => {
+  const left_bar_width = ref(340);
+  function change_left_bar_width(size: LeftBarSize) {
+    const map = {
+      "just-icon": 56,
+      grow: 340,
+      hidden: 0,
+    };
+    left_bar_width.value = map[size];
+  }
+
+  const use_markdown_render = ref(true)
+
   const db_task: Promise<any> = Promise.resolve()
     .then(async () => {
       await sync_db();
@@ -122,6 +136,11 @@ const use_main_store = defineStore("main", () => {
     /** 状态：使用原始渲染。
      * [req: use_raw_render]：当页面变动时清空。 */
     use_raw_render: {} as Record<number, boolean>,
+    clear() {
+      curry_chat.use_raw_render = {};
+      curry_chat.id = undefined;
+      curry_chat.messages = [];
+    },
   });
 
   /** 不应该直接运行，应该使用 `wait_db_task` 加入事务队列中。  */
@@ -145,6 +164,9 @@ const use_main_store = defineStore("main", () => {
   }
 
   return {
+    use_markdown_render,
+    left_bar_width,
+    change_left_bar_width,
     chat_records_meta,
     settings,
     new_chat_record: _new_chat_record,

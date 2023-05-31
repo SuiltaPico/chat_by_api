@@ -8,6 +8,12 @@ export function any(x: any) {
   return x as any;
 }
 
+export function cl(_class: string[] | string) {
+  return any({
+    class: _class,
+  });
+}
+
 export function try_it(fn: () => any, on_err: (e: any) => void) {
   try {
     fn();
@@ -18,8 +24,7 @@ export function try_it(fn: () => any, on_err: (e: any) => void) {
 
 export function slot<N extends string, V>(name: N, value: V) {
   return {
-    name,
-    value,
+    [name]: value,
   };
 }
 
@@ -112,7 +117,7 @@ export class Maybe<T> {
     if (this.is_nil()) {
       return _default;
     }
-    return this.value;
+    return this.value as NotNil<T>;
   }
   map<U>(mapper: (value: NotNil<T>) => U) {
     if (this.is_nil()) return Maybe.of<U>();
@@ -126,7 +131,7 @@ export class Maybe<T> {
     return _.isNil(this.value);
   }
   is_some() {
-    return _.isNil(this.value);
+    return !_.isNil(this.value);
   }
 }
 
@@ -145,4 +150,15 @@ export function fix_compo_batch<
   };
 }
 
-fix_compo_batch([1] as const);
+export function arr_or_pack_to_arr<T>(maybe_arr: T): T extends any[] ? T : [T] {
+  if (Array.isArray(maybe_arr)) {
+    return maybe_arr as any;
+  }
+  return [maybe_arr] as any;
+}
+
+export function call<T extends () => any>(
+  fn: T
+): T extends () => infer U ? U : never {
+  return fn();
+}

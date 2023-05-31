@@ -11,21 +11,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@quasar/extras": "^1.16.3",
+    "@quasar/extras": "^1.16.4",
     "@vscode/markdown-it-katex": "^1.0.0",
     "copy-text-to-clipboard": "^3.1.0",
+    "dayjs": "^1.11.7",
     "highlight.js": "^11.8.0",
     "highlightjs-line-numbers.js": "^2.8.0",
     "katex": "^0.16.7",
     "lodash": "^4.17.21",
     "markdown-it": "^13.0.1",
     "markdown-it-highlightjs": "^4.0.1",
+    "monaco-editor": "^0.38.0",
     "openai": "^3.2.1",
     "openai-edge": "^0.5.1",
     "pinia": "^2.0.35",
     "pouchdb": "^8.0.1",
     "pouchdb-find": "^8.0.1",
     "quasar": "^2.11.10",
+    "tesseract.js": "^4.0.6",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6"
   },
@@ -50,6 +53,7 @@
     "typescript": "^5.0.4",
     "vite": "^4.3.3",
     "vite-plugin-cross-origin-isolation": "^0.1.6",
+    "vite-plugin-json5": "^1.0.5",
     "vue-tsc": "^1.6.4"
   }
 }
