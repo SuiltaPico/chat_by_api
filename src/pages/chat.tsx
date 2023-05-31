@@ -54,11 +54,59 @@ import { copy_with_notify } from "../common/quasar_utils";
 
 const md = create_md();
 
+async function regenerate(index: number) {
+  const ms = use_main_store();
+  const { chat_body_input, curry_chat } = ms;
+  const messages = cloneDeep(curry_chat.messages.slice(0, index + 1));
+  const msg = messages[index] as ServerMessage;
+
+  const chat_id = ms.curry_chat.id!;
+  const apply_update_chat_record_messages = throttle(async () => {
+    const curr_messages = await ms.get_chat_record_messages(chat_id);
+    curr_messages[index].content = messages[index].content;
+    await ms.update_chat_record_messages(chat_id, curr_messages);
+    await ms.sync_curr_chat_record_messages();
+  }, 100);
+
+  const settings = ms.settings;
+  const stop_next_ref = ref(async () => {});
+
+  if (ms.settings.apikeys.keys.length === 0) {
+    msg.error = {
+      err_type: "no_api_key",
+    };
+    await apply_update_chat_record_messages();
+    return;
+  }
+
+  try {
+    await openai_chat_completion({
+      api_key: settings.apikeys.keys[0].key,
+      api_base_path: settings.open_ai.api_base_path,
+      api_version: settings.open_ai.api_version,
+      messages: Messages_to_OpenAI_Messages(messages),
+      async on_status_changed(status) {
+        ms.curry_chat.status = status;
+      },
+      async on_update(clip) {
+        msg.content += clip;
+        await apply_update_chat_record_messages();
+      },
+      stop_next_ref,
+      open_ai_request_config: ms.get_chat_body_input_OpenAIRequestConfig(),
+    });
+  } catch (e) {
+    msg.error = e as ServerMessagesError;
+    await apply_update_chat_record_messages();
+    return;
+  }
+}
+
 async function generate_next(index: number) {
   const ms = use_main_store();
   const { chat_body_input, curry_chat } = ms;
   const messages = cloneDeep(curry_chat.messages);
-  const msg = ms.curry_chat.messages[index] as ServerMessage;
+  const msg = messages[index] as ServerMessage;
 
   const chat_id = ms.curry_chat.id!;
   const apply_update_chat_record_messages = throttle(async () => {
@@ -425,10 +473,10 @@ export const ServerMessageItem = defineComponent<
         : md.render_as_fence(message.content);
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
 
-      function regenerate() {
+      async function do_regenerate() {
         message.content = "";
         message.error = undefined;
-        generate_next(index);
+        await regenerate(index);
       }
 
       return (
@@ -450,7 +498,7 @@ export const ServerMessageItem = defineComponent<
               </div>
               <ServerMessageErrorHandler
                 message={message}
-                onRegenerate={regenerate}
+                onRegenerate={do_regenerate}
               ></ServerMessageErrorHandler>
               {not_undefined_or(() => {
                 if (!message.error) return;
@@ -483,7 +531,10 @@ export const ServerMessageItem = defineComponent<
                       class="text-secondary"
                       label="重新生成"
                       icon="mdi-refresh"
-                      onClick={regenerate}
+                      onClick={() => {
+                        more_popup_showing.value = false;
+                        do_regenerate();
+                      }}
                     ></MorePopupBtn>
                     <MorePopupBtn
                       label="直接复制文本"

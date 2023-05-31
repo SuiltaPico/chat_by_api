@@ -1,5 +1,13 @@
 export default [
   {
+    version: "2.0.2",
+    content: `
+### Fixed
+* 修复了重新生成时出现的内容覆写的问题。
+* 修复了对话中错误出现时，错误会写入到别的对话的问题。
+`,
+  },
+  {
     version: "2.0.1",
     content: `
 ### Changed
