@@ -1,10 +1,26 @@
 import { defineComponent } from "vue";
 import hj from "highlight.js";
+import { QBtn, QIcon, QSpace } from "quasar";
+import { as_props } from "../common/utils";
 
-export default defineComponent({
+type ErrorContainerProps = { title?: string; content?: string; raw?: string };
+
+export default defineComponent<
+  ErrorContainerProps,
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    regenerate: () => void;
+  }
+>({
   name: "ErrorContainer",
-  props: ["title", "content", "raw"],
-  setup(props: { title: string; content: string; raw: string }, ctx) {
+  props: as_props<ErrorContainerProps>()(["title", "content", "raw"]),
+  emits: ["regenerate"],
+  setup(props, ctx) {
     return () => {
       return (
         <div class="error_container gap-2">
@@ -13,9 +29,9 @@ export default defineComponent({
             {props.content} {ctx.slots.default ? ctx.slots.default() : ""}
           </div>
           {props.raw != undefined ? (
-            <details>
+            <details class="cursor-pointer">
               <div
-                class="bg-zinc-900 p-4"
+                class="bg-zinc-900 p-4 cursor-auto"
                 v-html={
                   hj.highlight(
                     props.raw
@@ -32,6 +48,21 @@ export default defineComponent({
           ) : (
             ""
           )}
+          <div class="frow mt-1">
+            <QBtn
+              color="primary"
+              padding="0.55rem 1rem"
+              unelevated
+              onClick={() => {
+                ctx.emit("regenerate");
+              }}
+            >
+              <div class="frow items-center gap-2">
+                <QIcon name="mdi-refresh" />
+                <div>尝试重新生成</div>
+              </div>
+            </QBtn>
+          </div>
         </div>
       );
     };

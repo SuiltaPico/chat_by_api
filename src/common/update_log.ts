@@ -1,13 +1,28 @@
 export default [
   {
+    version: "2.0.1",
+    content: `
+### Changed
+* 所有错误容器都会附加一个重新生成的按钮。
+### Added
+* 新增滚到页面最下方的按钮。
+* 新增后台生成支持。
+* 新增重新生成生成支持。
+### Fixed
+* 修复了在宽度为 1024 左右的时候出现的输入框宽度溢出问题。
+* 修复了生成时如果切换页面会出现内容错乱的问题。
+* 修复了报错时间距错误的问题。
+`,
+  },
+  {
     version: "2.0.0-alpha",
     content: `
-### Added
-* 更好的代码块支持
 ### Changed
 * 更新日志采用 [Keep a Changelog v1.1.0](https://keepachangelog.com/en/1.1.0/)
 * 版本号采用 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
-* 界面优化。
+* 界面小范围重构。
+### Added
+* 更好的代码块支持
 ### Fixed
 * 修复了 Markdown 渲染的 token 遗漏的问题。
 ### Tips

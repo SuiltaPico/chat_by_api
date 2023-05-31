@@ -13,6 +13,10 @@ body {
   @apply bg-zinc-700;
 }
 
+#app {
+  @apply scroll-smooth;
+}
+
 ul,
 ol {
   @apply ml-4;
@@ -119,7 +123,7 @@ pre.hljs {
 }
 
 .fit-width {
-  @apply max-sm:w-[95vw] md:w-[75%] w-[90%] lg:w-[80%] max-w-[800px] xl:w-[80%];
+  @apply w-[80%] max-sm:w-[95vw] md:w-[75%] lg:w-[60%] max-w-[800px] xl:w-[80%];
 }
 
 .record-fit-width {

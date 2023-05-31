@@ -2,7 +2,7 @@
   @apply fcol record-fit-width gap-1;
 
   & > .chat_item_header {
-    @apply frow text-xs text-zinc-400 gap-2
+    @apply frow text-xs text-zinc-400 gap-2;
   }
 
   & > .chat_item_main {
@@ -10,15 +10,18 @@
 
     & > .content {
       @apply fcol flex-wrap self-center grow
-        overflow-y-auto min-w-[16rem] max-md:order-1;
+        overflow-y-auto min-w-[16rem] max-md:order-1 gap-2;
     }
 
     & .mdblock {
       @apply gap-4 fcol w-full overflow-hidden;
     }
+
+    & > .q-space {
+      @apply hidden max-lg:block;
+    }
   }
 }
-
 
 .more_popup {
   @apply fcol bg-[#242428] text-white select-none quick 

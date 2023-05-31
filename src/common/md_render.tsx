@@ -148,11 +148,6 @@ export const create_md = () => {
         result.push(...htmlToVNodes(md.renderer.render(cache, md.options, {})));
       }
 
-      console.log(
-        result,
-        htmlToVNodes(md.renderer.render(cache, md.options, {}))
-      );
-
       return result;
     },
     render_as_fence(src: string) {

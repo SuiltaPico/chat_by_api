@@ -93,6 +93,7 @@ export async function delete_chat_record(id: string) {
   await db.remove(await db.get(id));
 }
 
+
 export const settings_default_value = {
   apikeys: {
     keys: [],

@@ -39,7 +39,7 @@ export default defineComponent({
             showIfAbove
             {...refvmodel(show_left_bar)}
             side="left"
-            breakpoint={1024}
+            breakpoint={1040}
             width={ms.left_bar_width}
           >
             <LeftBar class="min-w-[300px] bg-zinc-900" />

@@ -69,6 +69,7 @@ export function non_empty_else<T>(s: string, _else: T) {
 export function scroll_to(el: HTMLElement) {
   window.scrollTo({
     top: el.clientHeight,
+    behavior: "smooth",
   });
 }
 

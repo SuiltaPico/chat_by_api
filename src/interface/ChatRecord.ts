@@ -1,4 +1,5 @@
 import { CreateChatCompletionRequest } from "openai";
+import { type } from "os";
 
 /** 聊天记录元信息 */
 export interface ChatRecordMeta {
@@ -28,22 +29,36 @@ export interface UserMessage {
   content: string;
 }
 
+interface _RequestConfig {
+  api_source?: string;
+}
+
+export interface OpenAIRequestConfig
+  extends _RequestConfig,
+    Omit<CreateChatCompletionRequest, "messages"> {
+  api_source?: "openai";
+}
+
+export type RequestConfig = OpenAIRequestConfig;
+
 export interface ServerMessage {
   uuid?: string;
   message_type: "server";
   role: Role;
   created: number;
-  request_config: Omit<CreateChatCompletionRequest, "messages">;
+  request_config: OpenAIRequestConfig | _RequestConfig;
   response_meta?: ResponseMeta;
   content: string;
-  error?:
-    | ServerMessagesAPIError
-    | ServerMessagesOtherAPIError
-    | ServerMessagesOtherStringError
-    | ServerMessagesNoAPIKEYError
-    | ServerMessagesConnectionError
-    | ServerMessagesConnectionAbortError;
+  error?: ServerMessagesError;
 }
+
+export type ServerMessagesError =
+  | ServerMessagesAPIError
+  | ServerMessagesOtherAPIError
+  | ServerMessagesOtherStringError
+  | ServerMessagesNoAPIKEYError
+  | ServerMessagesConnectionError
+  | ServerMessagesConnectionAbortError;
 
 export interface ServerMessagesAPIError {
   err_type: "api";
