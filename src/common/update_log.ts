@@ -1,5 +1,13 @@
 export default [
   {
+    version: "2.2.0",
+    content: `
+### Added
+* 可以通过 url \`open_ai\` query 写入 OpenAI key。
+* 新增配额不足和API-KEY 无效的报错信息。
+`,
+  },
+  {
     version: "2.1.0",
     content: `
 ### Added

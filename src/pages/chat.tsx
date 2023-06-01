@@ -392,6 +392,22 @@ export const ServerMessageErrorHandler = defineComponent<
               onRegenerate={emit_regenerate}
             ></ErrorContainer>
           );
+        } else if (err.type === "insufficient_quota") {
+          return (
+            <ErrorContainer
+              title="配额不足"
+              content="您超过了当前配额，请检查您的 OpenAI 账号的计划和账单详细信息。"
+              raw={err_str}
+            ></ErrorContainer>
+          );
+        } else if (err.type === "invalid_request_error") {
+          return (
+            <ErrorContainer
+              title="API-KEY 无效"
+              content="API-KEY 可能输入错误、过期或被账号主人删除。"
+              raw={err_str}
+            ></ErrorContainer>
+          );
         } else {
           return <ErrorContainer title="错误" raw={err_str}></ErrorContainer>;
         }
