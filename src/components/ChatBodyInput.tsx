@@ -35,6 +35,7 @@ import { not_undefined_or, tpl } from "../common/jsx_utils";
 import { Role, RoleWithoutUnknown } from "../interface/ChatRecord";
 import { QSelectOptionSlotParam } from "../common/quasar_utils";
 import { Avatar } from "../pages/chat";
+import { HotKeys, key_event_match_HotKey } from "../common/key_event";
 
 export type ChatBodyInputMode = "generate" | "add";
 
@@ -346,9 +347,9 @@ export const Inputer = defineComponent<
     return () => {
       const promot = toRef(props, "promot");
       return (
-        <div class="frow max-md:gap-2 gap-3 items-center">
+        <div class="inputer_container">
           <QInput
-            {...c`ChatBodyInput`}
+            {...c`inputer`}
             modelValue={promot.value}
             onUpdate:modelValue={(value) => {
               emit("update:promot", String(value));
@@ -362,7 +363,7 @@ export const Inputer = defineComponent<
             ref={inputter}
           ></QInput>
           <QBtn
-            {...c`w-[3.5rem] h-[3rem]`}
+            {...c`w-[3.4rem] h-[2.9rem]`}
             {...submit_props.value}
             loading={props.submit_btn_loading}
             unelevated
@@ -377,20 +378,45 @@ export const Inputer = defineComponent<
   },
 });
 
-export const ChatBodyInput = defineComponent({
-  props: ["submit_btn_loading"],
+type ChatBodyInputProps = {
+  submit_btn_loading?: boolean;
+  submit_hot_keys: HotKeys;
+};
+
+export const ChatBodyInput = defineComponent<
+  ChatBodyInputProps,
+  {},
+  {},
+  {},
+  {},
+  {},
+  {},
+  {
+    submit: () => void;
+  }
+>({
+  props: as_props<ChatBodyInputProps>()([
+    "submit_btn_loading",
+    "submit_hot_keys",
+  ]),
   emits: ["submit"],
-  setup(props: { submit_btn_loading?: boolean }, { attrs, emit }) {
+  setup(props, { attrs, emit }) {
     const ms = use_main_store();
     const promot = toRef(ms.chat_body_input, "promot");
     const mode = toRef(ms.chat_body_input, "mode");
+    const submit_hot_keys = props.submit_hot_keys;
     return () => {
       return (
         <div
-          class={[
-            "fcol frow max-md:gap-2 gap-3 bg-zinc-800 bg-opacity-[.9] p-3 rounded-lg drop-shadow-lg fit-width",
-          ]}
+          class="chat_body_input_container"
           {...attrs}
+          onKeydown={(e) => {
+            if (e.repeat) return;
+            const match = key_event_match_HotKey(e, submit_hot_keys);
+            if (match) {
+              emit("submit");
+            }
+          }}
         >
           <Inputer
             {...props}

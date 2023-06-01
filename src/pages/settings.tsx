@@ -1,8 +1,18 @@
-import { QBtn, QIcon, QInput, QPage, QSelect, QToggle } from "quasar";
+import {
+  QBtn,
+  QIcon,
+  QInput,
+  QItem,
+  QList,
+  QPage,
+  QSelect,
+  QToggle,
+} from "quasar";
 import { defineComponent, ref } from "vue";
 import { batch_set_ref, c, promise_with_ref, refvmodel } from "../common/utils";
 import use_main_store from "../store/main_store";
 import { APIKeySource } from "../interface/Settings";
+import { HotKeys } from "../common/key_event";
 import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import _ from "lodash";
 import { DBAPIKEYDuplicateError } from "../store/db_api";
@@ -14,9 +24,78 @@ const md = new MarkdownIt({
   html: false,
 });
 
+export const HotKeysManager = defineComponent({
+  setup() {
+    const ms = use_main_store();
+
+    const set = (...ks: string[]) => new Set(ks);
+    const st = (s: Set<string>, t: string) => ({
+      s,
+      t,
+    });
+
+    function HotKeys_to_submit_keys_selection(hot_keys: HotKeys) {
+      const first_hot_key = hot_keys.value[0].keys;
+      // const list = [
+      //   st(set("Enter"), "Enter"),
+      //   st(set("Ctrl", "Enter"), "Ctrl + Enter"),
+      //   st(set("Shift", "Enter"), "Shift + Enter"),
+      //   st(set("Alt", "Enter"), "Alt + Enter"),
+      // ];
+      return first_hot_key.join(" + ");
+    }
+
+    const submit_keys_loading = ref(false);
+
+    const submit_keys_selected = ref();
+    const submit_keys_options = [
+      "Enter",
+      "Ctrl + Enter",
+      "Shift + Enter",
+      "Alt + Enter",
+    ];
+
+    return () => {
+      const hotkeys = ms.settings.hot_keys;
+      submit_keys_selected.value = HotKeys_to_submit_keys_selection(
+        hotkeys.submit_keys
+      );
+      return (
+        <div class="fcol gap-5">
+          <div class="text-xl font-bold">快捷键</div>
+          <ul>
+            <li class="gap-2 items-center marker:text-zinc-400">
+              <div class="frow gap-2 items-center">
+                <div>发送消息:</div>
+                <QSelect
+                  modelValue={submit_keys_selected.value}
+                  onUpdate:modelValue={async (new_keys) => {
+                    submit_keys_loading.value = true;
+                    ms.settings.hot_keys.submit_keys.value[0].keys =
+                      new_keys.split(" + ");
+                    await ms.set_settings("hot_keys", ms.settings.hot_keys);
+                    await ms.sync_db();
+                    submit_keys_loading.value = false;
+                  }}
+                  options={submit_keys_options}
+                  loading={submit_keys_loading.value}
+                  color="secondary"
+                  dark
+                  filled
+                  dense
+                ></QSelect>
+              </div>
+            </li>
+          </ul>
+        </div>
+      );
+    };
+  },
+});
+
 export const APIKEY_Manager = defineComponent({
   setup() {
-    const main_store = use_main_store();
+    const ms = use_main_store();
 
     const err = ref("");
 
@@ -33,11 +112,11 @@ export const APIKEY_Manager = defineComponent({
 
     const all_key_showing = ref(false);
 
-    async function apply_key_editing() {
+    async function apply_apikey_editing() {
       _.debounce(async () => {
         await promise_with_ref(
           async () => {
-            await main_store.set_settings("apikeys");
+            await ms.set_settings("apikeys");
           },
           frozen_key_editing,
           (e) => {
@@ -61,11 +140,10 @@ export const APIKEY_Manager = defineComponent({
     }
 
     return () => {
-      const settings = main_store.settings;
-      console.log(settings);
+      const settings = ms.settings;
       // TODO: 压缩这里的代码
       return (
-        <div class="fcol gap-6">
+        <div class="fcol gap-5">
           <div class="text-xl font-bold">API-KEY 管理</div>
           {err.value ? <div class="error_container">{err.value}</div> : ""}
           <div class="fcol gap-2">
@@ -109,13 +187,13 @@ export const APIKEY_Manager = defineComponent({
                 loading={new_key_adding.value}
                 onClick={() => {
                   promise_with_ref(async () => {
-                    main_store.settings.apikeys.keys.push({
+                    ms.settings.apikeys.keys.push({
                       source: new_key_type.value,
                       name: new_key_name.value,
                       key: new_key_key.value,
                     });
                     batch_set_ref("", new_key_name, new_key_key);
-                    await main_store.set_settings("apikeys");
+                    await ms.set_settings("apikeys");
                   }, new_key_adding);
                 }}
               >
@@ -132,7 +210,7 @@ export const APIKEY_Manager = defineComponent({
                   modelValue={it.source}
                   onUpdate:modelValue={(v) => {
                     it.source = v;
-                    apply_key_editing();
+                    apply_apikey_editing();
                   }}
                   options={new_key_type_option}
                   dark
@@ -145,7 +223,7 @@ export const APIKEY_Manager = defineComponent({
                   modelValue={it.name}
                   onUpdate:modelValue={(v) => {
                     it.name = String(v);
-                    apply_key_editing();
+                    apply_apikey_editing();
                   }}
                   dark
                   filled
@@ -158,7 +236,7 @@ export const APIKEY_Manager = defineComponent({
                   modelValue={it.key}
                   onUpdate:modelValue={(v) => {
                     it.key = String(v);
-                    apply_key_editing();
+                    apply_apikey_editing();
                   }}
                   dark
                   filled
@@ -172,11 +250,11 @@ export const APIKEY_Manager = defineComponent({
                   }}
                 </QInput>
                 <QBtn
-                  color="negative"
+                  {...c`bg-_negative2`}
                   unelevated
                   onClick={() => {
                     keys.splice(i, 1);
-                    apply_key_editing();
+                    apply_apikey_editing();
                   }}
                 >
                   删除
@@ -202,10 +280,9 @@ export const OpenAI = defineComponent({
 
     return () => {
       const open_ai = ms.settings.open_ai;
-      console.log(open_ai);
 
       return (
-        <div class="fcol gap-6">
+        <div class="fcol gap-5">
           <div class="text-xl font-bold">OpenAI</div>
           <div class="fcol gap-4">
             <div>第三方 API 设置</div>
@@ -247,7 +324,7 @@ export const OpenAI = defineComponent({
 export const About = defineComponent({
   setup() {
     return () => (
-      <div class="fcol gap-6">
+      <div class="fcol gap-5">
         <div class="text-xl font-bold">关于</div>
         <div class="fcol gap-2">
           <div class="frow gap-2">
@@ -290,6 +367,7 @@ export default defineComponent({
       return (
         <QPage {...c`frow default-bg text-zinc-200 justify-center p-4`}>
           <div class="fcol default-bg record-fit-width pt-8 gap-12">
+            <HotKeysManager></HotKeysManager>
             <APIKEY_Manager></APIKEY_Manager>
             <OpenAI></OpenAI>
             <About></About>

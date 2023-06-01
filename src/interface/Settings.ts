@@ -1,10 +1,17 @@
+import { HotKeys } from "../common/key_event";
+
 export default interface Settings {
   apikeys: APIKeysSetting;
   open_ai: OpenAISetting;
+  hot_keys: HotKeySetting;
 }
 
-// 增加的时候注意添加 db_api 
-export type SettingItem = APIKeysSetting | OpenAISetting;
+// 注意，增加新类型的时候注意去 db_api.ts 更新 api
+export type SettingItem = APIKeysSetting | OpenAISetting | HotKeySetting;
+
+export interface HotKeySetting {
+  submit_keys: HotKeys;
+}
 
 export type APIKeySource = "OpenAI";
 

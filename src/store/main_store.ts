@@ -172,6 +172,8 @@ const use_main_store = defineStore("main", () => {
       await sync_curr_chat_record_messages();
     }
 
+    console.log("[sync_db]", settings.value);
+
     is_loading.value = false;
   }
 

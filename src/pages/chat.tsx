@@ -643,12 +643,12 @@ export const MorePopup = defineComponent<
           {Maybe.of(ctx.slots.default)
             .map((slot) => slot())
             .unwrap_or(<div></div>)}
-          {/* <MorePopupBtn
+          <MorePopupBtn
             class="text-_negative"
             label="删除"
             icon="mdi-delete"
             onClick={() => ctx.emit("delete")}
-          ></MorePopupBtn> */}
+          ></MorePopupBtn>
           <MorePopupBtn icon="mdi-information-outline" label="信息">
             <QPopupProxy {...c`bg-zinc-700 text-zinc-200`}>
               <div class="p-2 px-4 w-full">
@@ -751,7 +751,7 @@ export const ChatBody = defineComponent({
           // 处理对话不存在的情况
           if (chat_id.value !== undefined && ms.curry_chat.id === undefined) {
             router.push({
-              name: "index",
+              name: "new_chat",
             });
           }
           if (ms.chat_body_input.require_next === true) {
@@ -784,8 +784,9 @@ export const ChatBody = defineComponent({
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
           <ChatBodyInput
-            class={"fixed bottom-[2rem] self-center"}
+            class={"fixed bottom-[2rem] max-[480px]:bottom-[0rem] self-center"}
             submit_btn_loading={loading_messages.value}
+            submit_hot_keys={ms.settings.hot_keys.submit_keys}
             onSubmit={async () => {
               const { promot } = ms.chat_body_input;
               if (promot.length === 0) return;
@@ -861,7 +862,7 @@ export const TopBar = defineComponent({
             <QTooltip>删除</QTooltip>
           </QBtn> */}
           <QSpace></QSpace>
-          <div class="frow gap-4">
+          <div class="right_btn_gruop">
             <QToggle {...refvmodel(use_markdown_render)}>
               <QIcon name="mdi-language-markdown" size="1.6rem"></QIcon>
             </QToggle>

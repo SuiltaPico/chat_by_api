@@ -27,7 +27,7 @@ ol {
 }
 
 ul {
-  @apply list-disc;
+  list-style: disc;
 }
 
 ol > li,
@@ -123,32 +123,46 @@ pre.hljs {
 }
 
 .fit-width {
-  @apply w-[80%] max-sm:w-[95vw] md:w-[75%] lg:w-[60%] max-w-[800px] xl:w-[80%];
+  @apply w-[80%] max-[480px]:w-[100vw] max-sm:w-[90vw] md:w-[75%] lg:w-[60%] max-w-[800px] xl:w-[80%];
 }
 
 .record-fit-width {
   @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[1000px] xl:w-[80%];
 }
 
-.ChatBodyInput {
-  @apply bg-zinc-800 border border-zinc-500 rounded-t-md shadow-xl grow;
-  @apply min-h-[3rem] max-h-[35vh] overflow-y-auto;
+.chat_body_input_container {
+  @apply fcol frow gap-2 max-[480px]:gap-2 bg-zinc-800 bg-opacity-[.9]
+    p-3 max-[480px]:p-3 rounded-lg
+    max-[480px]:rounded-none drop-shadow-lg fit-width;
 
-  & .q-field__control {
-    @apply min-h-[3rem];
-  }
+  & > .inputer_container {
+    @apply frow gap-3 items-center;
 
-  &.q-field--focused {
-    @apply border-zinc-500;
-  }
+    & > .q-btn {
+      @apply w-[3.5rem] h-[2.95rem] max-sm:w-[3.4rem] max-sm:h-[2.9rem];
+    }
 
-  &.q-field--filled.q-field--dark.q-field--highlighted
-    .q-field__control::before {
-    background-color: #ffffff08;
-  }
+    & > .inputer {
+      @apply bg-zinc-800 border border-zinc-500 rounded-t-md shadow-xl grow;
+      @apply min-h-[3rem] max-h-[35vh] overflow-y-auto;
 
-  &.q-textarea .q-field__native {
-    padding-bottom: 17px;
+      & .q-field__control {
+        @apply min-h-[3rem];
+      }
+
+      &.q-field--focused {
+        @apply border-zinc-500;
+      }
+
+      &.q-field--filled.q-field--dark.q-field--highlighted
+        .q-field__control::before {
+        background-color: #ffffff08;
+      }
+
+      &.q-textarea .q-field__native {
+        padding-bottom: 17px;
+      }
+    }
   }
 }
 

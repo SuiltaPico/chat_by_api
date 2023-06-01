@@ -26,7 +26,8 @@ export const IndexBody = defineComponent({
       <div class="flex flex-col relative grow">
         <IndexBodyMain />
         <ChatBodyInput
-          class={"fixed bottom-[2rem] self-center"}
+          class={"fixed bottom-[2rem] max-[480px]:bottom-[0rem] self-center"}
+          submit_hot_keys={ms.settings.hot_keys.submit_keys}
           onSubmit={async () => {
             const mode = ms.chat_body_input.mode;
             const promot = ms.chat_body_input.promot;

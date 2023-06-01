@@ -20,6 +20,7 @@
     & > .q-space {
       @apply hidden max-lg:block;
     }
+
   }
 }
 
@@ -40,5 +41,13 @@
   @apply frow grow pr-2 text-zinc-300 max-md:text-zinc-200;
   & > .q-btn .q-icon {
     @apply max-md:text-[1.35rem];
+  }
+
+  & > .right_btn_gruop {
+    @apply frow gap-4;
+
+    & > .q-btn{
+      @apply w-[3rem];
+    }
   }
 }

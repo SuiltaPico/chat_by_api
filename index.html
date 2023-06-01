@@ -5,13 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preload" href="/ChatGPT.svg" as="image" />
+    <meta name="theme-color" content="#27272a" />
+    <meta
+      name="description"
+      content="一个尽可能方便的使用 LLM 模型的网页应用。"
+    />
     <title>Chat By API</title>
   </head>
   <body>
     <div id="app"></div>
     <script>
       // fix for pouchdb
-      var global = (global === undefined) ? window : global;
+      var global = global === undefined ? window : global;
     </script>
     <script type="module" src="/src/main.ts"></script>
   </body>

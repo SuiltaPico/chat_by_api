@@ -93,6 +93,7 @@ export async function delete_chat_record(id: string) {
   await db.remove(await db.get(id));
 }
 
+// ----settings----
 
 export const settings_default_value = {
   apikeys: {
@@ -103,6 +104,11 @@ export const settings_default_value = {
     api_base_path: "",
     api_version: "",
   },
+  hot_keys: {
+    submit_keys: {
+      value: [{ keys: ["Ctrl", "Enter"] }],
+    },
+  },
 } as Settings;
 
 const settings_init = (async () => {
@@ -111,9 +117,11 @@ const settings_init = (async () => {
     _.chain(settings_default_value)
       .toPairs()
       .map(async ([key, value]) => {
-        await db.get(key).catch((e) => {
+        await db.get(key).catch(async (e) => {
           if (e.reason == "missing") {
-            db.put({
+            console.log("[setting] fix missing key", key);
+
+            await db.put({
               ...value,
               _id: key,
             });
@@ -141,7 +149,7 @@ export async function get_settings() {
     .value() as any as Settings;
 }
 
-export async function get_rev(id: keyof Settings) {
+export async function get_settings_rev(id: keyof Settings) {
   return (await dbs.settings.get(id))._rev;
 }
 
@@ -176,6 +184,6 @@ export async function set_settings<const T extends keyof Settings>(
   await dbs.settings.put({
     _id: id,
     ...(value as SettingItem),
-    _rev: await get_rev(id),
+    _rev: await get_settings_rev(id),
   });
 }
