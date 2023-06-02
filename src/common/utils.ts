@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _, { fromPairs } from "lodash";
 import { type } from "os";
 import { AllowedComponentProps, Ref } from "vue";
 
@@ -39,12 +39,27 @@ export function st(s: TemplateStringsArray) {
   return { style: s.join("") } as any;
 }
 
+export function carr(s: string[]) {
+  return { class: s.join("") } as any;
+}
+
 /** 类似 `v-model`。双向绑定的时候帮你偷个懒。 */
 export function refvmodel<T>(v: Ref<T>, name = "modelValue") {
   return {
     [name]: v.value,
     [`onUpdate:${name}` as const]: (value: T) => (v.value = value),
   } as any;
+}
+
+export function refvmodel_type<const T, const N extends string = "modelValue">(
+  v: Ref<T>,
+  name: N
+) {
+  type onUpdate<T extends string> = `onUpdate:${T}`;
+  return {
+    [name]: v.value,
+    [`onUpdate:${name}`]: (value: T) => (v.value = value),
+  } as any as Record<N, T> & Record<onUpdate<N>, (value: T) => void>;
 }
 
 export function as_props<T extends {}>() {
@@ -162,4 +177,8 @@ export function call<T extends () => any>(
   fn: T
 ): T extends () => infer U ? U : never {
   return fn();
+}
+
+export function parse_param_to_Record(param: string) {
+  return fromPairs(param.split("&").map((it) => it.split("=")));
 }

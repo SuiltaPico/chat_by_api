@@ -28,6 +28,7 @@ import {
   any,
   as_props,
   c,
+  parse_param_to_Record,
   promise_with_ref,
   refvmodel,
   scroll_if_close_to,
@@ -51,6 +52,7 @@ import { create_md } from "../common/md_render";
 import { calendar } from "../common/date";
 import { openai_chat_completion } from "../common/generate";
 import { copy_with_notify } from "../common/quasar_utils";
+import BetterBtn from "../components/BetterBtn";
 
 const md = create_md();
 
@@ -61,9 +63,12 @@ async function regenerate(index: number) {
   const msg = messages[index] as ServerMessage;
 
   const chat_id = ms.curry_chat.id!;
+
   const apply_update_chat_record_messages = throttle(async () => {
     const curr_messages = await ms.get_chat_record_messages(chat_id);
-    curr_messages[index].content = messages[index].content;
+    const curr_message = curr_messages[index] as ServerMessage;
+    curr_message.content = msg.content;
+    curr_message.error = msg.error;
     await ms.update_chat_record_messages(chat_id, curr_messages);
     await ms.sync_curr_chat_record_messages();
   }, 100);
@@ -79,11 +84,20 @@ async function regenerate(index: number) {
     return;
   }
 
+  const first_apikey = settings.apikeys.keys[0];
+  let additional_option = {};
+  if (first_apikey.source === "Custom") {
+    additional_option = {
+      api_base_path: first_apikey.base,
+      params: parse_param_to_Record(first_apikey.param),
+    };
+  }
+
   try {
     await openai_chat_completion({
-      api_key: settings.apikeys.keys[0].key,
-      api_base_path: settings.open_ai.api_base_path,
-      api_version: settings.open_ai.api_version,
+      api_key: first_apikey.key,
+      params: {},
+      ...additional_option,
       messages: Messages_to_OpenAI_Messages(messages),
       async on_status_changed(status) {
         ms.curry_chat.status = status;
@@ -125,11 +139,20 @@ async function generate_next(index: number) {
     return;
   }
 
+  const first_apikeys = settings.apikeys.keys[0];
+  let additional_option = {};
+  if (first_apikeys.source === "Custom") {
+    additional_option = {
+      api_base_path: first_apikeys.base,
+      params: parse_param_to_Record(first_apikeys.param),
+    };
+  }
+
   try {
     await openai_chat_completion({
-      api_key: settings.apikeys.keys[0].key,
-      api_base_path: settings.open_ai.api_base_path,
-      api_version: settings.open_ai.api_version,
+      api_key: first_apikeys.key,
+      params: {},
+      ...additional_option,
       messages: Messages_to_OpenAI_Messages(messages),
       async on_status_changed(status) {
         ms.curry_chat.status = status;
@@ -245,9 +268,9 @@ export const UserMessageItem = defineComponent<
             <Avatar
               class="mt-[2px]"
               role={message.role}
-              onUpdate:role={(role) => {
+              onUpdate:role={async (role) => {
                 message.role = role;
-                ms.update_chat_record_messages(chatid);
+                await ms.update_chat_record_messages(chatid);
               }}
             ></Avatar>
             <div class="content">{message.content}</div>
@@ -257,10 +280,10 @@ export const UserMessageItem = defineComponent<
                 {...c`text-xs text-zinc-300 p-2`}
                 icon="mdi-import"
                 flat
-                onClick={() => {
+                onClick={async () => {
                   ms.chat_body_input.promot = message.content;
                   ms.chat_body_input.inputter?.focus();
-                  ms.update_chat_record_messages(chatid);
+                  await ms.update_chat_record_messages(chatid);
                 }}
               ></QBtn>
               <QBtn
@@ -316,7 +339,19 @@ export const ServerMessageErrorHandler = defineComponent<
       const err_str = JSON.stringify(err);
       if (err === undefined) return;
 
-      const emit_regenerate = () => ctx.emit("regenerate");
+      const regenerate_btn = (
+        <BetterBtn
+          onClick={() => {
+            console.log("regenerate");
+            ctx.emit("regenerate");
+          }}
+        >
+          <div class="frow items-center gap-2">
+            <QIcon name="mdi-refresh" />
+            <div>尝试重新生成</div>
+          </div>
+        </BetterBtn>
+      );
 
       if (err.err_type === "api") {
         if (err.code === "model_not_found") {
@@ -324,8 +359,9 @@ export const ServerMessageErrorHandler = defineComponent<
             <ErrorContainer
               content={`你的 API-KEY 无法使用当前模型 “${message.request_config.model}”，请尝试切换其它模型。`}
               raw={err_str}
-              onRegenerate={emit_regenerate}
-            ></ErrorContainer>
+            >
+              {regenerate_btn}
+            </ErrorContainer>
           );
         } else if (err.type === "server_error") {
           const model_overloaded_reg =
@@ -340,8 +376,9 @@ export const ServerMessageErrorHandler = defineComponent<
                 title="模型过载"
                 content={`当前模型因其他请求而过载。您可以重试您的请求，或者如果错误仍然存​​在，请通过我们的帮助中心 help.openai.com 与我们联系。`}
                 raw={err_str}
-                onRegenerate={emit_regenerate}
-              ></ErrorContainer>
+              >
+                {regenerate_btn}
+              </ErrorContainer>
             );
           }
 
@@ -350,8 +387,9 @@ export const ServerMessageErrorHandler = defineComponent<
               title="服务器错误"
               content={`服务器发生错误，请查看 “详细信息”。`}
               raw={err_str}
-              onRegenerate={emit_regenerate}
-            ></ErrorContainer>
+            >
+              {regenerate_btn}
+            </ErrorContainer>
           );
         } else if (err.type === "requests") {
           const rate_limit_reg =
@@ -380,17 +418,16 @@ export const ServerMessageErrorHandler = defineComponent<
                   "片刻"
                 )} 后重试。如果您仍然遇到问题，请通过我们的帮助中心 help.openai.com 联系我们。请向您的帐户添加付款方式以提高您的费率限制。访问 https://platform.openai.com/account/billing 添加支付方式。`}
                 raw={err_str}
-                onRegenerate={emit_regenerate}
-              ></ErrorContainer>
+              >
+                {regenerate_btn}
+              </ErrorContainer>
             );
           }
 
           return (
-            <ErrorContainer
-              title="服务器拒绝了请求"
-              raw={err_str}
-              onRegenerate={emit_regenerate}
-            ></ErrorContainer>
+            <ErrorContainer title="服务器拒绝了请求" raw={err_str}>
+              {regenerate_btn}
+            </ErrorContainer>
           );
         } else if (err.type === "insufficient_quota") {
           return (
@@ -398,7 +435,9 @@ export const ServerMessageErrorHandler = defineComponent<
               title="配额不足"
               content="您超过了当前配额，请检查您的 OpenAI 账号的计划和账单详细信息。"
               raw={err_str}
-            ></ErrorContainer>
+            >
+              {regenerate_btn}
+            </ErrorContainer>
           );
         } else if (err.type === "invalid_request_error") {
           return (
@@ -406,17 +445,22 @@ export const ServerMessageErrorHandler = defineComponent<
               title="API-KEY 无效"
               content="API-KEY 可能输入错误、过期或被账号主人删除。"
               raw={err_str}
-            ></ErrorContainer>
+            >
+              {regenerate_btn}
+            </ErrorContainer>
           );
         } else {
-          return <ErrorContainer title="错误" raw={err_str}></ErrorContainer>;
+          return (
+            <ErrorContainer title="错误" raw={err_str}>
+              {regenerate_btn}
+            </ErrorContainer>
+          );
         }
       } else if (err.err_type === "no_api_key") {
         return (
           <ErrorContainer
             title="无 API-KEY"
             content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
-            onRegenerate={emit_regenerate}
           >
             <QBtn
               color="primary"
@@ -427,6 +471,7 @@ export const ServerMessageErrorHandler = defineComponent<
             >
               立即前往
             </QBtn>
+            <div>{regenerate_btn}</div>
           </ErrorContainer>
         );
       } else if (err.err_type === "connection_error") {
@@ -435,24 +480,24 @@ export const ServerMessageErrorHandler = defineComponent<
             title="连接出错"
             content="请检查你的网络连接。如果网络连接正常，请检查你所处区域的网络是否能流畅访问 chat.openai.com。"
             raw={err.content}
-            onRegenerate={emit_regenerate}
-          ></ErrorContainer>
+          >
+            {regenerate_btn}
+          </ErrorContainer>
         );
       } else if (err.err_type === "connection_abort") {
         return (
           <ErrorContainer
             title="连接中断"
             content="与服务器的连接中断了，需要重新生成。"
-            onRegenerate={emit_regenerate}
-          ></ErrorContainer>
+          >
+            {regenerate_btn}
+          </ErrorContainer>
         );
       }
       return (
-        <ErrorContainer
-          title="请求失败"
-          raw={JSON.stringify(err)}
-          onRegenerate={emit_regenerate}
-        ></ErrorContainer>
+        <ErrorContainer title="请求失败" raw={JSON.stringify(err)}>
+          {regenerate_btn}
+        </ErrorContainer>
       );
     };
   },
@@ -492,7 +537,9 @@ export const ServerMessageItem = defineComponent<
       async function do_regenerate() {
         message.content = "";
         message.error = undefined;
+        await ms.update_chat_record_messages(chatid);
         await regenerate(index);
+        await ms.sync_curr_chat_record_messages();
       }
 
       return (

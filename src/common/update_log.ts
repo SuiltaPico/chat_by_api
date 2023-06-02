@@ -1,17 +1,30 @@
 export default [
   {
+    version: "2.3.0",
+    content: `
+### Added
+* 新增其它网站的 API-KEY 的支持。
+### Changed
+* 针对宽度小于 \`480px\` 的设备进行进一步的界面优化。
+* 优化了 API-KEY 设置的交互体验。
+* OpenAI 相关的设置已取消，需要重新在 API-KEY 上设置。
+### Fixed
+* 修复了重新生成时，旧的错误仍然滞留的问题。
+`,
+  },
+  {
     version: "2.2.0",
     content: `
 ### Added
 * 可以通过 url \`open_ai\` query 写入 OpenAI key。
-* 新增配额不足和API-KEY 无效的报错信息。
+* 新增配额不足和 API-KEY 无效的报错信息。
 `,
   },
   {
     version: "2.1.0",
     content: `
 ### Added
-* 新增发送消息的快捷键支持
+* 新增发送消息的快捷键支持。
 * 新增页面主题色元信息。
 * 新增页面描述元信息。
 ### Changed

@@ -13,6 +13,7 @@
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "@vscode/markdown-it-katex": "^1.0.0",
+    "@vueuse/core": "^10.1.2",
     "copy-text-to-clipboard": "^3.1.0",
     "dayjs": "^1.11.7",
     "highlight.js": "^11.8.0",
@@ -29,6 +30,7 @@
     "pouchdb-find": "^8.0.1",
     "quasar": "^2.11.10",
     "tesseract.js": "^4.0.6",
+    "unique-names-generator": "^4.7.1",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6"
   },

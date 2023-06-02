@@ -132,14 +132,15 @@ pre.hljs {
 
 .chat_body_input_container {
   @apply fcol frow gap-2 max-[480px]:gap-2 bg-zinc-800 bg-opacity-[.9]
-    p-3 max-[480px]:p-3 rounded-lg
+    p-3 max-[480px]:p-2 max-[480px]:pt-2.5 rounded-lg
     max-[480px]:rounded-none drop-shadow-lg fit-width;
 
   & > .inputer_container {
-    @apply frow gap-3 items-center;
+    @apply frow gap-3 max-[480px]:gap-2 items-center;
 
     & > .q-btn {
-      @apply w-[3.5rem] h-[2.95rem] max-sm:w-[3.4rem] max-sm:h-[2.9rem];
+      @apply w-[3.5rem] h-[2.95rem] max-sm:w-[3.4rem]
+        max-[480px]:w-[3rem] max-[480px]:h-[2.6rem] max-sm:h-[2.9rem];
     }
 
     & > .inputer {
@@ -167,7 +168,7 @@ pre.hljs {
 }
 
 .Avatar {
-  @apply text-zinc-100 bg-primary p-[0.4rem] rounded cursor-pointer relative;
+  @apply text-zinc-100 bg-_primary p-[0.4rem] rounded cursor-pointer relative;
   @apply after:w-full after:h-full after:absolute after:left-0 after:top-0;
   @apply after:bg-white after:bg-opacity-0 after:transition-all;
   &:hover {
@@ -180,5 +181,9 @@ pre.hljs {
 }
 
 .error_container {
-  @apply fcol text-base border border-red-500 bg-[#944e4e] p-4 rounded;
+  @apply fcol text-base border border-red-500
+    bg-[#944e4e] p-4 rounded;
+  &.darker {
+    @apply bg-[#8E3D3D];
+  }
 }

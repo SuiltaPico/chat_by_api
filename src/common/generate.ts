@@ -1,4 +1,4 @@
-import { Configuration, OpenAIApi } from "openai-edge";
+import { Configuration, OpenAIApi } from "./openai_api";
 import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
 import { non_empty_else, scroll_if_close_to } from "./utils";
 import { ServerMessage } from "../interface/ChatRecord";
@@ -12,7 +12,7 @@ export type GenerateStatus = "init" | "connecting" | "generating" | "finished";
 export async function openai_chat_completion(config: {
   api_key: string;
   api_base_path?: string;
-  api_version?: string;
+  params: Record<string, string>;
   messages: ChatCompletionRequestMessage[];
   on_status_changed: (state: GenerateStatus) => Promise<void>;
   on_update: (content_clip: string) => Promise<void>;
@@ -22,7 +22,7 @@ export async function openai_chat_completion(config: {
   const {
     api_key,
     api_base_path,
-    api_version,
+    params,
     messages,
     on_status_changed,
     on_update,
@@ -47,13 +47,10 @@ export async function openai_chat_completion(config: {
 
   const cfg = new Configuration({
     apiKey: api_key,
-    basePath: non_empty_else(api_base_path ?? "", undefined),
-    baseOptions: {
-      params: {
-        "api-version": non_empty_else(api_version ?? "", undefined),
-      },
-    },
-  });
+    basePath: non_empty_else(api_base_path ?? "", "api.openai.com/v1"),
+    baseOptions: {},
+  });  
+
   const openai = new OpenAIApi(cfg);
 
   if (stop_next) return;
@@ -66,13 +63,16 @@ export async function openai_chat_completion(config: {
 
   try {
     res = await openai.createChatCompletion({
-      stream: true,
-      model,
-      messages: messages,
-      temperature,
-      presence_penalty,
-      frequency_penalty,
-      max_tokens,
+      params,
+      request: {
+        stream: true,
+        model,
+        messages: messages,
+        temperature,
+        presence_penalty,
+        frequency_penalty,
+        max_tokens,
+      },
     });
   } catch (e) {
     throw {

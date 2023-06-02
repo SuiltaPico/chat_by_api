@@ -66,7 +66,7 @@ export default defineComponent({
             breakpoint={1040}
             width={ms.left_bar_width}
           >
-            <LeftBar class="min-w-[300px] bg-zinc-900" />
+            <LeftBar class="bg-zinc-900" />
           </QDrawer>
           <QPageContainer>
             <RouterView />

@@ -1,9 +1,14 @@
-export const models = {
+export const api_base_url = {
+  OpenAI: "https://api.openai.com/v1",
+  API2D: "https://oa.api2d.net/v1",
+};
+
+export const openai_models = {
   chat_completions: [
     "gpt-4",
-    "gpt-4-0314",
-    "gpt-4-32k",
-    "gpt-4-32k-0314",
+    // "gpt-4-0314",
+    // "gpt-4-32k",
+    // "gpt-4-32k-0314",
     "gpt-3.5-turbo",
     "gpt-3.5-turbo-0301",
   ],
@@ -20,11 +25,4 @@ export const models = {
   fine_tunes: ["davinci", "curie", "babbage", "ada"],
   embeddings: ["text-embedding-ada-002", "text-search-ada-doc-001"],
   moderations: ["text-moderation-stable", "text-moderation-latest"],
-} as const;
-
-export const brief_mode_models = {
-  chat_completions: {
-    "gpt-4": "gpt-4",
-    "gpt-3.5": "gpt-3.5-turbo",
-  },
 } as const;

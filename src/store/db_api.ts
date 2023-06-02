@@ -99,11 +99,11 @@ export const settings_default_value = {
   apikeys: {
     keys: [],
   },
-  open_ai: {
-    api_type: "",
-    api_base_path: "",
-    api_version: "",
-  },
+  // open_ai: {
+  //   api_type: "",
+  //   api_base_path: "",
+  //   api_version: "",
+  // },
   hot_keys: {
     submit_keys: {
       value: [{ keys: ["Ctrl", "Enter"] }],

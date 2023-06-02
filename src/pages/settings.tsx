@@ -1,17 +1,25 @@
 import {
   QBtn,
+  QDialog,
   QIcon,
   QInput,
   QItem,
   QList,
   QPage,
   QSelect,
+  QTable,
   QToggle,
 } from "quasar";
-import { defineComponent, ref } from "vue";
-import { batch_set_ref, c, promise_with_ref, refvmodel } from "../common/utils";
+import { computed, defineComponent, ref, watch } from "vue";
+import {
+  batch_set_ref,
+  c,
+  promise_with_ref,
+  refvmodel,
+  refvmodel_type,
+} from "../common/utils";
 import use_main_store from "../store/main_store";
-import { APIKeySource } from "../interface/Settings";
+import { APIKey, APIKeySource } from "../interface/Settings";
 import { HotKeys } from "../common/key_event";
 import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import _ from "lodash";
@@ -19,6 +27,13 @@ import { DBAPIKEYDuplicateError } from "../store/db_api";
 import MarkdownIt from "markdown-it";
 import update_log from "../common/update_log";
 import { useRouter } from "vue-router";
+import { not_undefined_or, tpl } from "../common/jsx_utils";
+import {
+  DialogExpose,
+  DialogMode,
+  ModifyAPIKEYDialog,
+} from "../components/ModifyAPIKEYDialog";
+import BetterBtn from "../components/BetterBtn";
 
 const md = new MarkdownIt({
   html: false,
@@ -97,20 +112,34 @@ export const APIKEY_Manager = defineComponent({
   setup() {
     const ms = use_main_store();
 
-    const err = ref("");
+    const add_new_dialog_error_info = ref("");
+    const modify_dialog_error_info = ref("");
+    const new_key_type_option: APIKeySource[] = ["OpenAI", "Custom"];
 
-    const new_key_type = ref<APIKeySource>("OpenAI");
-    const new_key_type_option: APIKeySource[] = ["OpenAI"];
+    const layout_props = {
+      dark: true,
+      filled: true,
+      dense: true,
+      color: "secondary",
+    } as const;
 
-    const new_key_name = ref<string>("");
-    const new_key_key = ref<string>("");
+    function existed_model<T extends keyof APIKey>(it: APIKey, attr: T) {
+      return {
+        modelValue: it[attr],
+        "onUpdate:modelValue": (v: APIKey[T]) => {
+          it[attr] = v;
+          apply_apikey_editing();
+        },
+      };
+    }
 
-    const new_key_showing = ref(false);
-
-    const new_key_adding = ref(false);
     const frozen_key_editing = ref(false);
-
     const all_key_showing = ref(false);
+
+    const add_new_dialog_showing = ref(false);
+    const modify_dialog = ref<DialogExpose>();
+    const modify_dialog_showing = ref(false);
+    const modify_index = ref(-1);
 
     async function apply_apikey_editing() {
       _.debounce(async () => {
@@ -121,9 +150,10 @@ export const APIKEY_Manager = defineComponent({
           frozen_key_editing,
           (e) => {
             if (e instanceof DBAPIKEYDuplicateError) {
-              err.value = "[更改失败]：API-KEY 名称重复，第";
+              add_new_dialog_error_info.value =
+                "[更改失败]：API-KEY 名称重复，第";
               console.log(e.map);
-              err.value += _.chain(e.map)
+              add_new_dialog_error_info.value += _.chain(e.map)
                 .mapValues(
                   (it, name) =>
                     `${it
@@ -145,61 +175,55 @@ export const APIKEY_Manager = defineComponent({
       return (
         <div class="fcol gap-5">
           <div class="text-xl font-bold">API-KEY 管理</div>
-          {err.value ? <div class="error_container">{err.value}</div> : ""}
           <div class="fcol gap-2">
-            <div>添加新的 API-KEY</div>
-            <div class="frow flex-wrap gap-4 items-center pl-4">
-              <QSelect
-                {...refvmodel(new_key_type)}
-                options={new_key_type_option}
-                dark
-                filled
-                dense
-                color="secondary"
-              ></QSelect>
-              <QInput
-                {...refvmodel(new_key_name)}
-                label="名称（可选）"
-                dark
-                filled
-                dense
-                color="secondary"
-              />
-              <QInput
-                {...c`grow`}
-                {...refvmodel(new_key_key)}
-                {...passwd_attr(new_key_showing)}
-                label="API-KEY"
-                dark
-                filled
-                dense
-                color="secondary"
-              >
-                {{
-                  ...passwd_slot(new_key_showing, {
-                    size: "1.4rem",
-                  }),
+            <div>
+              <ModifyAPIKEYDialog
+                {...refvmodel_type(add_new_dialog_showing, "modelValue")}
+                {...refvmodel_type(add_new_dialog_error_info, "error_info")}
+                mode="add"
+                onSubmit={async (apikey, close_dialog) => {
+                  if (apikey === undefined) {
+                    add_new_dialog_error_info.value =
+                      "系统内部错误，ModifyAPIKEYDialog 不支持现有的模式。请前往 github 发起 issue。";
+                    return;
+                  }
+                  ms.settings.apikeys.keys.push(apikey);
+                  await apply_apikey_editing();
+                  close_dialog();
                 }}
-              </QInput>
+              ></ModifyAPIKEYDialog>
+              <ModifyAPIKEYDialog
+                {...refvmodel_type(modify_dialog_showing, "modelValue")}
+                {...refvmodel_type(modify_dialog_error_info, "error_info")}
+                mode="modify"
+                onSubmit={async (apikey, close_dialog) => {
+                  if (apikey === undefined) {
+                    modify_dialog_error_info.value =
+                      "系统内部错误，ModifyAPIKEYDialog 不支持现有的模式。请前往 github 发起 issue。";
+                    return;
+                  }
+                  ms.settings.apikeys.keys[modify_index.value] = apikey;
+                  await apply_apikey_editing();
+                  close_dialog();
+                }}
+                ref={modify_dialog}
+              ></ModifyAPIKEYDialog>
               <QBtn
+                {...c`px-[0.8rem] pr-[1rem] py-[0.5rem]`}
                 color="primary"
                 unelevated
-                loading={new_key_adding.value}
+                no-caps
                 onClick={() => {
-                  promise_with_ref(async () => {
-                    ms.settings.apikeys.keys.push({
-                      source: new_key_type.value,
-                      name: new_key_name.value,
-                      key: new_key_key.value,
-                    });
-                    batch_set_ref("", new_key_name, new_key_key);
-                    await ms.set_settings("apikeys");
-                  }, new_key_adding);
+                  add_new_dialog_showing.value = true;
                 }}
               >
-                添加
+                <div class="frow gap-2 items-center justify-center">
+                  <QIcon name="mdi-plus" size="1rem"></QIcon>
+                  <div>添加新的 API-KEY</div>
+                </div>
               </QBtn>
             </div>
+            <div></div>
           </div>
           <div class="fcol gap-2">
             <div>缓存的 API-KEY（目前仅支持使用第一个）</div>
@@ -207,41 +231,28 @@ export const APIKEY_Manager = defineComponent({
               <div class="frow flex-wrap gap-4 items-center pl-4">
                 <div>{i + 1}.</div>
                 <QSelect
-                  modelValue={it.source}
-                  onUpdate:modelValue={(v) => {
-                    it.source = v;
-                    apply_apikey_editing();
-                  }}
+                  label="来源"
+                  {...existed_model(it, "source")}
+                  {...layout_props}
                   options={new_key_type_option}
-                  dark
-                  filled
-                  readonly={frozen_key_editing.value}
-                  color="secondary"
-                  dense
+                  readonly
                 ></QSelect>
                 <QInput
-                  modelValue={it.name}
+                  label="名称"
+                  {...existed_model(it, "name")}
                   onUpdate:modelValue={(v) => {
                     it.name = String(v);
                     apply_apikey_editing();
                   }}
-                  dark
-                  filled
-                  color="secondary"
-                  dense
+                  {...layout_props}
+                  readonly
                 />
                 <QInput
+                  readonly
                   {...c`grow`}
                   {...passwd_attr(all_key_showing)}
-                  modelValue={it.key}
-                  onUpdate:modelValue={(v) => {
-                    it.key = String(v);
-                    apply_apikey_editing();
-                  }}
-                  dark
-                  filled
-                  color="secondary"
-                  dense
+                  {...existed_model(it, "key")}
+                  {...layout_props}
                 >
                   {{
                     ...passwd_slot(all_key_showing, {
@@ -249,16 +260,30 @@ export const APIKEY_Manager = defineComponent({
                     }),
                   }}
                 </QInput>
-                <QBtn
-                  {...c`bg-_negative2`}
-                  unelevated
+                <BetterBtn
+                  onClick={() => {
+                    modify_index.value = i;
+                    modify_dialog_showing.value = true;
+                    modify_dialog.value?.set_apikey(it);
+                  }}
+                >
+                  <div class="frow gap-2 items-center justify-center">
+                    <QIcon name="mdi-pencil" size="1.2rem"></QIcon>
+                    <div>编辑</div>
+                  </div>
+                </BetterBtn>
+                <BetterBtn
+                  class="bg-_negative2"
                   onClick={() => {
                     keys.splice(i, 1);
                     apply_apikey_editing();
                   }}
                 >
-                  删除
-                </QBtn>
+                  <div class="frow gap-2 items-center justify-center">
+                    <QIcon name="mdi-delete" size="1.2rem"></QIcon>
+                    <div>删除</div>
+                  </div>
+                </BetterBtn>
               </div>
             ))}
           </div>
@@ -268,59 +293,6 @@ export const APIKEY_Manager = defineComponent({
   },
 });
 
-export const OpenAI = defineComponent({
-  setup() {
-    const ms = use_main_store();
-    async function apply_editing() {
-      _.debounce(async () => {
-        console.log(ms.settings);
-        await ms.set_settings("open_ai");
-      }, 100)();
-    }
-
-    return () => {
-      const open_ai = ms.settings.open_ai;
-
-      return (
-        <div class="fcol gap-5">
-          <div class="text-xl font-bold">OpenAI</div>
-          <div class="fcol gap-4">
-            <div>第三方 API 设置</div>
-            <div class="frow gap-4 pl-4">
-              <QInput
-                {...c`grow`}
-                modelValue={open_ai.api_base_path}
-                onUpdate:modelValue={(it) => {
-                  open_ai.api_base_path = String(it);
-                  apply_editing();
-                }}
-                label="base_path"
-                filled
-                dark
-                dense
-                color="secondary"
-              ></QInput>
-              <QInput
-                {...c`grow`}
-                modelValue={open_ai.api_version}
-                onUpdate:modelValue={(it) => {
-                  open_ai.api_version = String(it);
-                  apply_editing();
-                }}
-                label="api_version"
-                filled
-                dark
-                dense
-                color="secondary"
-              ></QInput>
-            </div>
-          </div>
-        </div>
-      );
-    };
-  },
-});
-// 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
 export const About = defineComponent({
   setup() {
     return () => (
@@ -369,7 +341,6 @@ export default defineComponent({
           <div class="fcol default-bg record-fit-width pt-8 gap-12">
             <HotKeysManager></HotKeysManager>
             <APIKEY_Manager></APIKEY_Manager>
-            <OpenAI></OpenAI>
             <About></About>
           </div>
         </QPage>

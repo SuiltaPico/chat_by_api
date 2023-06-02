@@ -10,6 +10,7 @@ import {
   QSpinner,
   QSpinnerComment,
   QToggle,
+  useQuasar,
 } from "quasar";
 import {
   computed,
@@ -29,13 +30,14 @@ import {
   refvmodel,
   slot,
 } from "../common/utils";
-import { models as openai_models } from "../common/from_openai";
+import { openai_models as openai_models } from "../common/api_meta";
 import _ from "lodash";
 import { not_undefined_or, tpl } from "../common/jsx_utils";
 import { Role, RoleWithoutUnknown } from "../interface/ChatRecord";
 import { QSelectOptionSlotParam } from "../common/quasar_utils";
 import { Avatar } from "../pages/chat";
 import { HotKeys, key_event_match_HotKey } from "../common/key_event";
+import { useWindowSize } from "@vueuse/core";
 
 export type ChatBodyInputMode = "generate" | "add";
 
@@ -322,6 +324,8 @@ export const Inputer = defineComponent<
   props: as_props<InputerProps>()(["submit_btn_loading", "promot", "mode"]),
   emits: ["submit", "update:promot"],
   setup(props, { emit }) {
+    const window_width = useWindowSize().width;
+
     const inputter = ref<QInput>();
     const component_color = computed(() => {
       if (props.mode === "generate") {
@@ -360,6 +364,7 @@ export const Inputer = defineComponent<
             filled
             placeholder="在这里输入消息。"
             autogrow
+            dense={window_width.value <= 480}
             ref={inputter}
           ></QInput>
           <QBtn
