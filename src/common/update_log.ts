@@ -1,5 +1,14 @@
 export default [
   {
+    version: "2.5.0",
+    content: `
+### Added
+* 新增 API-KEY 的切换顺序功能。
+### Fixed
+* 修复了无法 openai 接口的问题。
+`
+  },
+  {
     version: "2.4.0",
     content: `
 ### Added

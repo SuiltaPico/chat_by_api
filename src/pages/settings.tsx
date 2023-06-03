@@ -14,6 +14,7 @@ import { computed, defineComponent, ref, watch } from "vue";
 import {
   batch_set_ref,
   c,
+  cl,
   promise_with_ref,
   refvmodel,
   refvmodel_type,
@@ -260,6 +261,21 @@ export const APIKEY_Manager = defineComponent({
                     }),
                   }}
                 </QInput>
+                <QBtn
+                  {...cl([
+                    "text-_primary bg-zinc-600",
+                    i === 0 ? "hidden" : "",
+                  ])}
+                  icon="mdi-menu-up"
+                  unelevated
+                  padding="0.5rem 0.5rem"
+                  onClick={async () => {
+                    const last = settings.apikeys.keys[i - 1];
+                    settings.apikeys.keys[i - 1] = it;
+                    settings.apikeys.keys[i] = last;
+                    await ms.set_settings("apikeys");
+                  }}
+                ></QBtn>
                 <BetterBtn
                   onClick={() => {
                     modify_index.value = i;

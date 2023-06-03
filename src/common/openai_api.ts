@@ -140,6 +140,8 @@ class BaseAPI {
   }
 }
 
+const openai_base = "https://api.openai.com/v1";
+
 export class OpenAIApi extends BaseAPI {
   async createChatCompletion(options: {
     /** @default `/chat/completions` */
@@ -155,7 +157,11 @@ export class OpenAIApi extends BaseAPI {
       "Content-Type": "application/json",
     };
 
-    const final_url = new URL(this.configuration.basePath + path);
+    console.log((this.configuration.basePath ?? openai_base) + path);
+
+    const final_url = new URL(
+      (this.configuration.basePath ?? openai_base) + path
+    );
     if (params) {
       for (const [key, value] of Object.entries(params)) {
         if (value !== undefined) {

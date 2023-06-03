@@ -47,9 +47,9 @@ export async function openai_chat_completion(config: {
 
   const cfg = new Configuration({
     apiKey: api_key,
-    basePath: non_empty_else(api_base_path ?? "", "api.openai.com/v1"),
+    basePath: non_empty_else(api_base_path ?? "", "https://api.openai.com/v1"),
     baseOptions: {},
-  });  
+  });
 
   const openai = new OpenAIApi(cfg);
 
