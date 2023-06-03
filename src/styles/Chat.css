@@ -1,5 +1,5 @@
 .chat_item {
-  @apply fcol record-fit-width gap-1;
+  @apply fcol record-fit-width gap-1 max-md:gap-y-0;
 
   & > .chat_item_header {
     @apply frow text-xs text-zinc-400 gap-2;
@@ -10,7 +10,7 @@
 
     & > .content {
       @apply fcol flex-wrap self-center grow
-        overflow-y-auto min-w-[16rem] max-md:order-1 gap-2;
+        overflow-y-auto min-w-[16rem] max-md:order-3 gap-2;
     }
 
     & .mdblock {
@@ -27,6 +27,9 @@
       @apply hidden max-lg:block;
     }
 
+    & > .right_btn_group {
+      @apply frow flex-nowrap self-start h-fit min-w-[5rem] max-w-[5rem] gap-1 my-[-0.25rem];
+    }
   }
 }
 
@@ -44,15 +47,19 @@
 }
 
 #app_header_slot > .chat_top_bar {
-  @apply frow grow pr-2 text-zinc-300 max-md:text-zinc-200;
+  @apply frow grow pr-2 text-zinc-300;
   & > .q-btn .q-icon {
     @apply max-md:text-[1.35rem];
+  }
+
+  & > .left_btn_group {
+    @apply frow items-center;
   }
 
   & > .right_btn_gruop {
     @apply frow gap-4;
 
-    & > .q-btn{
+    & > .q-btn {
       @apply w-[3rem];
     }
   }

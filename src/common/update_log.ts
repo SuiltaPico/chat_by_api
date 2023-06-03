@@ -4,6 +4,7 @@ export default [
     content: `
 ### Added
 * 新增多选模式。
+    * 新增删除功能。
 ### Changed
 * 针对小屏幕宽度情况优化了对话记录删除前确认浮窗的操作。
 `,

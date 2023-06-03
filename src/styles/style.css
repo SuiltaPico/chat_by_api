@@ -106,11 +106,10 @@ pre.hljs {
     items-center grow;
 
   & .q-btn {
-    @apply text-[0.82rem] w-[4rem] max-md:w-[3.5rem] h-[3.45rem]
-      max-lg:text-zinc-400;
+    @apply text-[0.82rem] w-[4rem] max-md:w-[3.5rem] h-[3.45rem];
   }
   & > .menu_switch {
-    @apply lg:hidden;
+    @apply text-zinc-300 lg:hidden;
   }
 
   & > #app_header_slot {
@@ -127,7 +126,7 @@ pre.hljs {
 }
 
 .record-fit-width {
-  @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[1000px] xl:w-[80%];
+  @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[1100px] xl:w-[80%];
 }
 
 .chat_body_input_container {

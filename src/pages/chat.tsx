@@ -8,11 +8,13 @@ import _, {
   eq,
   get,
   partial,
+  pullAt,
   stubTrue,
   throttle,
 } from "lodash";
 import {
   QBtn,
+  QCheckbox,
   QIcon,
   QPage,
   QPopupProxy,
@@ -28,6 +30,7 @@ import {
   any,
   as_props,
   c,
+  cl,
   parse_param_to_Record,
   promise_with_ref,
   refvmodel,
@@ -191,19 +194,23 @@ export const Avatar = defineComponent({
         ctx.emit("update:role", next(props.role));
       },
     });
+
     return () => {
       const { role } = props;
       const { attrs } = ctx;
-      if (role === "user") {
+      function gen_icon(icon: string, _class?: string) {
         return (
           <QIcon
-            {...c`Avatar`}
+            {...cl(["Avatar", _class ?? ""])}
             {...attrs}
             {...emit_attr}
-            name="mdi-account"
+            name={icon}
             size="1.25rem"
           ></QIcon>
         );
+      }
+      if (role === "user") {
+        return gen_icon("mdi-account");
       } else if (role === "assistant") {
         return (
           <div {...c`Avatar h-fit`} {...attrs} {...emit_attr}>
@@ -215,34 +222,56 @@ export const Avatar = defineComponent({
           </div>
         );
       } else if (role === "system") {
-        return (
-          <QIcon
-            {...c`Avatar Avatar_system`}
-            {...attrs}
-            {...emit_attr}
-            name="mdi-laptop"
-            size="1.25rem"
-          ></QIcon>
-        );
+        return gen_icon("mdi-laptop", "Avatar_system");
       } else {
-        return (
-          <QIcon
-            {...c`Avatar`}
-            {...attrs}
-            {...emit_attr}
-            name="mdi-help-box-outline"
-            size="1.25rem"
-          ></QIcon>
-        );
+        return gen_icon("mdi-help-box-outline");
       }
     };
   },
 });
 
+function ChatItem_Avatar(message: Message, chatid: string, _class?: string) {
+  const ms = use_main_store();
+  return (
+    <Avatar
+      class={_class}
+      role={message.role}
+      onUpdate:role={async (role) => {
+        message.role = role;
+        await ms.update_chat_record_messages(chatid);
+      }}
+    ></Avatar>
+  );
+}
+
+function ChatItem_select_box(index: number) {
+  const ms = use_main_store();
+  const curry_chat = ms.curry_chat;
+  const edit_mode = curry_chat.edit_mode;
+  return not_undefined_or(() => {
+    if (curry_chat.operating_mode === ChatRecordOperatingMode.edit) {
+      return tpl(
+        <QCheckbox
+          {...c`mt-2 self-start max-md:order-1`}
+          color="info"
+          dense
+          modelValue={!!edit_mode.selected[index]}
+          onUpdate:modelValue={(value) => {
+            if (value === true || value === false) {
+              edit_mode.selected[index] = value;
+            }
+          }}
+        ></QCheckbox>
+      );
+    }
+  });
+}
+
 export const UserMessageItem = defineComponent<
   {
     message: UserMessage;
     chatid: string;
+    index: number;
   },
   {},
   {},
@@ -254,7 +283,7 @@ export const UserMessageItem = defineComponent<
     delete: () => void;
   }
 >({
-  props: any(["message", "chatid"]),
+  props: any(["message", "chatid", "index"]),
   emits: ["delete"],
   setup(props, ctx) {
     const ms = use_main_store();
@@ -264,20 +293,29 @@ export const UserMessageItem = defineComponent<
 
     return () => {
       const { message, chatid } = props;
+      const curry_chat = ms.curry_chat;
+      const edit_mode = curry_chat.edit_mode;
       return (
         <div class="chat_item">
           <div class="chat_item_main">
-            <Avatar
-              class="mt-[2px]"
-              role={message.role}
-              onUpdate:role={async (role) => {
-                message.role = role;
-                await ms.update_chat_record_messages(chatid);
-              }}
-            ></Avatar>
+            {ChatItem_select_box(props.index)}
+            {ChatItem_Avatar(message, chatid, "mt-[2px]")}
             <div class="content">{message.content}</div>
-            <QSpace></QSpace>
-            <div class="frow flex-nowrap gap self-top h-fit min-w-[5rem] max-w-[5rem] gap-1 grow">
+            <QSpace
+              {...cl([
+                curry_chat.operating_mode === ChatRecordOperatingMode.default
+                  ? ""
+                  : "hidden",
+              ])}
+            ></QSpace>
+            <div
+              class={[
+                "right_btn_group",
+                curry_chat.operating_mode === ChatRecordOperatingMode.default
+                  ? ""
+                  : "hidden",
+              ]}
+            >
               <QBtn
                 {...c`text-xs text-zinc-300 p-2`}
                 icon="mdi-import"
@@ -309,7 +347,7 @@ export const UserMessageItem = defineComponent<
                 </MorePopup>
               </QBtn>
             </div>
-            <div class="max-md:min-w-full h-0 max-md:block"></div>
+            <div class="max-md:min-w-full h-0 max-md:block order-2"></div>
           </div>
         </div>
       );
@@ -536,6 +574,9 @@ export const ServerMessageItem = defineComponent<
         : md.render_as_fence(message.content);
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
 
+      const curry_chat = ms.curry_chat;
+      const edit_mode = curry_chat.edit_mode;
+
       async function do_regenerate() {
         message.content = "";
         message.error = undefined;
@@ -547,13 +588,8 @@ export const ServerMessageItem = defineComponent<
       return (
         <div class="chat_item">
           <div class="chat_item_main">
-            <Avatar
-              role={message.role}
-              onUpdate:role={(role) => {
-                message.role = role;
-                ms.update_chat_record_messages(chatid);
-              }}
-            ></Avatar>
+            {ChatItem_select_box(props.index)}
+            {ChatItem_Avatar(message, chatid)}
             <div class="content">
               <div class="mdblock" ref={mdblock}>
                 {rendered_content}
@@ -568,68 +604,79 @@ export const ServerMessageItem = defineComponent<
                 return <div class="mt-2"></div>;
               })}
             </div>
-            <QSpace></QSpace>
-            <div class="fcol flex-nowrap self-top h-fit min-w-[5rem] max-w-[5rem] gap-4 my-[-0.25rem]">
-              <div class="frow items-center gap-1">
-                <QBtn
-                  {...c`text-xs text-zinc-300 p-2`}
-                  icon="mdi-content-copy"
-                  flat
-                  onClick={() => {
-                    copy_with_notify(qs, message.content);
-                  }}
-                ></QBtn>
-                <QBtn
-                  {...c`text-xs text-zinc-300 p-2`}
-                  icon="mdi-dots-horizontal"
-                  flat
+            <QSpace
+              {...cl([
+                curry_chat.operating_mode === ChatRecordOperatingMode.default
+                  ? ""
+                  : "hidden",
+              ])}
+            ></QSpace>
+            <div
+              class={[
+                "right_btn_group",
+                curry_chat.operating_mode === ChatRecordOperatingMode.default
+                  ? ""
+                  : "hidden",
+              ]}
+            >
+              <QBtn
+                {...c`text-xs text-zinc-300 p-2`}
+                icon="mdi-content-copy"
+                flat
+                onClick={() => {
+                  copy_with_notify(qs, message.content);
+                }}
+              ></QBtn>
+              <QBtn
+                {...c`text-xs text-zinc-300 p-2`}
+                icon="mdi-dots-horizontal"
+                flat
+              >
+                <MorePopup
+                  {...refvmodel(more_popup_showing, "show")}
+                  message={message}
+                  onDelete={() => ctx.emit("delete")}
                 >
-                  <MorePopup
-                    {...refvmodel(more_popup_showing, "show")}
-                    message={message}
-                    onDelete={() => ctx.emit("delete")}
-                  >
-                    <MorePopupBtn
-                      class="text-secondary"
-                      label="重新生成"
-                      icon="mdi-refresh"
-                      onClick={() => {
-                        more_popup_showing.value = false;
-                        do_regenerate();
-                      }}
-                    ></MorePopupBtn>
-                    <MorePopupBtn
-                      label="直接复制文本"
-                      icon="mdi-raw-off"
-                      onClick={() => {
-                        more_popup_showing.value = false;
+                  <MorePopupBtn
+                    class="text-secondary"
+                    label="重新生成"
+                    icon="mdi-refresh"
+                    onClick={() => {
+                      more_popup_showing.value = false;
+                      do_regenerate();
+                    }}
+                  ></MorePopupBtn>
+                  <MorePopupBtn
+                    label="直接复制文本"
+                    icon="mdi-raw-off"
+                    onClick={() => {
+                      more_popup_showing.value = false;
 
-                        const s = getSelection();
+                      const s = getSelection();
 
-                        if (!mdblock.value) {
-                          return;
-                        }
+                      if (!mdblock.value) {
+                        return;
+                      }
 
-                        s?.selectAllChildren(mdblock.value);
+                      s?.selectAllChildren(mdblock.value);
 
-                        if (s) {
-                          copy_with_notify(qs, s.toString());
-                          s.empty();
-                        }
-                      }}
-                    ></MorePopupBtn>
-                  </MorePopup>
-                </QBtn>
-                {/* <QToggle
+                      if (s) {
+                        copy_with_notify(qs, s.toString());
+                        s.empty();
+                      }
+                    }}
+                  ></MorePopupBtn>
+                </MorePopup>
+              </QBtn>
+              {/* <QToggle
                 {...c`h-fit p-0 text-sm`}
                 {...refvmodel(use_raw_render)}
                 label="MD"
                 color="secondary"
                 size="xs"
               ></QToggle> */}
-              </div>
             </div>
-            <div class="max-md:min-w-full h-0 max-md:block"></div>
+            <div class="max-md:min-w-full h-0 max-md:block order-2"></div>
           </div>
         </div>
       );
@@ -810,6 +857,7 @@ export const ChatItem = defineComponent<
                 <UserMessageItem
                   message={message}
                   chatid={chatid}
+                  index={index}
                   onDelete={() => {
                     ctx.emit("delete");
                   }}
@@ -884,7 +932,12 @@ export const ChatBody = defineComponent({
             <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
           </div>
           <ChatBodyInput
-            class={"fixed bottom-[2rem] max-[480px]:bottom-[0rem] self-center"}
+            class={[
+              "fixed bottom-[2rem] max-[480px]:bottom-[0rem] self-center",
+              ms.curry_chat.operating_mode !== ChatRecordOperatingMode.default
+                ? "hidden"
+                : "",
+            ]}
             submit_btn_loading={loading_messages.value}
             submit_hot_keys={ms.settings.hot_keys.submit_keys}
             onSubmit={async () => {
@@ -945,40 +998,103 @@ export const ChatBody = defineComponent({
   },
 });
 
-export type ChatRecordOperatingMode = "default" | "select";
+export enum ChatRecordOperatingMode {
+  default,
+  edit,
+}
 
 export const TopBar = defineComponent({
-  setup() {
+  setup(props, ctx) {
     const ms = use_main_store();
     const use_markdown_render = toRef(ms, "use_markdown_render");
     const operating_mode = toRef(ms.curry_chat, "operating_mode");
+    const change_operating_mode = ms.curry_chat.change_operating_mode;
+    const show_delete_popup = ref(false);
     return () => {
+      const om = operating_mode.value;
       return (
         <div class="chat_top_bar">
-          <div>
+          <div class="left_btn_group">
             {not_undefined_or(() => {
-              const om = operating_mode.value;
-              if (om === "default") {
+              if (om === ChatRecordOperatingMode.default) {
                 return tpl(
                   <QBtn
-                    icon="mdi-checkbox-multiple-outline"
+                    key="top_bar_enter_edit_mode"
+                    icon="mdi-pencil"
                     flat
-                    onClick={() => (operating_mode.value = "select")}
+                    onClick={() =>
+                      change_operating_mode(ChatRecordOperatingMode.edit)
+                    }
                   >
-                    <QTooltip>多选</QTooltip>
-                  </QBtn>,
-                  <QBtn icon="mdi-chat-plus" flat>
-                    <QTooltip>插入</QTooltip>
+                    <QTooltip>编辑模式</QTooltip>
                   </QBtn>
                 );
               }
-              if (om === "select") {
+              if (om === ChatRecordOperatingMode.edit) {
                 return tpl(
                   <QBtn
-                    icon="mdi-arrow-left"
+                    {...c`text-_negative`}
+                    icon="mdi-close"
                     flat
-                    onClick={() => (operating_mode.value = "select")}
-                  ></QBtn>
+                    onClick={() =>
+                      change_operating_mode(ChatRecordOperatingMode.default)
+                    }
+                  >
+                    <QTooltip>关闭编辑模式</QTooltip>
+                  </QBtn>,
+                  <div class="mx-4">编辑模式</div>,
+                  <QBtn icon="mdi-delete" flat>
+                    <QTooltip>删除</QTooltip>
+                    <QPopupProxy
+                      {...c`bg-zinc-800 text-zinc-200 border border-zinc-500`}
+                      {...refvmodel_type(show_delete_popup, "modelValue")}
+                      breakpoint={0}
+                    >
+                      <div class="fcol gap-4 p-4">
+                        <div>
+                          你确定要<b>删除</b>这些对话记录吗？
+                        </div>
+                        <div class="frow gap-2 items-center justify-start">
+                          <QSpace {...c`md:hidden`}></QSpace>
+                          <BetterBtn
+                            {...c`bg-_negative2`}
+                            onClick={async () => {
+                              const selected = ms.curry_chat.edit_mode.selected;
+                              const selected_indexes: number[] = [];
+                              for (const [index, value] of Object.entries(
+                                selected
+                              )) {
+                                if (!value) return;
+                                selected_indexes.push(parseInt(index));
+                              }
+                              pullAt(ms.curry_chat.messages, selected_indexes);
+                              ms.curry_chat.clear_edit_mode_cache();
+                              if (ms.curry_chat.id) {
+                                await ms.update_chat_record_messages(
+                                  ms.curry_chat.id
+                                );
+                              }
+                              show_delete_popup.value = false;
+                              change_operating_mode(
+                                ChatRecordOperatingMode.default
+                              );
+                            }}
+                          >
+                            <QIcon name="mdi-check" size="1.2rem"></QIcon>
+                            <div>确认</div>
+                          </BetterBtn>
+                          <BetterBtn
+                            {...c`bg-transparent text-_secondary`}
+                            onClick={() => (show_delete_popup.value = false)}
+                          >
+                            <QIcon name="mdi-close" size="1.2rem"></QIcon>
+                            <div>取消</div>
+                          </BetterBtn>
+                        </div>
+                      </div>
+                    </QPopupProxy>
+                  </QBtn>,
+                  <QSpace></QSpace>
                 );
               }
             })}
@@ -986,17 +1102,23 @@ export const TopBar = defineComponent({
 
           <QSpace></QSpace>
           <div class="right_btn_gruop">
-            <QToggle {...refvmodel(use_markdown_render)}>
-              <QIcon name="mdi-language-markdown" size="1.6rem"></QIcon>
-            </QToggle>
-            <QBtn
-              icon="mdi-chevron-triple-down"
-              flat
-              size="0.75rem"
-              onClick={() => scroll_to(document.getElementById("app")!)}
-            >
-              <QTooltip>滚动到页面最下方</QTooltip>
-            </QBtn>
+            {not_undefined_or(() => {
+              if (om === ChatRecordOperatingMode.default) {
+                return tpl(
+                  <QToggle {...refvmodel(use_markdown_render)}>
+                    <QIcon name="mdi-language-markdown" size="1.6rem"></QIcon>
+                  </QToggle>,
+                  <QBtn
+                    icon="mdi-chevron-triple-down"
+                    flat
+                    size="0.75rem"
+                    onClick={() => scroll_to(document.getElementById("app")!)}
+                  >
+                    <QTooltip>滚动到页面最下方</QTooltip>
+                  </QBtn>
+                );
+              }
+            })}
           </div>
         </div>
       );

@@ -156,12 +156,28 @@ const use_main_store = defineStore("main", () => {
      * [req: use_raw_render]：当页面变动时清空。 */
     use_raw_render: {} as Record<number, boolean>,
     /** 操作模式。本来应该储存在组件中，但 props 的传递链维护起来比较麻烦。 */
-    operating_mode: "default" as ChatRecordOperatingMode,
+    operating_mode: ChatRecordOperatingMode.default,
+    edit_mode: {
+      selected: {} as Record<number, boolean>,
+    },
+    clear_edit_mode_cache() {
+      curry_chat.edit_mode = {
+        selected: {},
+      };
+    },
+    change_operating_mode(target_mode: ChatRecordOperatingMode) {
+      const curr_mode = curry_chat.operating_mode;
+      if (curr_mode === ChatRecordOperatingMode.edit) {
+        curry_chat.clear_edit_mode_cache();
+      }
+      curry_chat.operating_mode = target_mode;
+    },
     clear_cache() {
       curry_chat.use_raw_render = {};
       curry_chat.id = undefined;
       curry_chat.messages = [];
-      curry_chat.operating_mode = "default";
+      curry_chat.operating_mode = ChatRecordOperatingMode.default;
+      curry_chat.clear_edit_mode_cache();
     },
   });
 
