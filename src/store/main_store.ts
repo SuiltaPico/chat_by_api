@@ -21,6 +21,7 @@ import {
 } from "./db_api";
 import { ChatBodyInputMode } from "../components/ChatBodyInput";
 import { QInput } from "quasar";
+import { ChatRecordOperatingMode } from "../pages/chat";
 
 type LeftBarSize = "just-icon" | "grow" | "hidden";
 
@@ -154,10 +155,13 @@ const use_main_store = defineStore("main", () => {
     /** 状态：使用原始渲染。
      * [req: use_raw_render]：当页面变动时清空。 */
     use_raw_render: {} as Record<number, boolean>,
-    clear() {
+    /** 操作模式。本来应该储存在组件中，但 props 的传递链维护起来比较麻烦。 */
+    operating_mode: "default" as ChatRecordOperatingMode,
+    clear_cache() {
       curry_chat.use_raw_render = {};
       curry_chat.id = undefined;
       curry_chat.messages = [];
+      curry_chat.operating_mode = "default";
     },
   });
 

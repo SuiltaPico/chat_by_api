@@ -57,6 +57,7 @@ import BetterBtn from "../components/BetterBtn";
 
 const md = create_md();
 
+// TODO:合并 regenerate 和 generate_next
 async function regenerate(index: number) {
   const ms = use_main_store();
   const { chat_body_input, curry_chat } = ms;
@@ -720,6 +721,7 @@ export const MorePopup = defineComponent<
                   你确定要<b>删除</b>这项对话记录吗？
                 </div>
                 <div class="frow gap-2 items-center justify-start">
+                  <QSpace {...c`md:hidden`}></QSpace>
                   <BetterBtn
                     {...c`bg-_negative2`}
                     onClick={() => ctx.emit("delete")}
@@ -745,10 +747,10 @@ export const MorePopup = defineComponent<
             >
               {not_undefined_or(() => {
                 if (message_type === "user") {
-                  return <div class="text-md font-bold">用户创建的信息</div>;
+                  return <div class="font-bold">用户创建的信息</div>;
                 }
                 if (message_type === "server") {
-                  return <div class="text-lg font-bold">服务器创建的信息</div>;
+                  return <div class="font-bold">服务器创建的信息</div>;
                 }
               })}
               <div class="w-full">创建时间：{calendar(message.created)}</div>
@@ -943,31 +945,45 @@ export const ChatBody = defineComponent({
   },
 });
 
-type TopBarMode = "default" | "select";
+export type ChatRecordOperatingMode = "default" | "select";
 
 export const TopBar = defineComponent({
   setup() {
     const ms = use_main_store();
     const use_markdown_render = toRef(ms, "use_markdown_render");
-    const operating_mode = ref<TopBarMode>("default");
+    const operating_mode = toRef(ms.curry_chat, "operating_mode");
     return () => {
       return (
         <div class="chat_top_bar">
-          {
-            <QBtn
-              icon="mdi-checkbox-multiple-outline"
-              flat
-              onClick={() => (operating_mode.value = "select")}
-            >
-              <QTooltip>多选</QTooltip>
-            </QBtn>
-            /* <QBtn icon="mdi-chat-plus" flat>
-            <QTooltip>插入</QTooltip>
-          </QBtn>
-          <QBtn {...c`text-_negative`} icon="mdi-delete" flat>
-            <QTooltip>删除</QTooltip>
-          </QBtn> */
-          }
+          <div>
+            {not_undefined_or(() => {
+              const om = operating_mode.value;
+              if (om === "default") {
+                return tpl(
+                  <QBtn
+                    icon="mdi-checkbox-multiple-outline"
+                    flat
+                    onClick={() => (operating_mode.value = "select")}
+                  >
+                    <QTooltip>多选</QTooltip>
+                  </QBtn>,
+                  <QBtn icon="mdi-chat-plus" flat>
+                    <QTooltip>插入</QTooltip>
+                  </QBtn>
+                );
+              }
+              if (om === "select") {
+                return tpl(
+                  <QBtn
+                    icon="mdi-arrow-left"
+                    flat
+                    onClick={() => (operating_mode.value = "select")}
+                  ></QBtn>
+                );
+              }
+            })}
+          </div>
+
           <QSpace></QSpace>
           <div class="right_btn_gruop">
             <QToggle {...refvmodel(use_markdown_render)}>

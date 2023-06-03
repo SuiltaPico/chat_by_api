@@ -19,7 +19,7 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const ms = use_main_store();
       // [impl: use_raw_render]
-      ms.curry_chat.clear()
+      ms.curry_chat.clear_cache()
 
       if (!to.params.chatid) {
         next("/");

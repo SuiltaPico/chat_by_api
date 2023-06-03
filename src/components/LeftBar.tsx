@@ -1,38 +1,12 @@
-import {
-  Component,
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-  watch,
-} from "vue";
-import {
-  QAvatar,
-  QBadge,
-  QBtn,
-  QIcon,
-  QInput,
-  QRouteTab,
-  QSelect,
-  QSeparator,
-  QSpace,
-  QTab,
-  QTabs,
-} from "quasar";
-import type ChatRecord from "../interface/ChatRecord";
-import {
-  Nil,
-  any,
-  arr_or_pack_to_arr,
-  c,
-  cl,
-  refvmodel,
-} from "../common/utils";
-import { useRoute, useRouter } from "vue-router";
-import type { RouteRecordName } from "vue-router";
-import use_main_store from "../store/main_store";
-import router from "../router/router";
 import { includes } from "lodash";
+import { QIcon, QSpace, QTab, QTabs } from "quasar";
+import { Component, computed, defineComponent, ref } from "vue";
+import type { RouteRecordName } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { Nil, any, arr_or_pack_to_arr, c, refvmodel } from "../common/utils";
+import type ChatRecord from "../interface/ChatRecord";
+import router from "../router/router";
+import use_main_store from "../store/main_store";
 
 export const ChatBar = defineComponent({
   setup(props, ctx) {

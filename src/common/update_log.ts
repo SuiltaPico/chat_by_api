@@ -1,11 +1,22 @@
 export default [
   {
+    version: "2.4.0",
+    content: `
+### Added
+* 新增多选模式。
+### Changed
+* 针对小屏幕宽度情况优化了对话记录删除前确认浮窗的操作。
+`,
+  },
+  {
     version: "2.4.0-alpha",
     content: `
 ### Added
 * 新增对话记录删除前确认浮窗。
 ### Changed
 * 优化了对话记录的 Markdown 代码块行内渲染结果。
+### Fixed
+* 修复了移动端下查看对话记录信息时出现的渲染异常问题。
 `,
   },
   {
