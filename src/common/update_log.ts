@@ -1,5 +1,14 @@
 export default [
   {
+    version: "2.4.0-alpha",
+    content: `
+### Added
+* 新增对话记录删除前确认浮窗。
+### Changed
+* 优化了对话记录的 Markdown 代码块行内渲染结果。
+`,
+  },
+  {
     version: "2.3.0",
     content: `
 ### Added

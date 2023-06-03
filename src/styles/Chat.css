@@ -15,6 +15,12 @@
 
     & .mdblock {
       @apply gap-4 fcol w-full overflow-hidden;
+
+      & > p {
+        & > code {
+          @apply bg-zinc-700 py-1 px-1 mx-1 rounded;
+        }
+      }
     }
 
     & > .q-space {

@@ -1,10 +1,14 @@
 import { QBtn, QIcon } from "quasar";
 import { defineComponent } from "vue";
-import { Maybe, any, c } from "../common/utils";
+import { Maybe, any, as_props, c } from "../common/utils";
 import { insert_slot, not_undefined_or } from "../common/jsx_utils";
 
+type BetterBtnProps = {
+  color?: string;
+};
+
 export default defineComponent<
-  {},
+  BetterBtnProps,
   {},
   {},
   {},
@@ -15,8 +19,9 @@ export default defineComponent<
     click: (e: Event) => void;
   }
 >({
+  props: as_props<BetterBtnProps>()(["color"]),
   emits: ["click"],
-  setup(__, ctx) {
+  setup(props, ctx) {
     return () => {
       return (
         <QBtn
@@ -28,6 +33,7 @@ export default defineComponent<
           {...ctx.attrs}
           unelevated
           no-caps
+          color={props.color}
           onClick={(e) => {
             ctx.emit("click", e);
           }}

@@ -31,6 +31,7 @@ import {
   parse_param_to_Record,
   promise_with_ref,
   refvmodel,
+  refvmodel_type,
   scroll_if_close_to,
   scroll_to,
 } from "../common/utils";
@@ -692,8 +693,10 @@ export const MorePopup = defineComponent<
   props: as_props<MorePopupProps>()(["message", "show"]),
   emits: ["update:show", "delete"],
   setup(props, ctx) {
+    const message_type = props.message.message_type;
     return () => {
       const message = props.message;
+      const show_delete_popup = ref(false);
       return (
         <QPopupProxy
           {...c`more_popup`}
@@ -706,21 +709,53 @@ export const MorePopup = defineComponent<
           {Maybe.of(ctx.slots.default)
             .map((slot) => slot())
             .unwrap_or(<div></div>)}
-          <MorePopupBtn
-            class="text-_negative"
-            label="删除"
-            icon="mdi-delete"
-            onClick={() => ctx.emit("delete")}
-          ></MorePopupBtn>
-          <MorePopupBtn icon="mdi-information-outline" label="信息">
-            <QPopupProxy {...c`bg-zinc-700 text-zinc-200`}>
-              <div class="p-2 px-4 w-full">
-                创建时间：{calendar(message.created)}
+          <MorePopupBtn class="text-_negative" label="删除" icon="mdi-delete">
+            <QPopupProxy
+              {...c`bg-zinc-800 text-zinc-200 border border-zinc-500`}
+              {...refvmodel_type(show_delete_popup, "modelValue")}
+              breakpoint={0}
+            >
+              <div class="fcol gap-4 p-4">
+                <div>
+                  你确定要<b>删除</b>这项对话记录吗？
+                </div>
+                <div class="frow gap-2 items-center justify-start">
+                  <BetterBtn
+                    {...c`bg-_negative2`}
+                    onClick={() => ctx.emit("delete")}
+                  >
+                    <QIcon name="mdi-check" size="1.2rem"></QIcon>
+                    <div>确认</div>
+                  </BetterBtn>
+                  <BetterBtn
+                    {...c`bg-transparent text-_secondary`}
+                    onClick={() => (show_delete_popup.value = false)}
+                  >
+                    <QIcon name="mdi-close" size="1.2rem"></QIcon>
+                    <div>取消</div>
+                  </BetterBtn>
+                </div>
               </div>
+            </QPopupProxy>
+          </MorePopupBtn>
+          <MorePopupBtn icon="mdi-information-outline" label="信息">
+            <QPopupProxy
+              {...c`fcol bg-zinc-800 text-zinc-200 p-5 gap-2 border border-zinc-500`}
+              breakpoint={0}
+            >
+              {not_undefined_or(() => {
+                if (message_type === "user") {
+                  return <div class="text-md font-bold">用户创建的信息</div>;
+                }
+                if (message_type === "server") {
+                  return <div class="text-lg font-bold">服务器创建的信息</div>;
+                }
+              })}
+              <div class="w-full">创建时间：{calendar(message.created)}</div>
               {not_undefined_or(() => {
                 if (message.message_type === "server") {
                   return (
-                    <div class="p-2 px-4 text-zinc-200 w-full">
+                    <div class=" text-zinc-200 w-full">
                       模型：{message.request_config.model}
                     </div>
                   );
@@ -908,22 +943,31 @@ export const ChatBody = defineComponent({
   },
 });
 
+type TopBarMode = "default" | "select";
+
 export const TopBar = defineComponent({
   setup() {
     const ms = use_main_store();
     const use_markdown_render = toRef(ms, "use_markdown_render");
+    const operating_mode = ref<TopBarMode>("default");
     return () => {
       return (
         <div class="chat_top_bar">
-          {/* <QBtn icon="mdi-checkbox-multiple-outline" flat>
-            <QTooltip>多选</QTooltip>
-          </QBtn>
-          <QBtn icon="mdi-chat-plus" flat>
+          {
+            <QBtn
+              icon="mdi-checkbox-multiple-outline"
+              flat
+              onClick={() => (operating_mode.value = "select")}
+            >
+              <QTooltip>多选</QTooltip>
+            </QBtn>
+            /* <QBtn icon="mdi-chat-plus" flat>
             <QTooltip>插入</QTooltip>
           </QBtn>
           <QBtn {...c`text-_negative`} icon="mdi-delete" flat>
             <QTooltip>删除</QTooltip>
-          </QBtn> */}
+          </QBtn> */
+          }
           <QSpace></QSpace>
           <div class="right_btn_gruop">
             <QToggle {...refvmodel(use_markdown_render)}>
