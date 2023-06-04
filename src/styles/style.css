@@ -117,9 +117,7 @@ pre.hljs {
   }
 }
 
-.page_container {
-  @apply max-sm:max-w-[100vw] grow;
-}
+
 
 .fit-width {
   @apply w-[80%] max-[480px]:w-[100vw] max-sm:w-[90vw] md:w-[75%] lg:w-[60%] max-w-[800px] xl:w-[80%];

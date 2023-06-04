@@ -69,14 +69,17 @@ async function regenerate(index: number) {
 
   const chat_id = ms.curry_chat.id!;
 
-  const apply_update_chat_record_messages = throttle(async () => {
-    const curr_messages = await ms.get_chat_record_messages(chat_id);
-    const curr_message = curr_messages[index] as ServerMessage;
-    curr_message.content = msg.content;
-    curr_message.error = msg.error;
-    await ms.update_chat_record_messages(chat_id, curr_messages);
-    await ms.sync_curr_chat_record_messages();
-  }, 100);
+  const apply_update_chat_record_messages =
+    // throttle(
+    async () => {
+      const curr_messages = await ms.get_chat_record_messages(chat_id);
+      const curr_message = curr_messages[index] as ServerMessage;
+      curr_message.content = msg.content;
+      curr_message.error = msg.error;
+      await ms.update_chat_record_messages(chat_id, curr_messages);
+      await ms.sync_curr_chat_record_messages();
+    };
+  // , 50);
 
   const settings = ms.settings;
   const stop_next_ref = ref(async () => {});
@@ -845,12 +848,7 @@ export const ChatItem = defineComponent<
     return () => {
       const { message, index, chatid } = props;
       return (
-        <div
-          class={[
-            "frow w-full justify-center max-md:py-4 pt-4 py-5",
-            item_gen_color(index),
-          ]}
-        >
+        <div class={["chat_item_container", item_gen_color(index)]}>
           {not_undefined_or(() => {
             if (message.message_type === "user") {
               return (
@@ -915,9 +913,8 @@ export const ChatBody = defineComponent({
     return () => {
       const chatid = ms.curry_chat.id!;
       return (
-        <div class="fcol relative grow text-zinc-100 h-min flex-nowrap w-full">
-          {/* <ChatBodyTopBar></ChatBodyTopBar> */}
-          <div class={["fcol w-full page_container"]}>
+        <div class="chat_body">
+          <div class={["chat_items_container"]}>
             {messages.value.map((msg, index) => (
               <ChatItem
                 message={msg}
@@ -929,7 +926,7 @@ export const ChatBody = defineComponent({
                 }}
               ></ChatItem>
             ))}
-            <div id="ChatBodyBottom" class="min-h-[15rem]"></div>
+            <div id="ChatBodyBottom" class="chat_body_bottom"></div>
           </div>
           <ChatBodyInput
             class={[

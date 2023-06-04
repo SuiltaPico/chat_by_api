@@ -1,12 +1,20 @@
 export default [
   {
+    version: "2.5.1",
+    content: `
+### Fixed
+* 彻底解决应用单例下的数据库写入的冲突问题。
+* 对话生成会更加流畅。
+`,
+  },
+  {
     version: "2.5.0",
     content: `
 ### Added
 * 新增 API-KEY 的切换顺序功能。
 ### Fixed
-* 修复了无法 openai 接口的问题。
-`
+* 修复了无法使用 openai 接口的问题。
+`,
   },
   {
     version: "2.4.0",

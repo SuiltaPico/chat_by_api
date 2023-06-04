@@ -156,7 +156,7 @@ export const raw_items = [
   //   route_name: "text_continuation",
   // },
   // {
-  //   icon: "mdi-message-plus",
+  //   icon: "mdi-application-braces-outline",
   //   name: "template",
   //   label: "模板",
   //   route_name: "template",

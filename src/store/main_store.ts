@@ -38,7 +38,7 @@ const use_main_store = defineStore("main", () => {
 
   const use_markdown_render = ref(true);
 
-  const db_task: Promise<any> = Promise.resolve()
+  let db_task: Promise<any> = Promise.resolve()
     .then(async () => {
       await sync_db();
       await compact_dbs();
@@ -47,20 +47,12 @@ const use_main_store = defineStore("main", () => {
       throw e;
     });
 
-  async function wait_db_task<T>(p: Promise<T>) {
-    const result = await db_task
-      .then(() => p)
-      .catch((e) => {
-        throw e;
-      });
-    return result;
-  }
-
   async function wait_db_task_fn<T>(p: () => Promise<T>) {
-    const result = await db_task.then(p).catch((e) => {
+    const thenp = db_task.then(p).catch((e: any) => {
       throw e;
     });
-    return result;
+    db_task = thenp;
+    return await thenp;
   }
 
   const is_loading = ref(true);
