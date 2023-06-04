@@ -3,6 +3,7 @@ import { Component, reactive, ref, watch } from "vue";
 import ChatRecord, {
   ChatRecordMeta,
   Message,
+  OpenAIRequestConfig,
   Role,
   RoleWithoutUnknown,
 } from "../interface/ChatRecord";
@@ -18,6 +19,8 @@ import {
   get_chat_record_messages,
   update_chat_record_messages,
   compact_dbs,
+  update_chat_record,
+  get_chat_record,
 } from "./db_api";
 import { ChatBodyInputMode } from "../components/ChatBodyInput";
 import { QInput } from "quasar";
@@ -57,14 +60,14 @@ const use_main_store = defineStore("main", () => {
 
   const is_loading = ref(true);
 
-  const chat_body_input = ref({
+  const chat_body_input = reactive({
     mode: "generate" as ChatBodyInputMode,
     promot: "",
     model: "gpt-3.5-turbo",
     brief_mode: false,
     require_next: false,
     sended: (new_chat?: boolean) => {
-      const cbi = chat_body_input.value;
+      const cbi = chat_body_input;
       cbi.promot = "";
       if (new_chat) {
         cbi.require_next = true;
@@ -77,25 +80,18 @@ const use_main_store = defineStore("main", () => {
     frequency_penalty: 0,
     auto_max_tokens: true,
     max_tokens: 2000,
+    generate_OpenAIRequestConfig(): OpenAIRequestConfig {
+      return {
+        model: chat_body_input.model,
+        temperature: chat_body_input.temperature,
+        presence_penalty: chat_body_input.presence_penalty,
+        frequency_penalty: chat_body_input.frequency_penalty,
+        max_tokens: chat_body_input.auto_max_tokens
+          ? undefined
+          : chat_body_input.max_tokens,
+      };
+    },
   });
-
-  function get_chat_body_input_OpenAIRequestConfig() {
-    const {
-      model,
-      temperature,
-      presence_penalty,
-      frequency_penalty,
-      auto_max_tokens,
-      max_tokens,
-    } = chat_body_input.value;
-    return {
-      model,
-      temperature: temperature,
-      presence_penalty: presence_penalty,
-      frequency_penalty: frequency_penalty,
-      max_tokens: auto_max_tokens ? undefined : max_tokens,
-    };
-  }
 
   const chat_records_meta = ref<ChatRecordMeta[]>(chat_records_default_value);
   const settings = ref<Settings>(settings_default_value);
@@ -107,42 +103,39 @@ const use_main_store = defineStore("main", () => {
     await wait_db_task_fn(() => set_settings(id, value));
   }
 
-  async function _new_chat_record(name: string, created: number) {
+  async function _new_chat_record(name: string) {
     return await wait_db_task_fn(async () => {
-      const id = await new_chat_record(name, created);
+      const id = await new_chat_record(name);
       await sync_db();
       return id;
     });
+  }
+
+  async function _get_chat_record(id: string) {
+    return await wait_db_task_fn(() => get_chat_record(id));
   }
 
   async function _get_chat_record_messages(id: string) {
     return await wait_db_task_fn(() => get_chat_record_messages(id));
   }
 
-  async function _update_chat_record_messages(
-    id: string,
-    message?: readonly Message[]
-  ) {
-    console.log("id", id);
+  async function _update_chat_record(chat_record?: ChatRecord) {
+    const cr = chat_record ?? curry_chat.chat_record;
+    if (cr === undefined) return;
 
-    if (message === undefined) {
-      message = curry_chat.messages;
-    }
-
-    await wait_db_task_fn(() => update_chat_record_messages(id, message!));
+    return await wait_db_task_fn(() => update_chat_record(cr));
   }
 
   async function _delete_chat_record(id: string) {
     await wait_db_task_fn(async () => {
       await delete_chat_record(id);
-      curry_chat.id = undefined;
+      curry_chat.chat_record = undefined;
       await sync_db();
     });
   }
 
   const curry_chat = reactive({
-    id: undefined as undefined | string,
-    messages: [] as Message[],
+    chat_record: undefined as ChatRecord | undefined,
     status: "",
     /** 状态：使用原始渲染。
      * [req: use_raw_render]：当页面变动时清空。 */
@@ -159,45 +152,43 @@ const use_main_store = defineStore("main", () => {
     },
     change_operating_mode(target_mode: ChatRecordOperatingMode) {
       const curr_mode = curry_chat.operating_mode;
-      if (curr_mode === ChatRecordOperatingMode.edit) {
+      if (curr_mode === ChatRecordOperatingMode.select) {
         curry_chat.clear_edit_mode_cache();
       }
       curry_chat.operating_mode = target_mode;
     },
     clear_cache() {
       curry_chat.use_raw_render = {};
-      curry_chat.id = undefined;
-      curry_chat.messages = [];
+      curry_chat.chat_record = undefined;
       curry_chat.operating_mode = ChatRecordOperatingMode.default;
       curry_chat.clear_edit_mode_cache();
+    },
+    async load_chat_record(id: string) {
+      console.log("load_chat_record", id);
+
+      curry_chat.chat_record = await _get_chat_record(id);
     },
   });
 
   /** 不应该直接运行，应该使用 `wait_db_task_fn` 加入事务队列中。  */
   async function sync_db() {
-    console.log("sync");
-    console.log("curry_chat.id", curry_chat.id);
+    console.log("[sync_db]", curry_chat.chat_record?.id);
 
     chat_records_meta.value = await get_chat_records_meta(0, 20);
     settings.value = await get_settings();
-    if (curry_chat.id) {
-      await sync_curr_chat_record_messages();
-    }
-
-    console.log("[sync_db]", settings.value);
+    await sync_curr_chat_record();
 
     is_loading.value = false;
   }
 
   /** 不应该直接运行，应该使用 `wait_db_task_fn` 加入事务队列中。  */
-  async function sync_curr_chat_record_messages() {
-    if (!curry_chat.id) return;
+  async function sync_curr_chat_record() {
+    if (!curry_chat.chat_record) return;
 
     try {
-      curry_chat.messages = await get_chat_record_messages(curry_chat.id);
+      curry_chat.chat_record = await get_chat_record(curry_chat.chat_record.id);
     } catch {
-      console.log("sync faild");
-      curry_chat.id = undefined;
+      console.error("sync faild");
     }
   }
 
@@ -208,17 +199,17 @@ const use_main_store = defineStore("main", () => {
     chat_records_meta,
     settings,
     new_chat_record: _new_chat_record,
+    get_chat_record: _get_chat_record,
+    update_chat_record: _update_chat_record,
     get_chat_record_messages: _get_chat_record_messages,
-    update_chat_record_messages: _update_chat_record_messages,
     delete_chat_record: _delete_chat_record,
     set_settings: _set_settings,
     is_loading,
     curry_chat,
     chat_body_input,
-    get_chat_body_input_OpenAIRequestConfig,
     sync_db,
     sync_curr_chat_record_messages: () =>
-      wait_db_task_fn(() => sync_curr_chat_record_messages()),
+      wait_db_task_fn(() => sync_curr_chat_record()),
   };
 });
 

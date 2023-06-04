@@ -3,10 +3,18 @@ import { QIcon, QSpace, QTab, QTabs } from "quasar";
 import { Component, computed, defineComponent, ref } from "vue";
 import type { RouteRecordName } from "vue-router";
 import { useRoute, useRouter } from "vue-router";
-import { Nil, any, arr_or_pack_to_arr, c, refvmodel } from "../common/utils";
+import {
+  Nil,
+  any,
+  arr_or_pack_to_arr,
+  c,
+  refvmodel,
+  refvmodel_type,
+} from "../common/utils";
 import type ChatRecord from "../interface/ChatRecord";
 import router from "../router/router";
 import use_main_store from "../store/main_store";
+import { DeletePopup } from "./chat/DeletePopup";
 
 export const ChatBar = defineComponent({
   setup(props, ctx) {
@@ -67,7 +75,8 @@ export const ChatRecordSelectionItem = defineComponent({
   props: ["record", "index"],
   emits: ["click"],
   setup(props: { record: ChatRecord; index: number }, ctx) {
-    const main_store = use_main_store();
+    const ms = use_main_store();
+    const delete_popup_show = ref(false);
     return () => {
       const { record, index } = props;
       return (
@@ -82,21 +91,22 @@ export const ChatRecordSelectionItem = defineComponent({
           <div class="text">{record.name}</div>
           <QSpace />
           <div class="btn_group">
-            <QIcon
-              name="mdi-trash-can"
-              size="1.3rem"
-              {...any({
-                onClick: async () => {
-                  await main_store.delete_chat_record(record.id);
+            <QIcon name="mdi-trash-can" size="1.3rem">
+              <DeletePopup
+                {...refvmodel_type(delete_popup_show, "modelValue")}
+                onConfirm={async () => {
+                  await ms.delete_chat_record(record.id);
                   try {
-                    const id = main_store.chat_records_meta[index].id;
+                    const id = ms.chat_records_meta[index].id;
                     router.push({ name: "chat", params: { chatid: id } });
                   } catch {
                     router.push({ name: "index" });
                   }
-                },
-              })}
-            ></QIcon>
+                }}
+              >
+                是否确定删除此对话记录？
+              </DeletePopup>
+            </QIcon>
           </div>
         </div>
       );

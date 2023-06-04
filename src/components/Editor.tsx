@@ -1,4 +1,4 @@
-import monaco from "monaco-editor";
+import { editor as monaco_editor } from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { as_props } from "../common/utils";
 import { defineComponent, onMounted, ref } from "vue";
@@ -6,11 +6,6 @@ import { defineComponent, onMounted, ref } from "vue";
 /** @ts-ignore */
 self.MonacoEnvironment = {
   getWorker: async function (_: string, label: string) {
-    if (label === "json") {
-      return new (
-        await import("monaco-editor/esm/vs/language/json/json.worker?worker")
-      ).default();
-    }
     return new editorWorker();
   },
 };
@@ -19,6 +14,7 @@ self.MonacoEnvironment = {
 
 export interface EditorCompoAPI {
   change_value(value: string): false | undefined;
+  get_value(): string;
   force_set_value(value: string): false | undefined;
   change_lang(value: string): false | undefined;
   set_readonly(readonly: boolean): false | undefined;
@@ -30,7 +26,7 @@ interface EditorProps {
   init_readonly?: boolean;
 }
 
-export default defineComponent<
+export const Editor = defineComponent<
   EditorProps,
   {},
   {},
@@ -51,21 +47,24 @@ export default defineComponent<
   emits: ["update:content", "update:click"],
   setup(props, ctx) {
     let editor_container_ref = ref<HTMLDivElement>();
-    let editor: undefined | monaco.editor.IStandaloneCodeEditor;
+    let editor: undefined | monaco_editor.IStandaloneCodeEditor;
 
     onMounted(() => {
-      editor = monaco.editor.create(editor_container_ref.value!, {
+      editor = monaco_editor.create(editor_container_ref.value!, {
         language: props.init_language ?? "",
         theme: props.init_theme ?? "vs-dark",
-        automaticLayout: true,
+        // automaticLayout: true,
         readOnly: props.init_readonly ?? false,
+        wordWrap: "wordWrapColumn",
       });
       editor.onDidChangeModelContent(() => {
         ctx.emit("update:content", editor!.getModel()!.getValue());
       });
+
+      window.addEventListener("resize", () => editor?.layout());
     });
 
-    defineExpose({
+    ctx.expose({
       change_value(value) {
         const model = editor?.getModel();
         if (!model) return false;
@@ -87,7 +86,7 @@ export default defineComponent<
         const model = editor?.getModel();
         if (!model) return false;
 
-        monaco.editor.setModelLanguage(model, language);
+        monaco_editor.setModelLanguage(model, language);
       },
       set_readonly(readonly) {
         if (!editor) return false;
@@ -96,11 +95,15 @@ export default defineComponent<
           readOnly: readonly,
         });
       },
+      get_value() {
+        if (!editor) return "";
+        return editor.getModel()!.getValue();
+      },
     } as EditorCompoAPI);
     return () => (
       <div
         {...ctx.attrs}
-        ref="editor_container_ref"
+        ref={editor_container_ref}
         onClick={(e) => ctx.emit("update:click", e)}
       ></div>
     );

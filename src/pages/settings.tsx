@@ -263,15 +263,15 @@ export const APIKEY_Manager = defineComponent({
                 </QInput>
                 <QBtn
                   {...cl([
-                    "text-_primary bg-zinc-600",
+                    "text-_primary bg-zinc-600 text-[0.75rem]",
                     i === 0 ? "hidden" : "",
                   ])}
-                  icon="mdi-menu-up"
+                  icon="mdi-arrow-collapse-up"
                   unelevated
                   padding="0.5rem 0.5rem"
                   onClick={async () => {
-                    const last = settings.apikeys.keys[i - 1];
-                    settings.apikeys.keys[i - 1] = it;
+                    const last = settings.apikeys.keys[0];
+                    settings.apikeys.keys[0] = it;
                     settings.apikeys.keys[i] = last;
                     await ms.set_settings("apikeys");
                   }}

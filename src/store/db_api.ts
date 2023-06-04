@@ -7,6 +7,7 @@ import ChatRecord, {
 } from "../interface/ChatRecord";
 import Settings, { APIKeysSetting, SettingItem } from "../interface/Settings";
 import _ from "lodash";
+import { create_ChatRecordForStorageV2 } from "../impl/ChatRecord";
 
 PouchDB.plugin(PouchDBFind);
 
@@ -54,15 +55,11 @@ export async function get_chat_records_meta(page: number, page_size: number) {
     .value();
 }
 
-export async function new_chat_record(name: string, created: number) {
+export async function new_chat_record(name: string) {
   const db = dbs.chat_records;
+  console.log(create_ChatRecordForStorageV2(name));
+  const result = await db.post(create_ChatRecordForStorageV2(name));
 
-  const result = await db.post({
-    name,
-    created,
-    messages: [],
-    last_modified: created,
-  });
 
   return result.id;
 }
@@ -70,7 +67,29 @@ export async function new_chat_record(name: string, created: number) {
 export async function get_chat_record_messages(id: string) {
   const db = dbs.chat_records;
 
+  
+
   return (await db.get(id)).messages;
+}
+
+export async function get_chat_record(id: string): Promise<ChatRecord> {
+  const db = dbs.chat_records;
+
+  console.log("[db]get_chat_record", id);
+
+  const cr = await db.get(id);
+  const result = { ...cr, id: cr._id };
+  return result;
+}
+
+export async function update_chat_record(chat_record: ChatRecord) {
+  const db = dbs.chat_records;
+
+  const latest = await db.get(chat_record.id);
+  await db.put({
+    _rev: latest._rev,
+    ...chat_record,
+  });
 }
 
 export async function update_chat_record_messages(

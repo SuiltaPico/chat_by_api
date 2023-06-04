@@ -3,11 +3,16 @@ import { defineComponent, ref } from "vue";
 
 import { define_component_with_prop } from "../common/define_component";
 import { c } from "../common/utils";
-import type { Message } from "../interface/ChatRecord";
+import type { Message, MessageV2 } from "../interface/ChatRecord";
 
 import { useRouter } from "vue-router";
 import { ChatBodyInput } from "../components/ChatBodyInput";
 import use_main_store from "../store/main_store";
+import {
+  create_ServerMessage,
+  create_UserMessage,
+  create_UserMessageV2,
+} from "../impl/ChatRecord";
 
 // const res = await openai.createChatCompletion({
 //   model: "gpt-3.5-turbo",
@@ -34,33 +39,25 @@ export const IndexBody = defineComponent({
             if (promot.length === 0) return;
 
             const chatid = await ms.new_chat_record(
-              promot.slice(0, 50) + (promot.length > 50 ? "…" : ""),
-              Date.now()
+              promot.slice(0, 50) + (promot.length > 50 ? "…" : "")
             );
+
+            const chat_record = await ms.get_chat_record(chatid);
 
             if (mode === "generate") {
               const generate_mode_messages = [
-                {
-                  message_type: "user",
-                  role: "user",
-                  created: Date.now(),
-                  content: promot,
-                },
-                {
-                  message_type: "server",
-                  role: "assistant",
-                  created: Date.now(),
-                  request_config: {
-                    model: ms.chat_body_input.model,
-                  },
-                  content: "",
-                },
-              ] as const;
+                create_UserMessage(chat_record, "user", promot),
+                create_ServerMessage(
+                  chat_record,
+                  "assistant",
+                  "",
+                  ms.chat_body_input.generate_OpenAIRequestConfig()
+                ),
+              ] satisfies Message[];
 
-              await ms.update_chat_record_messages(
-                chatid,
-                generate_mode_messages
-              );
+              chat_record.messages = generate_mode_messages;
+
+              await ms.update_chat_record(chat_record);
 
               ms.chat_body_input.sended(true);
 
@@ -72,15 +69,16 @@ export const IndexBody = defineComponent({
               });
             } else if (mode === "add") {
               const add_mode_messages = [
-                {
-                  message_type: "user",
-                  role: ms.chat_body_input.role,
-                  created: Date.now(),
-                  content: promot,
-                },
-              ] as const;
+                create_UserMessage(
+                  chat_record,
+                  ms.chat_body_input.role,
+                  promot
+                ),
+              ] satisfies Message[];
 
-              await ms.update_chat_record_messages(chatid, add_mode_messages);
+              chat_record.messages = add_mode_messages;
+
+              await ms.update_chat_record(chat_record);
 
               ms.chat_body_input.sended(false);
 

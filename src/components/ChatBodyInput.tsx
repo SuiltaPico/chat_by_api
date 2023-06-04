@@ -35,7 +35,7 @@ import _ from "lodash";
 import { not_undefined_or, tpl } from "../common/jsx_utils";
 import { Role, RoleWithoutUnknown } from "../interface/ChatRecord";
 import { QSelectOptionSlotParam } from "../common/quasar_utils";
-import { Avatar } from "../pages/chat";
+import { Avatar } from "../components/chat/Avatar";
 import { HotKeys, key_event_match_HotKey } from "../common/key_event";
 import { useWindowSize } from "@vueuse/core";
 

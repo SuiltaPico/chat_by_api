@@ -1,5 +1,4 @@
 import { CreateChatCompletionRequest } from "openai";
-import { type } from "os";
 
 /** 聊天记录元信息 */
 export interface ChatRecordMeta {
@@ -7,27 +6,54 @@ export interface ChatRecordMeta {
   name: string;
   created: number;
   last_modified: number;
+  latest_record_id?: number;
+  record_count?: number;
+  api__?: string;
 }
+
+type ChatRecordToV2<T extends Omit<ChatRecordMeta, "id">> = Omit<
+  T,
+  "latest_record_id" | "record_count"
+> & {
+  api__: "v2";
+  latest_record_id: number;
+  record_count: number;
+};
+
+export type ChatRecordMetaV2 = ChatRecordToV2<ChatRecordMeta>;
 
 /** 聊天记录 */
 export default interface ChatRecord extends ChatRecordMeta {
   messages: Message[];
 }
 
+export type ChatRecordV2 = ChatRecordToV2<ChatRecord>;
+
 export type ChatRecordForStorage = Omit<ChatRecord, "id">;
+export type ChatRecordForStorageV2 = ChatRecordToV2<ChatRecordForStorage>;
 
 export type Message = UserMessage | ServerMessage;
+type MessageToV2<T extends Message> = Omit<T, "record_id" | "last_modified"> & {
+  record_id: number;
+  last_modified: number;
+  api__: "v2";
+};
+export type MessageV2 = ServerMessageV2 | UserMessageV2;
 
 export type Role = "user" | "assistant" | "system" | "unknown";
 export type RoleWithoutUnknown = Exclude<Role, "unknown">;
 
 export interface UserMessage {
-  uuid?: string;
+  api__?: string;
+  record_id?: number;
   message_type: "user";
   role: Role;
   created: number;
+  last_modified?: number;
   content: string;
 }
+
+export type UserMessageV2 = MessageToV2<UserMessage>;
 
 interface _RequestConfig {
   api_source?: string;
@@ -43,15 +69,19 @@ export interface OpenAIRequestConfig
 export type RequestConfig = OpenAIRequestConfig;
 
 export interface ServerMessage {
-  uuid?: string;
+  api__?: string;
+  record_id?: number;
   message_type: "server";
   role: Role;
   created: number;
-  request_config: OpenAIRequestConfig | _RequestConfig;
+  last_modified?: number;
+  request_config: OpenAIRequestConfig;
   response_meta?: ResponseMeta;
   content: string;
   error?: ServerMessagesError;
 }
+
+export type ServerMessageV2 = MessageToV2<ServerMessage>;
 
 export type ServerMessagesError =
   | ServerMessagesAPIError

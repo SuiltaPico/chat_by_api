@@ -1,6 +1,6 @@
 import _, { fromPairs } from "lodash";
 import { type } from "os";
-import { AllowedComponentProps, Ref } from "vue";
+import { AllowedComponentProps, Ref, VNode } from "vue";
 
 /** 欺骗类型系统的面具。
  */

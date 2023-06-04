@@ -1,5 +1,12 @@
-import { Comment, Slots, h } from "vue";
+import { Comment, Slots, VNode, createCommentVNode, h } from "vue";
 import { Maybe } from "./utils";
+
+export function vif(cond: boolean, template: VNode) {
+  if (cond) {
+    return template;
+  }
+  return createCommentVNode();
+}
 
 export function not_undefined_or<T>(fn: () => any, _default?: T) {
   const result = fn();

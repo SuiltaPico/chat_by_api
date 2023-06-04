@@ -19,7 +19,7 @@ body {
 
 ul,
 ol {
-  @apply ml-4;
+  @apply ml-[2rem];
 }
 
 ol {
