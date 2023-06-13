@@ -1,33 +1,34 @@
 import { defineStore } from "pinia";
-import { Component, reactive, ref, watch } from "vue";
+import { QInput } from "quasar";
+import { reactive, ref } from "vue";
+import { ChatBodyInputMode } from "../components/ChatBodyInput";
 import ChatRecord, {
   ChatRecordMeta,
-  Message,
   OpenAIRequestConfig,
-  Role,
   RoleWithoutUnknown,
 } from "../interface/ChatRecord";
 import Settings from "../interface/Settings";
-import {
-  get_chat_records_meta,
-  get_settings,
-  settings_default_value,
-  chat_records_default_value,
-  set_settings,
-  new_chat_record,
-  delete_chat_record,
-  get_chat_record_messages,
-  update_chat_record_messages,
-  compact_dbs,
-  update_chat_record,
-  get_chat_record,
-} from "./db_api";
-import { ChatBodyInputMode } from "../components/ChatBodyInput";
-import { QInput } from "quasar";
 import { ChatRecordOperatingMode } from "../pages/chat";
+import {
+  chat_records_default_value,
+  compact_dbs,
+  create_chat_record_db,
+  delete_chat_record_db,
+  get_chat_record_db,
+  get_chat_records_meta_db,
+  get_settings_db,
+  init_db,
+  modify_chat_record_db,
+  set_setting_db,
+  settings_default_value,
+} from "./db/db_api";
 
 type LeftBarSize = "just-icon" | "grow" | "hidden";
 
+/** 应用的临时储存。不保证与数据库实时同步。
+ *
+ * 提供的数据库 API 会尝试缓存与数据库的一致性。
+ */
 const use_main_store = defineStore("main", () => {
   const left_bar_width = ref(340);
   function change_left_bar_width(size: LeftBarSize) {
@@ -39,26 +40,28 @@ const use_main_store = defineStore("main", () => {
     left_bar_width.value = map[size];
   }
 
-  const use_markdown_render = ref(true);
-
-  let db_task: Promise<any> = Promise.resolve()
+  let db_task_queue: Promise<any> = Promise.resolve()
     .then(async () => {
-      await sync_db();
+      await sync_from_db();
       await compact_dbs();
     })
     .catch((e) => {
       throw e;
     });
 
-  async function wait_db_task_fn<T>(p: () => Promise<T>) {
-    const thenp = db_task.then(p).catch((e: any) => {
+  async function push_to_db_task_queue<T>(p: () => Promise<T>) {
+    const thenp = db_task_queue.then(p).catch((e: any) => {
       throw e;
     });
-    db_task = thenp;
+    db_task_queue = thenp;
     return await thenp;
   }
 
-  const is_loading = ref(true);
+  push_to_db_task_queue(async () => {
+    await init_db();
+  });
+
+  const is_initializing = ref(true);
 
   const chat_body_input = reactive({
     mode: "generate" as ChatBodyInputMode,
@@ -66,11 +69,11 @@ const use_main_store = defineStore("main", () => {
     model: "gpt-3.5-turbo",
     brief_mode: false,
     require_next: false,
-    sended: (new_chat?: boolean) => {
-      const cbi = chat_body_input;
-      cbi.promot = "";
+    /** 在使用 `ChatBodyInput` 组件发送消息后，对 `promot` 的清理和请求生成的控制。 */
+    sended(new_chat?: boolean) {
+      chat_body_input.promot = "";
       if (new_chat) {
-        cbi.require_next = true;
+        chat_body_input.require_next = true;
       }
     },
     inputter: undefined as undefined | QInput,
@@ -93,123 +96,105 @@ const use_main_store = defineStore("main", () => {
     },
   });
 
-  const chat_records_meta = ref<ChatRecordMeta[]>(chat_records_default_value);
-  const settings = ref<Settings>(settings_default_value);
+  const chat_records = reactive({
+    meta: chat_records_default_value as ChatRecordMeta[],
+    get_meta: get_chat_records_meta_db,
+    async create(name: string) {
+      const crid = await create_chat_record_db(name);
+      await chat_records.sync_meta();
+      return crid;
+    },
+    async delete(id: string) {
+      await delete_chat_record_db(id);
+      await chat_records.sync_meta();
+    },
+    async modify(
+      id: string,
+      modifier: (chat_record: ChatRecord) => Promise<void | ChatRecord>
+    ) {
+      await modify_chat_record_db(id, modifier);
+      await chat_records.sync_meta();
+      await chat_records.sync_message();
+    },
+    get: get_chat_record_db,
+    async sync_meta() {
+      chat_records.meta = await chat_records.get_meta(0, 1024);
+    },
+    async sync_message() {
+      if (curr_chat.chat_record === undefined) return;
+      curr_chat.chat_record = await chat_records.get(curr_chat.chat_record.id);
+    },
+  });
 
-  async function _set_settings<T extends keyof Settings>(
-    id: T,
-    value: Settings[T] = settings.value[id]
-  ) {
-    await wait_db_task_fn(() => set_settings(id, value));
-  }
+  const settings = reactive({
+    settings: settings_default_value as Settings,
+    async set_setting<T extends keyof Settings>(id: T, value: Settings[T]) {
+      await set_setting_db(id, value);
+      await settings.sync();
+    },
+    get_settings: get_settings_db,
+    async sync() {
+      settings.settings = await settings.get_settings();
+    },
+  });
 
-  async function _new_chat_record(name: string) {
-    return await wait_db_task_fn(async () => {
-      const id = await new_chat_record(name);
-      await sync_db();
-      return id;
-    });
-  }
-
-  async function _get_chat_record(id: string) {
-    return await wait_db_task_fn(() => get_chat_record(id));
-  }
-
-  async function _get_chat_record_messages(id: string) {
-    return await wait_db_task_fn(() => get_chat_record_messages(id));
-  }
-
-  async function _update_chat_record(chat_record?: ChatRecord) {
-    const cr = chat_record ?? curry_chat.chat_record;
-    if (cr === undefined) return;
-
-    return await wait_db_task_fn(() => update_chat_record(cr));
-  }
-
-  async function _delete_chat_record(id: string) {
-    await wait_db_task_fn(async () => {
-      await delete_chat_record(id);
-      curry_chat.chat_record = undefined;
-      await sync_db();
-    });
-  }
-
-  const curry_chat = reactive({
+  /** 用于渲染的当前对话状态。 */
+  const curr_chat = reactive({
+    /** 用于渲染的对话记录。
+     *
+     * 注意：仅用于渲染，并非最新的文档。写入数据库钱不能使用该项作为最新的文档。应该打包成一个任务，并使用 `get_chat_record` 获取最新数据。在 */
     chat_record: undefined as ChatRecord | undefined,
     status: "",
-    /** 状态：使用原始渲染。
-     * [req: use_raw_render]：当页面变动时清空。 */
-    use_raw_render: {} as Record<number, boolean>,
+    use_markdown_render: true,
     /** 操作模式。本来应该储存在组件中，但 props 的传递链维护起来比较麻烦。 */
     operating_mode: ChatRecordOperatingMode.default,
-    edit_mode: {
+    select_mode: {
       selected: {} as Record<number, boolean>,
     },
-    clear_edit_mode_cache() {
-      curry_chat.edit_mode = {
+    clear_select_mode_cache() {
+      curr_chat.select_mode = {
         selected: {},
       };
     },
     change_operating_mode(target_mode: ChatRecordOperatingMode) {
-      const curr_mode = curry_chat.operating_mode;
+      const curr_mode = curr_chat.operating_mode;
       if (curr_mode === ChatRecordOperatingMode.select) {
-        curry_chat.clear_edit_mode_cache();
+        curr_chat.clear_select_mode_cache();
       }
-      curry_chat.operating_mode = target_mode;
+      curr_chat.operating_mode = target_mode;
     },
     clear_cache() {
-      curry_chat.use_raw_render = {};
-      curry_chat.chat_record = undefined;
-      curry_chat.operating_mode = ChatRecordOperatingMode.default;
-      curry_chat.clear_edit_mode_cache();
+      curr_chat.chat_record = undefined;
+      curr_chat.operating_mode = ChatRecordOperatingMode.default;
+      curr_chat.clear_select_mode_cache();
     },
     async load_chat_record(id: string) {
-      console.log("load_chat_record", id);
-
-      curry_chat.chat_record = await _get_chat_record(id);
+      curr_chat.chat_record = await chat_records.get(id);
     },
   });
 
-  /** 不应该直接运行，应该使用 `wait_db_task_fn` 加入事务队列中。  */
-  async function sync_db() {
-    console.log("[sync_db]", curry_chat.chat_record?.id);
+  /** 从所有数据库中同步数据到 `main_store` 内。 */
+  async function sync_from_db() {
+    console.log("[sync_from_db]", curr_chat.chat_record?.id);
 
-    chat_records_meta.value = await get_chat_records_meta(0, 20);
-    settings.value = await get_settings();
-    await sync_curr_chat_record();
+    await chat_records.sync_meta();
+    await chat_records.sync_message();
 
-    is_loading.value = false;
-  }
+    await settings.sync();
 
-  /** 不应该直接运行，应该使用 `wait_db_task_fn` 加入事务队列中。  */
-  async function sync_curr_chat_record() {
-    if (!curry_chat.chat_record) return;
-
-    try {
-      curry_chat.chat_record = await get_chat_record(curry_chat.chat_record.id);
-    } catch {
-      console.error("sync faild");
-    }
+    is_initializing.value = false;
   }
 
   return {
-    use_markdown_render,
     left_bar_width,
     change_left_bar_width,
-    chat_records_meta,
+    chat_records,
     settings,
-    new_chat_record: _new_chat_record,
-    get_chat_record: _get_chat_record,
-    update_chat_record: _update_chat_record,
-    get_chat_record_messages: _get_chat_record_messages,
-    delete_chat_record: _delete_chat_record,
-    set_settings: _set_settings,
-    is_loading,
-    curry_chat,
+    is_initializing,
+    curry_chat: curr_chat,
     chat_body_input,
-    sync_db,
-    sync_curr_chat_record_messages: () =>
-      wait_db_task_fn(() => sync_curr_chat_record()),
+    push_to_db_task_queue,
+    sync_db: sync_from_db,
   };
 });
 

@@ -13,7 +13,7 @@ import {
 } from "../common/utils";
 import { passwd_attr, passwd_slot } from "../common/quasar_utils";
 import use_main_store from "../store/main_store";
-import { DBAPIKEYDuplicateError } from "../store/db_api";
+import { DBAPIKEYDuplicateError } from "../store/db/db_api";
 import { chain, debounce } from "lodash";
 import {
   uniqueNamesGenerator,

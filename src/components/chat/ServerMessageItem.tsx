@@ -1,34 +1,36 @@
+import _, { bind, cloneDeep, defer, get } from "lodash";
+import { QBtn, QIcon, QSpace, useQuasar } from "quasar";
 import { defineComponent, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { openai_chat_completion } from "../../common/generate";
+import { vif } from "../../common/jsx_utils";
+import { create_md } from "../../common/md_render";
+import { copy_with_notify } from "../../common/quasar_utils";
 import {
+  Maybe,
+  as_props,
+  parse_param_to_Record,
+  refvmodel_type,
+} from "../../common/utils";
+import {
+  Messages_to_OpenAI_Messages,
+  after_modify_Message,
+  write_Message_to_ChatRecord,
+} from "../../impl/ChatRecord";
+import ChatRecord, {
   Message,
   ServerMessage,
   ServerMessagesError,
 } from "../../interface/ChatRecord";
 import {
-  Maybe,
-  as_props,
-  c,
-  cl,
-  parse_param_to_Record,
-  refvmodel_type,
-} from "../../common/utils";
-import { useRouter } from "vue-router";
-import BetterBtn from "../BetterBtn";
-import { QBtn, QIcon, QSpace, useQuasar } from "quasar";
-import ErrorContainer from "../ErrorContainer";
-import _, { bind, cloneDeep, defer, get } from "lodash";
-import use_main_store from "../../store/main_store";
-import { Editor, EditorCompoAPI } from "../Editor";
-import {
   ChatItem_Avatar,
   ChatItem_select_box,
   ChatRecordOperatingMode,
 } from "../../pages/chat";
-import { not_undefined_or, vif } from "../../common/jsx_utils";
-import { copy_with_notify } from "../../common/quasar_utils";
-import { create_md } from "../../common/md_render";
-import { openai_chat_completion } from "../../common/generate";
-import { Messages_to_OpenAI_Messages } from "../../impl/ChatRecord";
+import use_main_store from "../../store/main_store";
+import BetterBtn from "../BetterBtn";
+import { Editor, EditorCompoAPI } from "../Editor";
+import ErrorContainer from "../ErrorContainer";
 import { MorePopup, MorePopupBtn } from "./MorePopup";
 import { UseEditorRightBtnGroup } from "./UseEditorRightBtnGroup";
 
@@ -47,22 +49,17 @@ async function regenerate(
 
   /** 更新 `_messages[index]` 的消息。 */
   const apply_update_chat_record_messages = async () => {
-    const chat_record_on_db = await ms.get_chat_record(chat_id);
-    const latest_message_on_db = chat_record_on_db.messages[
-      index
-    ] as ServerMessage;
-    latest_message_on_db.content = msg.content;
-    latest_message_on_db.error = msg.error;
-    const now = Date.now();
-    latest_message_on_db.last_modified = chat_record_on_db.last_modified = now;
-    await ms.update_chat_record(chat_record_on_db);
-    await ms.sync_curr_chat_record_messages();
+    await ms.push_to_db_task_queue(async () => {
+      await ms.chat_records.modify(chat_id, async (curr_cr) => {
+        write_Message_to_ChatRecord(curr_cr, msg, index);
+      });
+    });
   };
 
-  const settings = ms.settings;
+  const settings = ms.settings.settings;
   const stop_next_ref = ref(async () => {});
 
-  if (ms.settings.apikeys.keys.length === 0) {
+  if (settings.apikeys.keys.length === 0) {
     msg.error = {
       err_type: "no_api_key",
     };
@@ -249,15 +246,17 @@ export const ServerMessageErrorHandler = defineComponent<
             title="无 API-KEY"
             content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
           >
-            <QBtn
-              color="primary"
-              unelevated
-              onClick={() => {
-                router.push({ name: "settings" });
-              }}
-            >
-              立即前往
-            </QBtn>
+            <div>
+              <QBtn
+                color="primary"
+                unelevated
+                onClick={() => {
+                  router.push({ name: "settings" });
+                }}
+              >
+                立即前往
+              </QBtn>
+            </div>
             <div>{regenerate_btn}</div>
           </ErrorContainer>
         );
@@ -294,6 +293,7 @@ export type ServerMessageItemProps = {
   message: ServerMessage;
   index: number;
   use_editor: boolean;
+  chat_record: ChatRecord;
 };
 
 export const ServerMessageItem = defineComponent<
@@ -324,27 +324,30 @@ export const ServerMessageItem = defineComponent<
     });
 
     return () => {
-      const { message, index, use_editor } = props;
-      const rendered_content = ms.use_markdown_render
+      const { message, index, use_editor, chat_record } = props;
+      const rendered_content = ms.curry_chat.use_markdown_render
         ? md.render(message.content)
         : md.render_as_fence(message.content);
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
 
       const curry_chat = ms.curry_chat;
-      const edit_mode = curry_chat.edit_mode;
+      const edit_mode = curry_chat.select_mode;
 
-      async function do_regenerate() {
-        message.content = "";
-        message.error = undefined;
-        message.request_config =
-          ms.chat_body_input.generate_OpenAIRequestConfig();
-        await ms.update_chat_record(ms.curry_chat.chat_record);
+      async function do_regenerate(crid: string) {
+        await ms.push_to_db_task_queue(async () => {
+          ms.chat_records.modify(crid, async (curr_cr) => {
+            message.content = "";
+            message.error = undefined;
+            message.request_config =
+              ms.chat_body_input.generate_OpenAIRequestConfig();
+            after_modify_Message(curr_cr, message);
+          });
+        });
         await regenerate(
           ms.curry_chat.chat_record!.id,
           ms.curry_chat.chat_record!.messages,
           index
         );
-        await ms.sync_curr_chat_record_messages();
       }
 
       return (
@@ -368,12 +371,8 @@ export const ServerMessageItem = defineComponent<
                 </div>
                 <ServerMessageErrorHandler
                   message={message}
-                  onRegenerate={do_regenerate}
+                  onRegenerate={() => do_regenerate(curry_chat.chat_record!.id)}
                 ></ServerMessageErrorHandler>
-                {not_undefined_or(() => {
-                  if (!message.error) return;
-                  return <div class="mt-2"></div>;
-                })}
               </div>
             )}
 
@@ -416,7 +415,7 @@ export const ServerMessageItem = defineComponent<
                         icon="mdi-refresh"
                         onClick={() => {
                           more_popup_showing.value = false;
-                          do_regenerate();
+                          do_regenerate(curry_chat.chat_record!.id);
                         }}
                       ></MorePopupBtn>
                       <MorePopupBtn

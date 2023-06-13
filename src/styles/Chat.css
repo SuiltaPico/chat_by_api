@@ -58,6 +58,8 @@
             @apply gap-4 fcol w-full overflow-hidden;
 
             & > p {
+              line-height: 2rem;
+               `
               & > code {
                 @apply bg-zinc-700 py-1 px-1 mx-1 rounded;
               }
@@ -74,9 +76,12 @@
               @apply frow flex-nowrap self-start min-w-[5rem] max-w-[5rem] gap-1 items-center;
             }
             & > .editor {
-              @apply frow flex-nowrap;
-              & > .q-btn.check .q-icon {
-                @apply text-_secondary;
+              @apply frow flex-nowrap gap-1;
+              & > .q-btn.check {
+                @apply border-x-2 border-_secondary;
+                & .q-icon {
+                  @apply text-_secondary;
+                }
               }
               & > .q-btn.cancel .q-icon {
                 @apply text-_negative;
@@ -112,7 +117,7 @@
   }
 
   & > .left_btn_group {
-    @apply frow items-center;
+    @apply frow items-center gap-2 max-md:gap-0;
   }
 
   & > .right_btn_gruop {

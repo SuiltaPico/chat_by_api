@@ -4,7 +4,7 @@ import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { not_undefined_or } from "../../common/jsx_utils";
 import { as_props, c, refvmodel_type } from "../../common/utils";
 import { get_Message_uuid } from "../../impl/ChatRecord";
-import { Message } from "../../interface/ChatRecord";
+import ChatRecord, { Message } from "../../interface/ChatRecord";
 import { ChatRecordOperatingMode } from "../../pages/chat";
 import use_main_store from "../../store/main_store";
 import BetterBtn from "../BetterBtn";
@@ -14,6 +14,7 @@ import { UserMessageItem } from "./UserMessageItem";
 export type ChatItemProps = {
   message: Message;
   index: number;
+  chat_record: ChatRecord;
 };
 
 function item_gen_color(index: number) {
@@ -35,7 +36,7 @@ export const ChatItem = defineComponent<
     delete: () => void;
   }
 >({
-  props: as_props<ChatItemProps>()(["message", "index"]),
+  props: as_props<ChatItemProps>()(["message", "index", "chat_record"]),
   emits: ["delete"],
   setup(props, ctx) {
     const ms = use_main_store();
@@ -46,14 +47,14 @@ export const ChatItem = defineComponent<
 
       const el: HTMLDivElement = msg_item.value.$el;
 
-      if (el.clientHeight > 140) {
+      if (el.clientHeight > 200) {
         return true;
       }
       return false;
     });
     const no_thumbnail = ref(false);
     const operating_mode = toRef(ms.curry_chat, "operating_mode");
-    const edit_mode_selected = toRef(ms.curry_chat.edit_mode, "selected");
+    const edit_mode_selected = toRef(ms.curry_chat.select_mode, "selected");
 
     const use_editor = ref(false);
 
@@ -94,6 +95,7 @@ export const ChatItem = defineComponent<
                   message={message}
                   index={index}
                   {...refvmodel_type(use_editor, "use_editor")}
+                  chat_record={props.chat_record}
                   onDelete={() => {
                     ctx.emit("delete");
                   }}
@@ -106,6 +108,7 @@ export const ChatItem = defineComponent<
                   message={message}
                   index={index}
                   {...refvmodel_type(use_editor, "use_editor")}
+                  chat_record={props.chat_record}
                   onDelete={() => {
                     ctx.emit("delete");
                   }}

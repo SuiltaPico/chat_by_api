@@ -1,11 +1,9 @@
-import { Configuration, OpenAIApi } from "./openai_api";
-import { Messages_to_OpenAI_Messages } from "../impl/ChatRecord";
-import { non_empty_else, scroll_if_close_to } from "./utils";
-import { ServerMessage } from "../interface/ChatRecord";
-import { Ref, ref, watch } from "vue";
-import { ChatCompletionRequestMessage } from "openai";
-import { OpenAIRequestConfig } from "../interface/ChatRecord";
 import { chain } from "lodash";
+import { ChatCompletionRequestMessage } from "openai";
+import { Ref } from "vue";
+import { OpenAIRequestConfig } from "../interface/ChatRecord";
+import { Configuration, OpenAIApi } from "./openai_api";
+import { non_empty_else, scroll_if_close_to } from "./utils";
 
 export type GenerateStatus = "init" | "connecting" | "generating" | "finished";
 
@@ -107,10 +105,11 @@ export async function openai_chat_completion(config: {
       }
       done = res.done;
       value = res.value;
-
       // console.log(done, value);
       if (done) break;
       const raw_result = decoder.decode(value);
+      // console.log(raw_result);
+
       const msg_clip = chain(raw_result)
         .split("\n\n")
         .filter((it) => it.length > 0)

@@ -1,7 +1,7 @@
 import { editor as monaco_editor } from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import { as_props } from "../common/utils";
 import { defineComponent, onMounted, ref } from "vue";
+import { as_props } from "../common/utils";
 
 /** @ts-ignore */
 self.MonacoEnvironment = {

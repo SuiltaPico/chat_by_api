@@ -1,5 +1,5 @@
 import { includes } from "lodash";
-import { QIcon, QSpace, QTab, QTabs } from "quasar";
+import { QBadge, QIcon, QSpace, QTab, QTabs } from "quasar";
 import { Component, computed, defineComponent, ref } from "vue";
 import type { RouteRecordName } from "vue-router";
 import { useRoute, useRouter } from "vue-router";
@@ -24,7 +24,7 @@ export const ChatBar = defineComponent({
     return () => {
       // 受制于响应式系统，必须写在里面
       const route = useRoute();
-      const records = ms.chat_records_meta;
+      const records = ms.chat_records.meta;
       return (
         <div {...attrs} class="chat_record_detail">
           <div class="top_btn_group">
@@ -47,7 +47,7 @@ export const ChatBar = defineComponent({
           <ChatRecordSelectionSeparator />
           <div {...c`container`}>
             {records.map((it, index) => (
-              <ChatRecordSelectionItem
+              <Item
                 class={{ active: it.id == route.params.chatid }}
                 key={it.id}
                 record={it}
@@ -55,7 +55,7 @@ export const ChatBar = defineComponent({
                 onClick={() => {
                   router.push(`/chat/${it.id}`);
                 }}
-              ></ChatRecordSelectionItem>
+              ></Item>
             ))}
           </div>
           <QSpace />
@@ -71,7 +71,7 @@ export const ChatRecordSelectionSeparator = defineComponent({
   },
 });
 
-export const ChatRecordSelectionItem = defineComponent({
+export const Item = defineComponent({
   props: ["record", "index"],
   emits: ["click"],
   setup(props: { record: ChatRecord; index: number }, ctx) {
@@ -87,6 +87,7 @@ export const ChatRecordSelectionItem = defineComponent({
               name="mdi-message-outline"
               size="1rem"
             ></QIcon>
+            <QBadge label={record.record_count}></QBadge>
           </div>
           <div class="text">{record.name}</div>
           <QSpace />
@@ -95,13 +96,8 @@ export const ChatRecordSelectionItem = defineComponent({
               <DeletePopup
                 {...refvmodel_type(delete_popup_show, "modelValue")}
                 onConfirm={async () => {
-                  await ms.delete_chat_record(record.id);
-                  try {
-                    const id = ms.chat_records_meta[index].id;
-                    router.push({ name: "chat", params: { chatid: id } });
-                  } catch {
-                    router.push({ name: "index" });
-                  }
+                  await ms.chat_records.delete(record.id);
+                  router.push({ name: "new_chat" });
                 }}
               >
                 是否确定删除此对话记录？

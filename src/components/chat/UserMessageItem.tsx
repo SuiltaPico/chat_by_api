@@ -1,5 +1,5 @@
 import { defineComponent, ref } from "vue";
-import { UserMessage } from "../../interface/ChatRecord";
+import ChatRecord, { UserMessage } from "../../interface/ChatRecord";
 import { as_props, c, cl, refvmodel_type } from "../../common/utils";
 import use_main_store from "../../store/main_store";
 import { QBtn, QSpace, useQuasar } from "quasar";
@@ -19,6 +19,7 @@ export type UserMessageItemProps = {
   message: UserMessage;
   index: number;
   use_editor: boolean;
+  chat_record: ChatRecord;
 };
 
 export const UserMessageItem = defineComponent<
@@ -34,7 +35,12 @@ export const UserMessageItem = defineComponent<
     "update:use_editor": (value: boolean) => void;
   }
 >({
-  props: as_props<UserMessageItemProps>()(["message", "index", "use_editor"]),
+  props: as_props<UserMessageItemProps>()([
+    "message",
+    "index",
+    "use_editor",
+    "chat_record",
+  ]),
   emits: ["delete", "update:use_editor"],
   setup(props, ctx) {
     const ms = use_main_store();
@@ -44,9 +50,9 @@ export const UserMessageItem = defineComponent<
     const content_editor = ref<EditorCompoAPI>();
 
     return () => {
-      const { message, index, use_editor } = props;
+      const { message, index, use_editor, chat_record } = props;
       const curry_chat = ms.curry_chat;
-      const edit_mode = curry_chat.edit_mode;
+      const edit_mode = curry_chat.select_mode;
       return (
         <div class="chat_item">
           <div class="chat_item_main">
@@ -77,7 +83,6 @@ export const UserMessageItem = defineComponent<
                     onClick={async () => {
                       ms.chat_body_input.promot = message.content;
                       ms.chat_body_input.inputter?.focus();
-                      await ms.update_chat_record();
                     }}
                   ></QBtn>
                   <QBtn

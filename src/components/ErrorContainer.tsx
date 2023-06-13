@@ -1,9 +1,7 @@
-import { defineComponent } from "vue";
 import hj from "highlight.js";
-import { QBtn, QIcon, QSpace } from "quasar";
-import { as_props } from "../common/utils";
-import BetterBtn from "./BetterBtn";
+import { defineComponent } from "vue";
 import { insert_slot, not_undefined_or } from "../common/jsx_utils";
+import { as_props } from "../common/utils";
 
 type ErrorContainerProps = { title?: string; content?: string; raw?: string };
 

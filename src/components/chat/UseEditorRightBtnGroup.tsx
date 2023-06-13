@@ -1,10 +1,10 @@
-import { defineComponent } from "vue";
-import { vif } from "../../common/jsx_utils";
 import { QBtn } from "quasar";
-import { EditorCompoAPI } from "../Editor";
+import { vif } from "../../common/jsx_utils";
+import { c } from "../../common/utils";
+import { after_modify_Message } from "../../impl/ChatRecord";
 import { Message } from "../../interface/ChatRecord";
 import use_main_store from "../../store/main_store";
-import { c } from "../../common/utils";
+import { EditorCompoAPI } from "../Editor";
 
 export const UseEditorRightBtnGroup = (
   use_editor: boolean,
@@ -20,15 +20,19 @@ export const UseEditorRightBtnGroup = (
     <div class="editor">
       <QBtn
         {...c`check`}
-        flat
+        unelevated
         icon="mdi-check"
         onClick={async () => {
-          const new_content = content_editor?.get_value() ?? "";
-          message.content = new_content;
-          message.last_modified = Date.now();
-          await ms.update_chat_record();
-          await ms.sync_curr_chat_record_messages();
-          ctx.emit("update:use_editor", false);
+          const crid = ms.curry_chat.chat_record!.id;
+          await ms.push_to_db_task_queue(async () => {
+            await ms.chat_records.modify(crid, async (curr_cr) => {
+              const new_content = content_editor?.get_value() ?? "";
+              message.content = new_content;
+              after_modify_Message(curr_cr, message);
+            });
+
+            ctx.emit("update:use_editor", false);
+          });
         }}
       ></QBtn>
       <QBtn

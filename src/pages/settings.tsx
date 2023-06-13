@@ -1,40 +1,19 @@
-import {
-  QBtn,
-  QDialog,
-  QIcon,
-  QInput,
-  QItem,
-  QList,
-  QPage,
-  QSelect,
-  QTable,
-  QToggle,
-} from "quasar";
-import { computed, defineComponent, ref, watch } from "vue";
-import {
-  batch_set_ref,
-  c,
-  cl,
-  promise_with_ref,
-  refvmodel,
-  refvmodel_type,
-} from "../common/utils";
-import use_main_store from "../store/main_store";
-import { APIKey, APIKeySource } from "../interface/Settings";
+import _ from "lodash";
+import MarkdownIt from "markdown-it";
+import { QBtn, QIcon, QInput, QPage, QSelect } from "quasar";
+import { defineComponent, ref } from "vue";
 import { HotKeys } from "../common/key_event";
 import { passwd_attr, passwd_slot } from "../common/quasar_utils";
-import _ from "lodash";
-import { DBAPIKEYDuplicateError } from "../store/db_api";
-import MarkdownIt from "markdown-it";
 import update_log from "../common/update_log";
-import { useRouter } from "vue-router";
-import { not_undefined_or, tpl } from "../common/jsx_utils";
+import { c, cl, promise_with_ref, refvmodel_type } from "../common/utils";
+import BetterBtn from "../components/BetterBtn";
 import {
   DialogExpose,
-  DialogMode,
   ModifyAPIKEYDialog,
 } from "../components/ModifyAPIKEYDialog";
-import BetterBtn from "../components/BetterBtn";
+import { APIKey, APIKeySource } from "../interface/Settings";
+import { DBAPIKEYDuplicateError } from "../store/db/db_api";
+import use_main_store from "../store/main_store";
 
 const md = new MarkdownIt({
   html: false,
@@ -43,12 +22,6 @@ const md = new MarkdownIt({
 export const HotKeysManager = defineComponent({
   setup() {
     const ms = use_main_store();
-
-    const set = (...ks: string[]) => new Set(ks);
-    const st = (s: Set<string>, t: string) => ({
-      s,
-      t,
-    });
 
     function HotKeys_to_submit_keys_selection(hot_keys: HotKeys) {
       const first_hot_key = hot_keys.value[0].keys;
@@ -72,7 +45,9 @@ export const HotKeysManager = defineComponent({
     ];
 
     return () => {
-      const hotkeys = ms.settings.hot_keys;
+      const settings = ms.settings.settings;
+
+      const hotkeys = settings.hot_keys;
       submit_keys_selected.value = HotKeys_to_submit_keys_selection(
         hotkeys.submit_keys
       );
@@ -87,10 +62,15 @@ export const HotKeysManager = defineComponent({
                   modelValue={submit_keys_selected.value}
                   onUpdate:modelValue={async (new_keys) => {
                     submit_keys_loading.value = true;
-                    ms.settings.hot_keys.submit_keys.value[0].keys =
+                    settings.hot_keys.submit_keys.value[0].keys =
                       new_keys.split(" + ");
-                    await ms.set_settings("hot_keys", ms.settings.hot_keys);
-                    await ms.sync_db();
+                    await ms.push_to_db_task_queue(
+                      async () =>
+                        await ms.settings.set_setting(
+                          "hot_keys",
+                          settings.hot_keys
+                        )
+                    );
                     submit_keys_loading.value = false;
                   }}
                   options={submit_keys_options}
@@ -146,7 +126,11 @@ export const APIKEY_Manager = defineComponent({
       _.debounce(async () => {
         await promise_with_ref(
           async () => {
-            await ms.set_settings("apikeys");
+            const settings = ms.settings.settings;
+            await ms.push_to_db_task_queue(
+              async () =>
+                await ms.settings.set_setting("apikeys", settings.apikeys)
+            );
           },
           frozen_key_editing,
           (e) => {
@@ -171,8 +155,8 @@ export const APIKEY_Manager = defineComponent({
     }
 
     return () => {
-      const settings = ms.settings;
-      // TODO: 压缩这里的代码
+      const settings = ms.settings.settings;
+
       return (
         <div class="fcol gap-5">
           <div class="text-xl font-bold">API-KEY 管理</div>
@@ -188,7 +172,7 @@ export const APIKEY_Manager = defineComponent({
                       "系统内部错误，ModifyAPIKEYDialog 不支持现有的模式。请前往 github 发起 issue。";
                     return;
                   }
-                  ms.settings.apikeys.keys.push(apikey);
+                  settings.apikeys.keys.push(apikey);
                   await apply_apikey_editing();
                   close_dialog();
                 }}
@@ -203,7 +187,7 @@ export const APIKEY_Manager = defineComponent({
                       "系统内部错误，ModifyAPIKEYDialog 不支持现有的模式。请前往 github 发起 issue。";
                     return;
                   }
-                  ms.settings.apikeys.keys[modify_index.value] = apikey;
+                  settings.apikeys.keys[modify_index.value] = apikey;
                   await apply_apikey_editing();
                   close_dialog();
                 }}
@@ -226,10 +210,10 @@ export const APIKEY_Manager = defineComponent({
             </div>
             <div></div>
           </div>
-          <div class="fcol gap-2">
+          <div class="fcol gap-4">
             <div>缓存的 API-KEY（目前仅支持使用第一个）</div>
             {settings.apikeys.keys.map((it, i, keys) => (
-              <div class="frow flex-wrap gap-4 items-center pl-4">
+              <div class="frow flex-wrap gap-3 items-center pl-4">
                 <div>{i + 1}.</div>
                 <QSelect
                   label="来源"
@@ -240,6 +224,7 @@ export const APIKEY_Manager = defineComponent({
                 ></QSelect>
                 <QInput
                   label="名称"
+                  {...c`max-w-[20%] shrink`}
                   {...existed_model(it, "name")}
                   onUpdate:modelValue={(v) => {
                     it.name = String(v);
@@ -250,7 +235,7 @@ export const APIKEY_Manager = defineComponent({
                 />
                 <QInput
                   readonly
-                  {...c`grow`}
+                  {...c`shrink`}
                   {...passwd_attr(all_key_showing)}
                   {...existed_model(it, "key")}
                   {...layout_props}
@@ -273,10 +258,17 @@ export const APIKEY_Manager = defineComponent({
                     const last = settings.apikeys.keys[0];
                     settings.apikeys.keys[0] = it;
                     settings.apikeys.keys[i] = last;
-                    await ms.set_settings("apikeys");
+                    await ms.push_to_db_task_queue(
+                      async () =>
+                        await ms.settings.set_setting(
+                          "apikeys",
+                          settings.apikeys
+                        )
+                    );
                   }}
                 ></QBtn>
                 <BetterBtn
+                  class="min-w-[5.3rem] bg-_primary"
                   onClick={() => {
                     modify_index.value = i;
                     modify_dialog_showing.value = true;
@@ -289,10 +281,10 @@ export const APIKEY_Manager = defineComponent({
                   </div>
                 </BetterBtn>
                 <BetterBtn
-                  class="bg-_negative2"
-                  onClick={() => {
+                  class="min-w-[5.3rem] bg-_negative2"
+                  onClick={async () => {
                     keys.splice(i, 1);
-                    apply_apikey_editing();
+                    await apply_apikey_editing();
                   }}
                 >
                   <div class="frow gap-2 items-center justify-center">
@@ -331,6 +323,22 @@ export const About = defineComponent({
                 ></QBtn>
               </div>
             </div>
+          </details>
+          <details open>
+            <summary>这个网站安全吗？</summary>
+            <div class="fcol gap-4 m-2">
+              <div>
+                <b>是的</b>。这个网站其实就是一个本地的 APP，你的个人信息只会储存在你的浏览器缓存里。网站的源码会一直保证开放，如果你认为存疑，请亲自检查和构建。
+              </div>
+            </div>
+          </details>
+          <details open>
+            <summary>注意事项</summary>
+            <ol class="m-2">
+              <li>
+                因为这个应用依赖浏览器缓存进行数据存储，所以清理浏览器缓存之前，请记得备份数据。
+              </li>
+            </ol>
           </details>
           <details class="frow gap-2">
             <summary>更新日志</summary>

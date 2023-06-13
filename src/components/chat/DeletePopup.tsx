@@ -1,8 +1,8 @@
 import { QIcon, QPopupProxy, QSpace } from "quasar";
 import { defineComponent } from "vue";
-import { c, refvmodel_type } from "../../common/utils";
-import BetterBtn from "../BetterBtn";
 import { insert_slot } from "../../common/jsx_utils";
+import { c } from "../../common/utils";
+import BetterBtn from "../BetterBtn";
 
 type DeletePopupProps = {
   modelValue: boolean;

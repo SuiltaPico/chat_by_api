@@ -1,7 +1,7 @@
-import { QBtn, QIcon } from "quasar";
+import { QBtn } from "quasar";
 import { defineComponent } from "vue";
-import { Maybe, any, as_props, c } from "../common/utils";
-import { insert_slot, not_undefined_or } from "../common/jsx_utils";
+import { insert_slot } from "../common/jsx_utils";
+import { any, as_props } from "../common/utils";
 
 type BetterBtnProps = {
   color?: string;

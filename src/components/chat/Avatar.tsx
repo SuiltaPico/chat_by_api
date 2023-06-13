@@ -1,8 +1,8 @@
-import { defineComponent } from "vue";
-import { Role } from "../../interface/ChatRecord";
 import { cond, constant, eq, partial, stubTrue } from "lodash";
-import { any, c, cl } from "../../common/utils";
 import { QIcon } from "quasar";
+import { defineComponent } from "vue";
+import { any, c, cl } from "../../common/utils";
+import { Role } from "../../interface/ChatRecord";
 
 export const Avatar = defineComponent({
   props: ["role"],

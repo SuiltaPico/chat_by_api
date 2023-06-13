@@ -1,3 +1,5 @@
+/** 接口的一些实用方法实现。 */
+
 import {
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageRoleEnum,
@@ -31,11 +33,28 @@ export function create_ChatRecordForStorageV2(
   };
 }
 
+export function CRFS_to_ChatRecord<T extends ChatRecordForStorage>(
+  cr: T,
+  id: string
+) {
+  return { ...cr, id };
+}
+
+/** 更改 `chat_record`。
+ * ### 副作用
+ * * `chat_record` */
+export function after_modify_ChatRecord(chat_record: ChatRecord) {
+  chat_record.last_modified = Date.now();
+}
+
+export function delete_ChatRecord(chat_record: ChatRecord) {}
+
 export function create_UserMessage(
   chat_record: ChatRecordMeta,
   role: Role,
   content: string
 ) {
+  chat_record.last_modified = Date.now();
   if (chat_record.api__ === "v2") {
     return create_UserMessageV2(chat_record as ChatRecordMetaV2, role, content);
   }
@@ -58,6 +77,7 @@ export function create_UserMessageV2(
   content: string
 ): UserMessageV2 {
   chat_record.latest_record_id += 1;
+  chat_record.record_count += 1;
   return {
     api__: "v2",
     record_id: chat_record.latest_record_id,
@@ -75,6 +95,7 @@ export function create_ServerMessage(
   content: string,
   request_config: RequestConfig
 ): ServerMessage {
+  chat_record.last_modified = Date.now();
   if (chat_record.api__ === "v2") {
     return create_ServerMessageV2(
       chat_record as ChatRecordMetaV2,
@@ -107,9 +128,10 @@ export function create_ServerMessageV2(
   request_config: RequestConfig
 ): ServerMessageV2 {
   chat_record.latest_record_id += 1;
+  chat_record.record_count += 1;
   return {
     api__: "v2",
-    record_id: 1,
+    record_id: chat_record.latest_record_id,
     message_type: "server",
     role,
     created: Date.now(),
@@ -117,6 +139,58 @@ export function create_ServerMessageV2(
     request_config,
     content,
   };
+}
+
+export function delete_Message(chat_record: ChatRecord) {
+  if (chat_record.api__ === "v2") {
+    chat_record.record_count! -= 1;
+  }
+  chat_record.last_modified = Date.now();
+}
+
+export function after_modify_Message(
+  chat_record: ChatRecord,
+  message: Message
+) {
+  message.last_modified = Date.now();
+  chat_record.last_modified = Date.now();
+}
+
+/** 获取 `message` 在 `chat_record.messages` 中最有可能的索引。 */
+export function get_Message_index_in_ChatRecord(
+  chat_record: ChatRecord,
+  message: Message,
+  index_in_cache: number
+) {
+  // console.log(chat_record.messages);
+
+  // 数据可能编辑过，位置可能会发生变化，根据 `record_id` 来写入最稳妥。
+  if (message.record_id != undefined) {
+    const finded_index = chat_record.messages.findIndex(
+      (m) => m.record_id === message.record_id
+    );
+    if (finded_index !== -1) {
+      return finded_index;
+    }
+  }
+  // 如果是早期版本的 `chat_record`，只能根据索引写入。
+  return index_in_cache;
+}
+
+/** 在最小破坏程度的情况下，将 `message` 写入 `chat_record.messages` 的正确位置。 */
+export function write_Message_to_ChatRecord(
+  chat_record: ChatRecord,
+  message: Message,
+  index_in_cache: number
+) {
+  // console.log(
+  //   index_in_cache,
+  //   get_Message_index_in_ChatRecord(chat_record, message, index_in_cache)
+  // );
+
+  chat_record.messages[
+    get_Message_index_in_ChatRecord(chat_record, message, index_in_cache)
+  ] = message;
 }
 
 export function get_Message_uuid(

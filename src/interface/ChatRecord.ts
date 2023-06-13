@@ -1,5 +1,7 @@
 import { CreateChatCompletionRequest } from "openai";
 
+export type ChatRecordStatus = "generating";
+
 /** 聊天记录元信息 */
 export interface ChatRecordMeta {
   id: string;
@@ -8,6 +10,8 @@ export interface ChatRecordMeta {
   last_modified: number;
   latest_record_id?: number;
   record_count?: number;
+  /** 聊天记录状态。`undefined` 为无状态 */
+  status?: ChatRecordStatus;
   api__?: string;
 }
 

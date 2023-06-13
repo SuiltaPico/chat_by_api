@@ -33,14 +33,14 @@ import { fill, pullAt } from "lodash";
 export const TopBar = defineComponent({
   setup(props, ctx) {
     const ms = use_main_store();
-    const use_markdown_render = toRef(ms, "use_markdown_render");
+    const use_markdown_render = toRef(ms.curry_chat, "use_markdown_render");
     const operating_mode = toRef(ms.curry_chat, "operating_mode");
     const change_operating_mode = ms.curry_chat.change_operating_mode;
     const show_delete_popup = ref(false);
     return () => {
       const om = operating_mode.value;
       const is_full_selected = computed(() => {
-        const selected = ms.curry_chat.edit_mode.selected;
+        const selected = ms.curry_chat.select_mode.selected;
         const keys = Object.keys(selected);
         if (keys.length === 0) {
           return false;
@@ -69,17 +69,27 @@ export const TopBar = defineComponent({
               }
               if (om === ChatRecordOperatingMode.select) {
                 return tpl(
+                  <QBtn
+                    icon="mdi-arrow-left"
+                    flat
+                    onClick={() =>
+                      change_operating_mode(ChatRecordOperatingMode.default)
+                    }
+                  >
+                    <QTooltip>关闭选择模式</QTooltip>
+                  </QBtn>,
                   <QCheckbox
                     {...c`px-1 pr-2`}
                     color="info"
                     modelValue={is_full_selected.value}
+                    dark
                     onUpdate:modelValue={() => {
                       if (ms.curry_chat.chat_record === undefined) return;
 
                       if (is_full_selected.value === true) {
-                        ms.curry_chat.edit_mode.selected = [];
+                        ms.curry_chat.select_mode.selected = [];
                       } else {
-                        const selected = ms.curry_chat.edit_mode.selected;
+                        const selected = ms.curry_chat.select_mode.selected;
                         const len = ms.curry_chat.chat_record?.messages.length;
                         for (let index = 0; index < len; index++) {
                           selected[index] = true;
@@ -89,7 +99,8 @@ export const TopBar = defineComponent({
                   >
                     全选
                   </QCheckbox>,
-                  <QBtn icon="mdi-delete" flat>
+                  <QSpace></QSpace>,
+                  <QBtn {...c`text-_negative ml-1`} icon="mdi-delete" flat>
                     <QTooltip>删除</QTooltip>
                     <QPopupProxy
                       {...c`bg-zinc-800 text-zinc-200 border border-zinc-500`}
@@ -105,23 +116,28 @@ export const TopBar = defineComponent({
                           <BetterBtn
                             {...c`bg-_negative2`}
                             onClick={async () => {
-                              if (ms.curry_chat.chat_record === undefined) {
+                              if (ms.curry_chat.chat_record === undefined)
                                 return;
-                              }
-                              const selected = ms.curry_chat.edit_mode.selected;
-                              const selected_indexes: number[] = [];
-                              for (const [index, value] of Object.entries(
-                                selected
-                              )) {
-                                if (!value) return;
-                                selected_indexes.push(parseInt(index));
-                              }
-                              pullAt(
-                                ms.curry_chat.chat_record.messages,
-                                selected_indexes
-                              );
-                              ms.curry_chat.clear_edit_mode_cache();
-                              await ms.update_chat_record();
+                              const crid = ms.curry_chat.chat_record.id;
+                              await ms.push_to_db_task_queue(async () => {
+                                const selected =
+                                  ms.curry_chat.select_mode.selected;
+                                await ms.chat_records.modify(
+                                  crid,
+                                  async (curr_cr) => {
+                                    const selected_indexes: number[] = [];
+                                    for (const [index, value] of Object.entries(
+                                      selected
+                                    )) {
+                                      if (!value) return;
+                                      selected_indexes.push(parseInt(index));
+                                    }
+                                    pullAt(curr_cr.messages, selected_indexes);
+                                  }
+                                );
+                                ms.curry_chat.clear_select_mode_cache();
+                              });
+
                               show_delete_popup.value = false;
                               change_operating_mode(
                                 ChatRecordOperatingMode.default
@@ -142,17 +158,6 @@ export const TopBar = defineComponent({
                       </div>
                     </QPopupProxy>
                   </QBtn>,
-                  <QBtn
-                    {...c`text-_negative`}
-                    icon="mdi-close"
-                    flat
-                    onClick={() =>
-                      change_operating_mode(ChatRecordOperatingMode.default)
-                    }
-                  >
-                    <QTooltip>关闭选择模式</QTooltip>
-                  </QBtn>,
-                  <QSpace></QSpace>
                 );
               }
             })}

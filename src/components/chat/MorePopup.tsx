@@ -11,6 +11,7 @@ import { Maybe, as_props, c, refvmodel_type } from "../../common/utils";
 import { Message } from "../../interface/ChatRecord";
 import BetterBtn from "../BetterBtn";
 import { isNil } from "lodash";
+import { DeletePopup } from "./DeletePopup";
 
 type MorePopupBtnProp = {
   icon: string;
@@ -96,34 +97,12 @@ export const MorePopup = defineComponent<
             }}
           ></MorePopupBtn>
           <MorePopupBtn class="text-_negative" label="删除" icon="mdi-delete">
-            <QPopupProxy
-              {...c`bg-zinc-800 text-zinc-200 border border-zinc-500`}
+            <DeletePopup
               {...refvmodel_type(show_delete_popup, "modelValue")}
-              breakpoint={0}
+              onConfirm={() => ctx.emit("delete")}
             >
-              <div class="fcol gap-4 p-4">
-                <div>
-                  你确定要<b>删除</b>这项对话记录吗？
-                </div>
-                <div class="frow gap-2 items-center justify-start">
-                  <QSpace {...c`md:hidden`}></QSpace>
-                  <BetterBtn
-                    {...c`bg-_negative2`}
-                    onClick={() => ctx.emit("delete")}
-                  >
-                    <QIcon name="mdi-check" size="1.2rem"></QIcon>
-                    <div>确认</div>
-                  </BetterBtn>
-                  <BetterBtn
-                    {...c`bg-transparent text-_secondary`}
-                    onClick={() => (show_delete_popup.value = false)}
-                  >
-                    <QIcon name="mdi-close" size="1.2rem"></QIcon>
-                    <div>取消</div>
-                  </BetterBtn>
-                </div>
-              </div>
-            </QPopupProxy>
+              你确定要<b>删除</b>这项对话记录吗？
+            </DeletePopup>
           </MorePopupBtn>
           <MorePopupBtn icon="mdi-information-outline" label="信息">
             <QPopupProxy

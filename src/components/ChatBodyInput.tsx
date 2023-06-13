@@ -1,6 +1,7 @@
+import { useWindowSize } from "@vueuse/core";
+import _ from "lodash";
 import {
   QBtn,
-  QBtnGroup,
   QIcon,
   QInput,
   QItem,
@@ -10,18 +11,12 @@ import {
   QSpinner,
   QSpinnerComment,
   QToggle,
-  useQuasar,
 } from "quasar";
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-  resolveDirective,
-  toRef,
-  withDirectives,
-} from "vue";
-import use_main_store from "../store/main_store";
+import { computed, defineComponent, ref, toRef } from "vue";
+import { openai_models } from "../common/api_meta";
+import { not_undefined_or, tpl } from "../common/jsx_utils";
+import { HotKeys, key_event_match_HotKey } from "../common/key_event";
+import { QSelectOptionSlotParam } from "../common/quasar_utils";
 import {
   ElementOfArray,
   any,
@@ -30,14 +25,9 @@ import {
   refvmodel,
   slot,
 } from "../common/utils";
-import { openai_models as openai_models } from "../common/api_meta";
-import _ from "lodash";
-import { not_undefined_or, tpl } from "../common/jsx_utils";
-import { Role, RoleWithoutUnknown } from "../interface/ChatRecord";
-import { QSelectOptionSlotParam } from "../common/quasar_utils";
 import { Avatar } from "../components/chat/Avatar";
-import { HotKeys, key_event_match_HotKey } from "../common/key_event";
-import { useWindowSize } from "@vueuse/core";
+import { RoleWithoutUnknown } from "../interface/ChatRecord";
+import use_main_store from "../store/main_store";
 
 export type ChatBodyInputMode = "generate" | "add";
 
@@ -118,7 +108,7 @@ export const GenetateModeToolbarPopup = defineComponent({
           breakpoint={0}
         >
           <QSelect
-            {...c`min-w-[140px] bg-zinc-800`}
+            {...c`min-w-[140px] bg-zinc-800 _hidden max-sm:flex`}
             modelValue={model.value}
             onUpdate:modelValue={(m) => {
               if (typeof m != "string") {
@@ -175,9 +165,31 @@ export const GenetateModeToolbarPopup = defineComponent({
 
 export const GenetateModeToolbar = defineComponent({
   setup() {
+    const ms = use_main_store()
+
+    const model = toRef(ms.chat_body_input, "model");
+    const models = openai_models.chat_completions;
+
     return () =>
       tpl(
         <ToolbarState></ToolbarState>,
+        <QSelect
+          {...c`min-w-[140px] bg-zinc-800 _hidden sm:flex`}
+          modelValue={model.value}
+          onUpdate:modelValue={(m) => {
+            if (typeof m != "string") {
+              model.value = m.value;
+            } else {
+              model.value = m;
+            }
+          }}
+          label="模型"
+          color="secondary"
+          dense
+          options={models}
+          dark
+          filled
+        ></QSelect>,
         <QBtn {...c`w-[2.5rem] h-[2.5rem]`} icon="mdi-tune" unelevated>
           <GenetateModeToolbarPopup></GenetateModeToolbarPopup>
         </QBtn>

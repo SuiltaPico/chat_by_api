@@ -8,6 +8,7 @@ import {
   defineComponent,
   onUnmounted,
   ref,
+  toRef,
   watch,
 } from "vue";
 import { useRouter } from "vue-router";
@@ -23,6 +24,8 @@ import {
   Messages_to_OpenAI_Messages,
   create_ServerMessage,
   create_UserMessage,
+  get_Message_index_in_ChatRecord,
+  write_Message_to_ChatRecord
 } from "../impl/ChatRecord";
 import {
   Message,
@@ -48,18 +51,18 @@ async function generate_next(
   const msg = messages[index] as ServerMessage;
 
   const apply_update_chat_record_messages = async () => {
-    const chat_record = await ms.get_chat_record(chat_id);
-    const now = Date.now();
-    chat_record.last_modified = now;
-    chat_record.messages = messages;
-    await ms.update_chat_record(chat_record);
-    await ms.sync_curr_chat_record_messages();
+    ms.push_to_db_task_queue(async () => {
+      await ms.chat_records.modify(chat_id, async (cr) => {
+        write_Message_to_ChatRecord(cr, msg, index);
+        return cr;
+      });
+    });
   };
 
-  const settings = ms.settings;
+  const settings = ms.settings.settings;
   const stop_next_ref = ref(async () => {});
 
-  if (ms.settings.apikeys.keys.length === 0) {
+  if (settings.apikeys.keys.length === 0) {
     msg.error = {
       err_type: "no_api_key",
     };
@@ -99,6 +102,7 @@ async function generate_next(
   }
 }
 
+/** @assert ms.curry_chat.chat_record!  */
 export function ChatItem_Avatar(message: Message, _class?: string) {
   const ms = use_main_store();
   return (
@@ -106,8 +110,13 @@ export function ChatItem_Avatar(message: Message, _class?: string) {
       class={_class}
       role={message.role}
       onUpdate:role={async (role) => {
-        message.role = role;
-        await ms.update_chat_record();
+        const crid = ms.curry_chat.chat_record!.id;
+        ms.push_to_db_task_queue(() => {
+          return ms.chat_records.modify(crid, async (cr) => {
+            message.role = role;
+            return cr;
+          });
+        });
       }}
     ></Avatar>
   );
@@ -116,7 +125,7 @@ export function ChatItem_Avatar(message: Message, _class?: string) {
 export function ChatItem_select_box(index: number) {
   const ms = use_main_store();
   const curry_chat = ms.curry_chat;
-  const edit_mode = curry_chat.edit_mode;
+  const edit_mode = curry_chat.select_mode;
   return not_undefined_or(() => {
     if (curry_chat.operating_mode === ChatRecordOperatingMode.select) {
       return tpl(
@@ -141,28 +150,35 @@ export const ChatBody = defineComponent({
     const ms = use_main_store();
     const router = useRouter();
     const route = computed(() => router.currentRoute.value);
-    const chat_id = computed(() => route.value.params.chatid as string);
+    const crid = computed(() => route.value.params.chatid as string);
     const loading_messages = ref(false);
-    const messages = computed(() => ms.curry_chat.chat_record?.messages);
+    const chat_record = toRef(ms.curry_chat, "chat_record");
+    const messages = computed(() => chat_record.value?.messages);
 
     const chat_id_unwatcher = watch(
-      chat_id,
+      crid,
       () => {
         promise_with_ref(async () => {
           if (route.value.name !== "chat") return;
-          await ms.curry_chat.load_chat_record(chat_id.value);
-          // 处理对话不存在的情况
+
+          await ms.curry_chat.load_chat_record(crid.value);
+          await ms.chat_records.sync_message();
+
+          // 处理有 `crid` 但是对话不存在（已删除）的情况。
           if (
-            chat_id.value !== undefined &&
+            crid.value !== undefined &&
             ms.curry_chat.chat_record === undefined
           ) {
             router.push({
               name: "new_chat",
             });
           }
+
+          // 如果是请求生成
           if (ms.chat_body_input.require_next === true) {
             ms.chat_body_input.require_next = false;
             if (messages.value === undefined) return;
+
             await generate_next(
               ms.curry_chat.chat_record!.id,
               ms.curry_chat.chat_record!.messages,
@@ -179,20 +195,33 @@ export const ChatBody = defineComponent({
     onUnmounted(() => {
       chat_id_unwatcher();
     });
+
     return () => {
       return (
         <div class="chat_body">
           <div class={["chat_items_container"]}>
             {not_undefined_or(() => {
               if (messages.value === undefined) return;
-              return messages.value.map((msg, index) => (
+              return messages.value.map((message, index) => (
                 <ChatItem
-                  message={msg}
+                  message={message}
                   index={index}
+                  chat_record={chat_record.value!}
                   onDelete={() => {
-                    if (messages.value === undefined) return;
-                    messages.value.splice(index, 1);
-                    ms.update_chat_record();
+                    if (chat_record.value === undefined) return;
+                    const cr = chat_record.value;
+                    ms.push_to_db_task_queue(() =>
+                      ms.chat_records.modify(cr.id, async (new_cr) => {
+                        new_cr.messages.splice(
+                          get_Message_index_in_ChatRecord(
+                            new_cr,
+                            message,
+                            index
+                          ),
+                          1
+                        );
+                      })
+                    );
                   }}
                 ></ChatItem>
               ));
@@ -207,51 +236,55 @@ export const ChatBody = defineComponent({
                 : "",
             ]}
             submit_btn_loading={loading_messages.value}
-            submit_hot_keys={ms.settings.hot_keys.submit_keys}
+            submit_hot_keys={ms.settings.settings.hot_keys.submit_keys}
             onSubmit={async () => {
               const { promot } = ms.chat_body_input;
               if (promot.length === 0) return;
               if (ms.curry_chat.chat_record === undefined) return;
 
               const mode = ms.chat_body_input.mode;
-              const messages = ms.curry_chat.chat_record.messages;
-              console.log(ms.curry_chat.chat_record.id);
+              const crid = ms.curry_chat.chat_record.id;
 
-              const chat_record = await ms.get_chat_record(
-                ms.curry_chat.chat_record.id
-              );
+              await ms.push_to_db_task_queue(async () => {
+                if (ms.curry_chat.chat_record === undefined) return;
+
+                await ms.chat_records.modify(crid, async (curr_cr) => {
+                  const messages = curr_cr.messages;
+
+                  if (mode === "generate") {
+                    const generate_mode_messages = [
+                      create_UserMessage(curr_cr, "user", promot),
+                      create_ServerMessage(
+                        curr_cr,
+                        "assistant",
+                        "",
+                        ms.chat_body_input.generate_OpenAIRequestConfig()
+                      ),
+                    ] as const;
+                    messages.push(...generate_mode_messages);
+                    ms.chat_body_input.sended();
+                    scroll_to(document.getElementById("app")!);
+                  } else if (mode === "add") {
+                    const mode_messages = [
+                      create_UserMessage(
+                        curr_cr,
+                        ms.chat_body_input.role,
+                        promot
+                      ),
+                    ];
+                    messages.push(...mode_messages);
+                    ms.chat_body_input.sended();
+                    scroll_to(document.getElementById("app")!);
+                  }
+                });
+              });
 
               if (mode === "generate") {
-                const generate_mode_messages = [
-                  create_UserMessage(chat_record, "user", promot),
-                  create_ServerMessage(
-                    chat_record,
-                    "assistant",
-                    "",
-                    ms.chat_body_input.generate_OpenAIRequestConfig()
-                  ),
-                ] as const;
-                messages.push(...generate_mode_messages);
-                ms.chat_body_input.sended();
-                await ms.update_chat_record(chat_record);
-                scroll_to(document.getElementById("app")!);
                 await generate_next(
-                  ms.curry_chat.chat_record!.id,
-                  ms.curry_chat.chat_record!.messages,
-                  ms.curry_chat.chat_record!.messages.length - 1
+                  crid,
+                  ms.curry_chat.chat_record.messages,
+                  ms.curry_chat.chat_record.messages.length - 1
                 );
-              } else if (mode === "add") {
-                const mode_messages = [
-                  create_UserMessage(
-                    chat_record,
-                    ms.chat_body_input.role,
-                    promot
-                  ),
-                ];
-                messages.push(...mode_messages);
-                ms.chat_body_input.sended();
-                await ms.update_chat_record(chat_record);
-                scroll_to(document.getElementById("app")!);
               }
             }}
           ></ChatBodyInput>

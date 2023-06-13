@@ -60,6 +60,10 @@ pre.hljs {
   }
 }
 
+._hidden {
+  display: none;
+}
+
 .quick {
   --q-transition-duration: 0.1s !important;
 }
@@ -128,8 +132,8 @@ pre.hljs {
 }
 
 .chat_body_input_container {
-  @apply fcol frow gap-2 max-[480px]:gap-2 bg-zinc-800 bg-opacity-[.9]
-    p-3 max-[480px]:p-2 max-[480px]:pt-2.5 rounded-lg
+  @apply fcol frow gap-3 max-[480px]:gap-2 bg-zinc-800 bg-opacity-[.9]
+    p-3 max-[480px]:px-2.5 max-[480px]:pt-2.5 rounded-lg
     max-[480px]:rounded-none drop-shadow-lg fit-width;
 
   & > .inputer_container {
@@ -182,5 +186,9 @@ pre.hljs {
     bg-[#944e4e] p-4 rounded;
   &.darker {
     @apply bg-[#8E3D3D];
+  }
+
+  & > div {
+    @apply fcol gap-2
   }
 }
