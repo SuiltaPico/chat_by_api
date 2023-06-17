@@ -69,7 +69,7 @@ export const MorePopup = defineComponent<
   }
 >({
   props: as_props<MorePopupProps>()(["message", "show"]),
-  emits: ["update:show", "delete"],
+  emits: ["update:show", "delete", "edit"],
   setup(props, ctx) {
     const message_type = props.message.message_type;
     return () => {

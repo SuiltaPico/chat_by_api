@@ -14,6 +14,7 @@ import { vif } from "../../common/jsx_utils";
 import { Editor, EditorCompoAPI } from "../Editor";
 import { UseEditorRightBtnGroup } from "./UseEditorRightBtnGroup";
 import { defer } from "lodash";
+import { Editor2 } from "../Editor2";
 
 export type UserMessageItemProps = {
   message: UserMessage;
@@ -50,21 +51,29 @@ export const UserMessageItem = defineComponent<
     const content_editor = ref<EditorCompoAPI>();
 
     return () => {
-      const { message, index, use_editor, chat_record } = props;
+      const { message, index, use_editor } = props;
       const curry_chat = ms.curry_chat;
-      const edit_mode = curry_chat.select_mode;
       return (
         <div class="chat_item">
           <div class="chat_item_main">
             {ChatItem_select_box(props.index)}
+            {vif(
+              ms.curry_chat.operating_mode === ChatRecordOperatingMode.select,
+              <QBtn
+                unelevated
+                {...c`drag_handler self-start py-[0.4rem] px-[0.6rem] text-[0.9rem]`}
+                icon="mdi-drag"
+                ripple={false}
+              ></QBtn>
+            )}
             {ChatItem_Avatar(message, "mt-[2px]")}
             {vif(
               use_editor,
-              <Editor
+              <Editor2
                 class="editor"
                 init_language="markdown"
                 ref={content_editor}
-              ></Editor>
+              ></Editor2>
             )}
             {vif(!use_editor, <div class="content">{message.content}</div>)}
             {vif(
@@ -121,6 +130,7 @@ export const UserMessageItem = defineComponent<
                 use_editor,
                 content_editor.value,
                 message,
+                index,
                 ctx
               )}
             </div>

@@ -25,12 +25,13 @@ export const dbs = {
   settings: new PouchDB<SettingItem>("settings", db_init_param),
 };
 
-/** 压缩数据库，清理多余的缓存。 */
-export async function compact_dbs() {
+/** 压缩数据库，清理多余的缓存。 */ 
+async function compact_dbs() {
   await Promise.all(Object.values(dbs).map((db) => db.compact()));
 }
 
 export async function init_db() {
   await init_chat_record_db();
   await init_settings_db();
+  await compact_dbs();
 }

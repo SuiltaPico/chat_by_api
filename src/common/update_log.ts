@@ -1,5 +1,16 @@
 export default [
   {
+    version: "2.7.1",
+    content: `
+### Changed
+* 改用了 Quasar Editor 来代替原本的 Monaco Editor，减轻了网页的加载负担。
+### Fixed
+* 修复了编辑器更改文本后，点击确认按钮无法更改消息原有文本的问题。
+* 修复了重新生成对话时，上一次对话没有清空的问题。
+* 优化了选择时，过长消息展开按钮的视觉影响。
+`,
+  },
+  {
     version: "2.7.0",
     content: `
 ### Added

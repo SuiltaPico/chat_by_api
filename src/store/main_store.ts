@@ -11,7 +11,6 @@ import Settings from "../interface/Settings";
 import { ChatRecordOperatingMode } from "../pages/chat";
 import {
   chat_records_default_value,
-  compact_dbs,
   create_chat_record_db,
   delete_chat_record_db,
   get_chat_record_db,
@@ -25,7 +24,7 @@ import {
 
 type LeftBarSize = "just-icon" | "grow" | "hidden";
 
-/** 应用的临时储存。不保证与数据库实时同步。
+/** 应用用于渲染的临时储存。不保证与数据库实时同步。
  *
  * 提供的数据库 API 会尝试缓存与数据库的一致性。
  */
@@ -40,26 +39,20 @@ const use_main_store = defineStore("main", () => {
     left_bar_width.value = map[size];
   }
 
-  let db_task_queue: Promise<any> = Promise.resolve()
-    .then(async () => {
-      await sync_from_db();
-      await compact_dbs();
-    })
-    .catch((e) => {
-      throw e;
-    });
+  let db_task_queue: Promise<any> = Promise.resolve();
+
+  push_to_db_task_queue(async () => {
+    await init_db();
+    await sync_from_db();
+  });
 
   async function push_to_db_task_queue<T>(p: () => Promise<T>) {
     const thenp = db_task_queue.then(p).catch((e: any) => {
-      throw e;
+      console.log(e);
     });
     db_task_queue = thenp;
     return await thenp;
   }
-
-  push_to_db_task_queue(async () => {
-    await init_db();
-  });
 
   const is_initializing = ref(true);
 

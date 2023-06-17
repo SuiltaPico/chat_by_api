@@ -12,6 +12,7 @@
         @apply max-h-[160px] overflow-hidden cursor-pointer;
         & > .thumbnail_bottom {
           visibility: visible;
+          background-image: linear-gradient(to bottom, #fff0, #ffffff23);
           & .wrap {
             display: flex;
           }
@@ -20,6 +21,7 @@
       &.no_thumbnail {
         & > .thumbnail_bottom {
           visibility: visible;
+          background-color: #ffffff0c;
           & .unwrap {
             display: flex;
           }
@@ -28,7 +30,6 @@
       & > .thumbnail_bottom {
         @apply frow justify-center items-center absolute bottom-0 left-0 h-[40px] w-full;
         visibility: hidden;
-        background-image: linear-gradient(to bottom, #fff0, #1e8a7cc4);
         & .wrap,
         & .unwrap {
           display: none;
@@ -45,7 +46,7 @@
           @apply frow gap-x-4 gap-y-3 max-md:flex-wrap w-full;
 
           & > .editor {
-            @apply self-center min-h-[18rem] w-[82%] max-sm:w-[90vw]
+            @apply self-center min-h-[18rem] max-h-[18rem] w-[82%] max-sm:w-[90vw]
               max-md:order-3 rounded grow shrink;
           }
 
@@ -59,8 +60,7 @@
 
             & > p {
               line-height: 2rem;
-               `
-              & > code {
+              ` & > code {
                 @apply bg-zinc-700 py-1 px-1 mx-1 rounded;
               }
             }

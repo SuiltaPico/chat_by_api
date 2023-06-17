@@ -26,6 +26,8 @@ import "quasar/src/css/index.sass";
 
 import { createPinia } from "pinia";
 
+import { plugin as Slicksort } from 'vue-slicksort';
+
 import "./styles/style.css";
 
 import router from "./router/router";
@@ -36,7 +38,6 @@ const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
-
 app.use(Quasar, {
   directives: {},
   plugins: { Notify }, // import Quasar plugins and add here
@@ -48,5 +49,7 @@ app.use(Quasar, {
     },
   },
 });
+
+app.use(Slicksort);
 
 app.mount("#app");

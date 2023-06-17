@@ -1,7 +1,7 @@
 import { QBtn } from "quasar";
 import { vif } from "../../common/jsx_utils";
 import { c } from "../../common/utils";
-import { after_modify_Message } from "../../impl/ChatRecord";
+import { after_modify_Message, write_Message_to_ChatRecord } from "../../impl/ChatRecord";
 import { Message } from "../../interface/ChatRecord";
 import use_main_store from "../../store/main_store";
 import { EditorCompoAPI } from "../Editor";
@@ -10,6 +10,7 @@ export const UseEditorRightBtnGroup = (
   use_editor: boolean,
   content_editor: EditorCompoAPI | undefined,
   message: Message,
+  index: number,
   ctx: {
     emit: (event: "update:use_editor", value: boolean) => void;
   }
@@ -28,6 +29,7 @@ export const UseEditorRightBtnGroup = (
             await ms.chat_records.modify(crid, async (curr_cr) => {
               const new_content = content_editor?.get_value() ?? "";
               message.content = new_content;
+              write_Message_to_ChatRecord(curr_cr, message, index)
               after_modify_Message(curr_cr, message);
             });
 

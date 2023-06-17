@@ -29,10 +29,12 @@
     "pouchdb": "^8.0.1",
     "pouchdb-find": "^8.0.1",
     "quasar": "^2.12.0",
+    "sortablejs": "^1.15.0",
     "tesseract.js": "^4.1.0",
     "unique-names-generator": "^4.7.1",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.2"
+    "vue-router": "^4.2.2",
+    "vue-slicksort": "^2.0.5"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",

@@ -1,7 +1,9 @@
-import { editor as monaco_editor } from "monaco-editor";
+// import { editor as monaco_editor } from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { defineComponent, onMounted, ref } from "vue";
 import { as_props } from "../common/utils";
+import { QInnerLoading } from "quasar";
+import { tpl } from "../common/jsx_utils";
 
 /** @ts-ignore */
 self.MonacoEnvironment = {
@@ -10,13 +12,15 @@ self.MonacoEnvironment = {
   },
 };
 
+const monaco_promise = import("monaco-editor");
+
 // monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
 export interface EditorCompoAPI {
   change_value(value: string): false | undefined;
   get_value(): string;
   force_set_value(value: string): false | undefined;
-  change_lang(value: string): false | undefined;
+  change_lang(value: string): Promise<false | undefined>;
   set_readonly(readonly: boolean): false | undefined;
 }
 
@@ -47,10 +51,13 @@ export const Editor = defineComponent<
   emits: ["update:content", "update:click"],
   setup(props, ctx) {
     let editor_container_ref = ref<HTMLDivElement>();
-    let editor: undefined | monaco_editor.IStandaloneCodeEditor;
+    let editor:
+      | undefined
+      | import("monaco-editor").editor.IStandaloneCodeEditor;
 
-    onMounted(() => {
-      editor = monaco_editor.create(editor_container_ref.value!, {
+    onMounted(async () => {
+      const monaco = await monaco_promise;
+      editor = monaco.editor.create(editor_container_ref.value!, {
         language: props.init_language ?? "",
         theme: props.init_theme ?? "vs-dark",
         // automaticLayout: true,
@@ -82,11 +89,13 @@ export const Editor = defineComponent<
 
         model.setValue(value);
       },
-      change_lang(language) {
+      async change_lang(language) {
         const model = editor?.getModel();
         if (!model) return false;
 
-        monaco_editor.setModelLanguage(model, language);
+        const monaco = await monaco_promise;
+
+        monaco.editor.setModelLanguage(model, language);
       },
       set_readonly(readonly) {
         if (!editor) return false;
@@ -100,12 +109,13 @@ export const Editor = defineComponent<
         return editor.getModel()!.getValue();
       },
     } as EditorCompoAPI);
-    return () => (
+    return () => tpl(
       <div
         {...ctx.attrs}
         ref={editor_container_ref}
         onClick={(e) => ctx.emit("update:click", e)}
-      ></div>
+      >
+      </div>
     );
   },
 });

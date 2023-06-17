@@ -3,9 +3,11 @@ import "katex/dist/katex.min.css";
 import { cloneDeep } from "lodash";
 import { QCheckbox, QPage } from "quasar";
 import {
+  DefineComponent,
   Teleport,
   computed,
   defineComponent,
+  onMounted,
   onUnmounted,
   ref,
   toRef,
@@ -25,13 +27,14 @@ import {
   create_ServerMessage,
   create_UserMessage,
   get_Message_index_in_ChatRecord,
-  write_Message_to_ChatRecord
+  write_Message_to_ChatRecord,
 } from "../impl/ChatRecord";
 import {
   Message,
   ServerMessage,
   ServerMessagesError,
 } from "../interface/ChatRecord";
+
 import use_main_store from "../store/main_store";
 
 import { not_undefined_or, tpl } from "../common/jsx_utils";
@@ -40,6 +43,10 @@ import { openai_chat_completion } from "../common/generate";
 import { Avatar } from "../components/chat/Avatar";
 import { ChatItem } from "../components/chat/ChatItem";
 import { TopBar } from "../components/chat/TopBar";
+
+import { SlickList as _SlickList } from "vue-slicksort";
+
+const SlickList: DefineComponent = _SlickList as any;
 
 async function generate_next(
   chat_id: string,
@@ -199,7 +206,10 @@ export const ChatBody = defineComponent({
     return () => {
       return (
         <div class="chat_body">
-          <div class={["chat_items_container"]}>
+          <SlickList
+            {...any({ list: messages.value ?? [] })}
+            class={["chat_items_container"]}
+          >
             {not_undefined_or(() => {
               if (messages.value === undefined) return;
               return messages.value.map((message, index) => (
@@ -227,7 +237,7 @@ export const ChatBody = defineComponent({
               ));
             })}
             <div id="ChatBodyBottom" class="chat_body_bottom"></div>
-          </div>
+          </SlickList>
           <ChatBodyInput
             class={[
               "fixed bottom-[2rem] max-[480px]:bottom-[0rem] self-center",
