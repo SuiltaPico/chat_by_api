@@ -70,7 +70,7 @@ export default defineComponent({
             {...refvmodel(show_left_bar)}
             side="left"
             breakpoint={1040}
-            width={ms.left_bar_width}
+            width={ms.left_bar.width}
           >
             <LeftBar class="bg-zinc-900" />
           </QDrawer>

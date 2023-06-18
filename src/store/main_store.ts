@@ -29,15 +29,18 @@ type LeftBarSize = "just-icon" | "grow" | "hidden";
  * 提供的数据库 API 会尝试缓存与数据库的一致性。
  */
 const use_main_store = defineStore("main", () => {
-  const left_bar_width = ref(340);
-  function change_left_bar_width(size: LeftBarSize) {
-    const map = {
-      "just-icon": 56,
-      grow: 340,
-      hidden: 0,
-    };
-    left_bar_width.value = map[size];
-  }
+  const left_bar = reactive({
+    selected_name: "chat",
+    width: ref(340),
+    change_width(size: LeftBarSize) {
+      const map = {
+        "just-icon": 56,
+        grow: 340,
+        hidden: 0,
+      };
+      left_bar.width = map[size];
+    },
+  });
 
   let db_task_queue: Promise<any> = Promise.resolve();
 
@@ -48,7 +51,7 @@ const use_main_store = defineStore("main", () => {
 
   async function push_to_db_task_queue<T>(p: () => Promise<T>) {
     const thenp = db_task_queue.then(p).catch((e: any) => {
-      console.log(e);
+      console.error(e);
     });
     db_task_queue = thenp;
     return await thenp;
@@ -179,8 +182,7 @@ const use_main_store = defineStore("main", () => {
   }
 
   return {
-    left_bar_width,
-    change_left_bar_width,
+    left_bar,
     chat_records,
     settings,
     is_initializing,

@@ -73,12 +73,9 @@
           @apply text-ellipsis overflow-hidden whitespace-nowrap;
         }
         & > .btn_group {
-          display: none;
-          & > .BtnIcon:hover {
-            @apply text-white;
-          }
-          & > .BtnIcon:active {
-            @apply text-zinc-300;
+          @apply _hidden items-center gap-2 text-white;
+          & > .mark .q-icon {
+            @apply text-yellow-400 text-opacity-70;
           }
         }
 

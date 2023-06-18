@@ -1,114 +1,16 @@
-import { includes } from "lodash";
-import { QBadge, QIcon, QSpace, QTab, QTabs } from "quasar";
-import { Component, computed, defineComponent, ref } from "vue";
-import type { RouteRecordName } from "vue-router";
-import { useRoute, useRouter } from "vue-router";
+import { Component, computed, defineComponent, ref, toRef } from "vue";
 import {
   Nil,
-  any,
   arr_or_pack_to_arr,
+  as_props,
   c,
-  refvmodel,
   refvmodel_type,
 } from "../common/utils";
-import type ChatRecord from "../interface/ChatRecord";
-import router from "../router/router";
+import { ChatLB, ChatLBStared } from "./leftbar/ChatLB";
+import { RouteRecordName, useRouter } from "vue-router";
+import { includes, keyBy } from "lodash";
 import use_main_store from "../store/main_store";
-import { DeletePopup } from "./chat/DeletePopup";
-
-export const ChatBar = defineComponent({
-  setup(props, ctx) {
-    const { attrs } = ctx;
-    const router = useRouter();
-    const ms = use_main_store();
-    return () => {
-      // 受制于响应式系统，必须写在里面
-      const route = useRoute();
-      const records = ms.chat_records.meta;
-      return (
-        <div {...attrs} class="chat_record_detail">
-          <div class="top_btn_group">
-            {/* <div class=" text-zinc-300 rounded">
-              <QBtn {...c`search`} icon="mdi-magnify" flat></QBtn>
-              <QBtn {...c`checkbox`} icon="mdi-checkbox-marked" flat></QBtn>
-              <QBtn {...c`sort`} icon="mdi-sort" flat></QBtn>
-              <QBtn {...c`sort`} icon="mdi-history" flat></QBtn>
-            </div> */}
-            <div
-              class={["item", "new_chat", { active: "new_chat" == route.name }]}
-              onClick={() => {
-                router.push({ name: "new_chat" });
-              }}
-            >
-              <QIcon name="mdi-plus" size="1rem"></QIcon>
-              <div>新会话</div>
-            </div>
-          </div>
-          <ChatRecordSelectionSeparator />
-          <div {...c`container`}>
-            {records.map((it, index) => (
-              <Item
-                class={{ active: it.id == route.params.chatid }}
-                key={it.id}
-                record={it}
-                index={index}
-                onClick={() => {
-                  router.push(`/chat/${it.id}`);
-                }}
-              ></Item>
-            ))}
-          </div>
-          <QSpace />
-        </div>
-      );
-    };
-  },
-});
-
-export const ChatRecordSelectionSeparator = defineComponent({
-  setup() {
-    return () => <div class="border-t border-zinc-700"></div>;
-  },
-});
-
-export const Item = defineComponent({
-  props: ["record", "index"],
-  emits: ["click"],
-  setup(props: { record: ChatRecord; index: number }, ctx) {
-    const ms = use_main_store();
-    const delete_popup_show = ref(false);
-    return () => {
-      const { record, index } = props;
-      return (
-        <div class="item" onClick={() => ctx.emit("click")}>
-          <div class="frow gap-1 items-center">
-            <QIcon
-              {...c`pt-[0.1rem]`}
-              name="mdi-message-outline"
-              size="1rem"
-            ></QIcon>
-            <QBadge label={record.record_count}></QBadge>
-          </div>
-          <div class="text">{record.name}</div>
-          <QSpace />
-          <div class="btn_group">
-            <QIcon name="mdi-trash-can" size="1.3rem">
-              <DeletePopup
-                {...refvmodel_type(delete_popup_show, "modelValue")}
-                onConfirm={async () => {
-                  await ms.chat_records.delete(record.id);
-                  router.push({ name: "new_chat" });
-                }}
-              >
-                是否确定删除此对话记录？
-              </DeletePopup>
-            </QIcon>
-          </div>
-        </div>
-      );
-    };
-  },
-});
+import { QTab, QTabs } from "quasar";
 
 export const NoContent = defineComponent({
   setup() {
@@ -124,6 +26,7 @@ export interface RawItem {
   route_name: string | string[];
   component?: () => Component;
   to_route?: string | true;
+  hidden?: true;
 }
 
 export interface Item {
@@ -134,6 +37,7 @@ export interface Item {
   route_name: string[];
   component: () => Component;
   to_route?: string;
+  hidden: boolean;
 }
 
 function build_RawItem(ri: RawItem): Item {
@@ -144,6 +48,7 @@ function build_RawItem(ri: RawItem): Item {
     to_route: ri.to_route === true ? route_name[0] : ri.to_route,
     component: ri.component ?? (() => NoContent),
     hide_details: !!ri.hide_details,
+    hidden: !!ri.hidden,
   };
 }
 
@@ -153,7 +58,15 @@ export const raw_items = [
     name: "chat",
     label: "对话",
     route_name: ["chat", "new_chat"],
-    component: () => ChatBar,
+    component: () => ChatLB,
+  },
+  {
+    icon: "",
+    name: "chat_marked",
+    label: "",
+    route_name: [],
+    hidden: true,
+    component: () => ChatLBStared,
   },
   // {
   //   icon: "mdi-file-document-edit",
@@ -170,7 +83,7 @@ export const raw_items = [
   // {
   //   icon: "mdi-server",
   //   name: "vector_library",
-  //   label: "数据库",
+  //   label: "向量数据库",
   //   route_name: "vector_library",
   // },
   {
@@ -184,6 +97,7 @@ export const raw_items = [
 ] satisfies RawItem[];
 
 const items = raw_items.map(build_RawItem);
+export const items_map = keyBy(items, "name");
 function route_name_to_item_name(name: RouteRecordName | Nil) {
   for (const it of items) {
     if (includes(it.route_name, name)) {
@@ -192,10 +106,12 @@ function route_name_to_item_name(name: RouteRecordName | Nil) {
   }
 }
 
-export const LeftBarDetails = defineComponent<{
+export type LeftBarDetailsProps = {
   item?: Item;
-}>({
-  props: any(["item"]),
+};
+
+export const LeftBarDetails = defineComponent<LeftBarDetailsProps>({
+  props: as_props<LeftBarDetailsProps>()(["item"]),
   setup(props) {
     const ms = use_main_store();
     return () => {
@@ -207,15 +123,12 @@ export const LeftBarDetails = defineComponent<{
       const compo = gen_compo.value();
 
       if (item?.hide_details) {
-        ms.change_left_bar_width("just-icon");
+        ms.left_bar.change_width("just-icon");
       } else {
-        ms.change_left_bar_width("grow");
+        ms.left_bar.change_width("grow");
       }
       return (
         <div class={["details_container", item?.hide_details ? "hide" : ""]}>
-          {/* <div class="title">
-            <div>{props.item?.label}</div>
-          </div> */}
           <compo></compo>
         </div>
       );
@@ -225,9 +138,10 @@ export const LeftBarDetails = defineComponent<{
 
 export const LeftBar = defineComponent({
   setup(props, ctx) {
+    const ms = use_main_store();
     const { attrs } = ctx;
     const router = useRouter();
-    const selected_name = ref("chat");
+    const selected_name = toRef(ms.left_bar, "selected_name");
     // watch(selected_name, ()=>{
     //   console.log(items.find((it) => it.name == selected_name.value)?.name);
     // })
@@ -236,7 +150,7 @@ export const LeftBar = defineComponent({
         <div {...attrs} class="left_bar">
           <QTabs
             {...c`selection_container`}
-            {...refvmodel(selected_name)}
+            {...refvmodel_type(selected_name, "modelValue")}
             onUpdate:modelValue={(name) => {
               selected_name.value = name;
               const item = items.find((it) => it.name == name);
@@ -247,17 +161,19 @@ export const LeftBar = defineComponent({
             switch-indicator
             vertical
           >
-            {items.map((it) => (
-              <QTab
-                {...c`selection_item`}
-                name={it.name}
-                icon={it.icon}
-                ripple={false}
-              ></QTab>
-            ))}
+            {items
+              .filter((it) => !it.hidden)
+              .map((it) => (
+                <QTab
+                  {...c`selection_item`}
+                  name={it.name}
+                  icon={it.icon}
+                  ripple={false}
+                ></QTab>
+              ))}
           </QTabs>
           <LeftBarDetails
-            item={items.find((it) => it.name == selected_name.value)}
+            item={items_map[selected_name.value]}
           ></LeftBarDetails>
         </div>
       );

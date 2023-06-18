@@ -7,6 +7,7 @@ import { ChatRecordForStorage } from "../../interface/ChatRecord";
 import { SettingItem } from "../../interface/Settings";
 import { init_settings_db } from "./settings";
 import { init_chat_record_db } from "./chat_records";
+import { DocumentMetaForStorage } from "../../interface/Document";
 
 export * from "./settings";
 export * from "./chat_records";
@@ -15,7 +16,8 @@ PouchDB.plugin(PouchDBFind);
 
 const db_init_param = {
   revs_limit: 1,
-};
+  auto_compaction: true,
+} satisfies PouchDB.Configuration.DatabaseConfiguration;
 
 export const dbs = {
   chat_records: new PouchDB<ChatRecordForStorage>(
@@ -23,9 +25,10 @@ export const dbs = {
     db_init_param
   ),
   settings: new PouchDB<SettingItem>("settings", db_init_param),
+  document: new PouchDB<DocumentMetaForStorage>("document", db_init_param),
 };
 
-/** 压缩数据库，清理多余的缓存。 */ 
+/** 压缩数据库，清理多余的缓存。 */
 async function compact_dbs() {
   await Promise.all(Object.values(dbs).map((db) => db.compact()));
 }

@@ -6,7 +6,9 @@ import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { quasar, transformAssetUrls } from "@quasar/vite-plugin";
 import crossOriginIsolation from "vite-plugin-cross-origin-isolation";
-import json5_plugin from 'vite-plugin-json5'
+import json5_plugin from "vite-plugin-json5";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 
 import autoprefixer from "autoprefixer";
 import tailwindcss from "tailwindcss";
@@ -78,7 +80,9 @@ export default defineConfig({
       sassVariables: "src/styles/quasar-variables.sass",
     }),
     crossOriginIsolation(),
-    json5_plugin()
+    json5_plugin(),
+    wasm(),
+    topLevelAwait(),
   ],
   server: {
     hmr: true,

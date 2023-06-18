@@ -12,6 +12,7 @@ export interface ChatRecordMeta {
   record_count?: number;
   /** 聊天记录状态。`undefined` 为无状态 */
   status?: ChatRecordStatus;
+  marked?: boolean;
   api__?: string;
 }
 

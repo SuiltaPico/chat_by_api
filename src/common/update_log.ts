@@ -1,5 +1,16 @@
 export default [
   {
+    version: "2.8.0",
+    content: `
+### Added
+* 新增对话记录收藏功能。
+### Removed
+* 删除了显示消息数量功能。
+### Fixed
+* 修复了对话记录数据库视图储存了过多无用信息导致数据库卡顿的bug。现在视图会在每次打开网页时清理和重建。
+`,
+  },
+  {
     version: "2.7.1",
     content: `
 ### Changed

@@ -1,4 +1,4 @@
-import _, { chain } from "lodash";
+import _, { chain, remove } from "lodash";
 import {
   CRFS_to_ChatRecord,
   create_ChatRecordForStorageV2,
@@ -21,6 +21,18 @@ export const chat_records_default_value = [] satisfies ChatRecordMeta[];
 
 export async function init_chat_record_db() {
   const db = dbs.chat_records;
+
+  const index_meta = (await db.getIndexes()).indexes.find(
+    (it) => it.ddoc === "_design/last_modified_index"
+  );
+
+  if (index_meta !== undefined) {
+    await new Promise((res) => {
+      db.deleteIndex(index_meta as PouchDB.Find.DeleteIndexOptions, () => {
+        res(undefined);
+      });
+    });
+  }
 }
 
 export async function get_chat_records_meta_db(
@@ -30,7 +42,7 @@ export async function get_chat_records_meta_db(
   const db = dbs.chat_records;
 
   // 创建 last_modified 字段的索引
-  await db.createIndex({
+  const index = await db.createIndex({
     index: { fields: ["last_modified"], ddoc: "last_modified_index" },
   });
 
@@ -44,6 +56,7 @@ export async function get_chat_records_meta_db(
       "created",
       "last_modified",
       "record_count",
+      "marked",
       "_id",
       "_rev",
     ] satisfies (keyof PouchDB.Core.ExistingDocument<ChatRecord>)[],

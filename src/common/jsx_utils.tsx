@@ -2,9 +2,13 @@ import { Comment, Slots, VNode, createCommentVNode, h } from "vue";
 import { Maybe } from "./utils";
 
 export function vif(cond: boolean, template: VNode) {
-  if (cond) {
-    return template;
-  }
+  if (cond) return template;
+
+  return createCommentVNode();
+}
+
+export function vif_fn(cond: boolean, template: () => VNode) {
+  if (cond) return template();
   return createCommentVNode();
 }
 
