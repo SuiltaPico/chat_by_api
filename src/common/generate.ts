@@ -2,7 +2,7 @@ import { chain } from "lodash";
 import { ChatCompletionRequestMessage } from "openai";
 import { Ref } from "vue";
 import { OpenAIRequestConfig } from "../interface/ChatRecord";
-import { Configuration, OpenAIApi } from "./openai_api";
+import { Configuration, OpenAIApi } from "./openai/openai_api";
 import { non_empty_else, scroll_if_close_to } from "./utils";
 
 export type GenerateStatus = "init" | "connecting" | "generating" | "finished";
@@ -40,8 +40,6 @@ export async function openai_chat_completion(config: {
   };
 
   await on_status_changed("init");
-
-  // 锁定chatid，不被变化影响
 
   const cfg = new Configuration({
     apiKey: api_key,

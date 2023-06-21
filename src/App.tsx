@@ -12,11 +12,12 @@ import { defineComponent, ref } from "vue";
 
 import { RouterView, useRouter } from "vue-router";
 
-import { LeftBar } from "./components/LeftBar";
+import { LeftBar } from "./components/leftbar/LeftBar";
 import use_main_store from "./store/main_store";
 import { Maybe, c, refvmodel } from "./common/utils";
 import { vif } from "./common/jsx_utils";
 import { ChatRecordOperatingMode } from "./pages/chat";
+import { nanoid } from "nanoid";
 
 export default defineComponent({
   setup() {
@@ -33,15 +34,20 @@ export default defineComponent({
         const apikeys = settings.apikeys.keys;
         const same = apikeys.find((it) => it.name === "from_query");
         if (!same) {
-          apikeys.push({
-            name: "from_query",
-            key: openai_key.toString(),
-            source: "OpenAI",
-          });
-          ms.settings.set_setting("apikeys", settings.apikeys).then(() => {
-            router.replace({
-              name: "new_chat",
+          ms.push_to_db_task_queue(async () => {
+            apikeys.push({
+              id: Date.now() + nanoid(),
+              name: "from_query",
+              key: openai_key.toString(),
+              source: "OpenAI",
             });
+            await ms.settings
+              .set_setting("apikeys", settings.apikeys)
+              .then(() => {
+                router.replace({
+                  name: "new_chat",
+                });
+              });
           });
         } else {
           router.replace({

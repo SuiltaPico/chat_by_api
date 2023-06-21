@@ -21,6 +21,20 @@ import {
   set_setting_db,
   settings_default_value,
 } from "./db/db_api";
+import {
+  create_document_db,
+  delete_document_db,
+  document_default_value,
+  get_document_db,
+  get_document_meta_db,
+  get_documents_meta_db,
+  modify_document_db,
+} from "./db/document";
+import { Document, DocumentForStorage } from "../interface/Document";
+import { get_item_name_from_route_name } from "../components/leftbar/LeftBar";
+import { defer } from "lodash";
+import { useRoute } from "vue-router";
+import { load_models } from "../common/api_meta";
 
 type LeftBarSize = "just-icon" | "grow" | "hidden";
 
@@ -47,6 +61,7 @@ const use_main_store = defineStore("main", () => {
   push_to_db_task_queue(async () => {
     await init_db();
     await sync_from_db();
+    load_models();
   });
 
   async function push_to_db_task_queue<T>(p: () => Promise<T>) {
@@ -93,28 +108,28 @@ const use_main_store = defineStore("main", () => {
   });
 
   const chat_records = reactive({
-    meta: chat_records_default_value as ChatRecordMeta[],
-    get_meta: get_chat_records_meta_db,
+    metas: chat_records_default_value as ChatRecordMeta[],
+    get_metas: get_chat_records_meta_db,
     async create(name: string) {
       const crid = await create_chat_record_db(name);
-      await chat_records.sync_meta();
+      await chat_records.sync_metas();
       return crid;
     },
     async delete(id: string) {
       await delete_chat_record_db(id);
-      await chat_records.sync_meta();
+      await chat_records.sync_metas();
     },
     async modify(
       id: string,
       modifier: (chat_record: ChatRecord) => Promise<void | ChatRecord>
     ) {
       await modify_chat_record_db(id, modifier);
-      await chat_records.sync_meta();
+      await chat_records.sync_metas();
       await chat_records.sync_message();
     },
     get: get_chat_record_db,
-    async sync_meta() {
-      chat_records.meta = await chat_records.get_meta(0, 1024);
+    async sync_metas() {
+      chat_records.metas = await chat_records.get_metas(0, 1024);
     },
     async sync_message() {
       if (curr_chat.chat_record === undefined) return;
@@ -122,15 +137,47 @@ const use_main_store = defineStore("main", () => {
     },
   });
 
+  const documents = reactive({
+    metas: document_default_value,
+    get_meta: get_document_meta_db,
+    get_metas: get_documents_meta_db,
+    async create(dfs: DocumentForStorage) {
+      const id = await create_document_db(dfs);
+      await documents.sync_metas();
+      return id;
+    },
+    async delete(id: string) {
+      await delete_document_db(id);
+      await documents.sync_metas();
+    },
+    async modify(
+      id: string,
+      modifier: (document: Document) => Promise<void | Document>
+    ) {
+      await modify_document_db(id, modifier);
+      await documents.sync_metas();
+    },
+    get: get_document_db,
+    async sync_metas() {
+      documents.metas = await documents.get_metas(0, 1024);
+    },
+  });
+
   const settings = reactive({
     settings: settings_default_value as Settings,
     async set_setting<T extends keyof Settings>(id: T, value: Settings[T]) {
+      if (id === "apikeys") {
+        load_models();
+      }
       await set_setting_db(id, value);
       await settings.sync();
     },
     get_settings: get_settings_db,
     async sync() {
       settings.settings = await settings.get_settings();
+    },
+    get_enabled_apikey() {
+      return settings.settings.apikeys.keys[0];
     },
   });
 
@@ -173,7 +220,7 @@ const use_main_store = defineStore("main", () => {
   async function sync_from_db() {
     console.log("[sync_from_db]", curr_chat.chat_record?.id);
 
-    await chat_records.sync_meta();
+    await chat_records.sync_metas();
     await chat_records.sync_message();
 
     await settings.sync();

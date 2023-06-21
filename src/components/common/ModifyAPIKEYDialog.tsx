@@ -1,7 +1,7 @@
 import { QBtn, QDialog, QIcon, QInput, QSelect, QSpace } from "quasar";
 import { defineComponent, ref } from "vue";
-import { insert_slot, not_undefined_or, tpl } from "../common/jsx_utils";
-import { APIKey, APIKeySource } from "../interface/Settings";
+import { insert_slot, not_undefined_or, tpl } from "../../common/jsx_utils";
+import { APIKey, APIKeySource } from "../../interface/Settings";
 import {
   any,
   as_props,
@@ -10,10 +10,10 @@ import {
   carr,
   promise_with_ref,
   refvmodel,
-} from "../common/utils";
-import { passwd_attr, passwd_slot } from "../common/quasar_utils";
-import use_main_store from "../store/main_store";
-import { DBAPIKEYDuplicateError } from "../store/db/db_api";
+} from "../../common/utils";
+import { passwd_attr, passwd_slot } from "../../common/quasar_utils";
+import use_main_store from "../../store/main_store";
+import { DBAPIKEYDuplicateError } from "../../store/db/db_api";
 import { chain, debounce } from "lodash";
 import {
   uniqueNamesGenerator,
@@ -23,6 +23,7 @@ import {
 } from "unique-names-generator";
 import ErrorContainer from "./ErrorContainer";
 import BetterBtn from "./BetterBtn";
+import { generate_apikey_id } from "../../implement/Settings";
 
 const gen_random_name = () =>
   uniqueNamesGenerator({
@@ -245,12 +246,14 @@ export const ModifyAPIKEYDialog = defineComponent<
                   let result: APIKey | undefined;
                   if (new_key_type.value === "OpenAI") {
                     result = {
+                      id: generate_apikey_id(),
                       source: new_key_type.value,
                       name: name.value,
                       key: key.value,
                     };
                   } else if (new_key_type.value === "Custom") {
                     result = {
+                      id: generate_apikey_id(),
                       source: new_key_type.value,
                       name: name.value,
                       key: key.value,

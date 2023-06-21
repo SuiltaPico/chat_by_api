@@ -1,37 +1,37 @@
 import { cloneDeep, defer } from "lodash";
 import { QBtn, QSpace, useQuasar } from "quasar";
 import { defineComponent, onMounted, ref } from "vue";
-import { openai_chat_completion } from "../../common/generate";
-import { vif } from "../../common/jsx_utils";
-import { create_md } from "../../common/md_render";
-import { copy_with_notify } from "../../common/quasar_utils";
+import { openai_chat_completion } from "../../../common/generate";
+import { vif } from "../../../common/jsx_utils";
+import { create_md } from "../../../common/md_render";
+import { copy_with_notify } from "../../../common/quasar_utils";
 import {
   as_props,
   c,
   parse_param_to_Record,
   refvmodel_type,
-} from "../../common/utils";
+} from "../../../common/utils";
 import {
   Messages_to_OpenAI_Messages,
   after_modify_Message,
   write_Message_to_ChatRecord,
-} from "../../impl/ChatRecord";
+} from "../../../implement/ChatRecord";
 import ChatRecord, {
   Message,
   ServerMessage,
   ServerMessagesError,
-} from "../../interface/ChatRecord";
+} from "../../../interface/ChatRecord";
 import {
   ChatItem_Avatar,
   ChatItem_select_box,
   ChatRecordOperatingMode,
-} from "../../pages/chat";
-import use_main_store from "../../store/main_store";
-import { Editor, EditorCompoAPI } from "../Editor";
-import { MorePopup, MorePopupBtn } from "./MorePopup";
-import { UseEditorRightBtnGroup } from "./UseEditorRightBtnGroup";
+} from "../../../pages/chat";
+import use_main_store from "../../../store/main_store";
+import { Editor, EditorCompoAPI } from "../../common/Editor";
+import { MorePopup, MorePopupBtn } from "../MorePopup";
+import { UseEditorRightBtnGroup } from "../UseEditorRightBtnGroup";
 import { ServerMessageErrorHandler } from "./ServerMessageErrorHandler";
-import { Editor2 } from "../Editor2";
+import { Editor2 } from "../../common/Editor2";
 
 const md = create_md();
 
@@ -172,7 +172,7 @@ export const ServerMessageItem = defineComponent<
                 ripple={false}
               ></QBtn>
             )}
-            {ChatItem_Avatar(message)}
+            {ChatItem_Avatar(message, index)}
             {vif(
               use_editor,
               <Editor2

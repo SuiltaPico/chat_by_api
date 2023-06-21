@@ -11,10 +11,10 @@ import {
 import { copy_with_notify } from "../../common/quasar_utils";
 import { MorePopup, MorePopupBtn } from "./MorePopup";
 import { vif } from "../../common/jsx_utils";
-import { Editor, EditorCompoAPI } from "../Editor";
+import { Editor, EditorCompoAPI } from "../common/Editor";
 import { UseEditorRightBtnGroup } from "./UseEditorRightBtnGroup";
 import { defer } from "lodash";
-import { Editor2 } from "../Editor2";
+import { Editor2 } from "../common/Editor2";
 
 export type UserMessageItemProps = {
   message: UserMessage;
@@ -54,7 +54,7 @@ export const UserMessageItem = defineComponent<
       const { message, index, use_editor } = props;
       const curry_chat = ms.curry_chat;
       return (
-        <div class="chat_item">
+        <div class="chat_item user">
           <div class="chat_item_main">
             {ChatItem_select_box(props.index)}
             {vif(
@@ -66,7 +66,7 @@ export const UserMessageItem = defineComponent<
                 ripple={false}
               ></QBtn>
             )}
-            {ChatItem_Avatar(message, "mt-[2px]")}
+            {ChatItem_Avatar(message, index, "mt-[2px]")}
             {vif(
               use_editor,
               <Editor2

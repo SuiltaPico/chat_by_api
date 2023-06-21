@@ -3,12 +3,12 @@ import { QIcon } from "quasar";
 import { computed, defineComponent, ref, toRef, watch } from "vue";
 import { not_undefined_or } from "../../common/jsx_utils";
 import { as_props, c, refvmodel_type } from "../../common/utils";
-import { get_Message_uuid } from "../../impl/ChatRecord";
+import { get_Message_uuid } from "../../implement/ChatRecord";
 import ChatRecord, { Message } from "../../interface/ChatRecord";
 import { ChatRecordOperatingMode } from "../../pages/chat";
 import use_main_store from "../../store/main_store";
-import BetterBtn from "../BetterBtn";
-import { ServerMessageItem } from "./ServerMessageItem";
+import BetterBtn from "../common/BetterBtn";
+import { ServerMessageItem } from "./ServerMessageItem/ServerMessageItem";
 import { UserMessageItem } from "./UserMessageItem";
 
 export type ChatItemProps = {

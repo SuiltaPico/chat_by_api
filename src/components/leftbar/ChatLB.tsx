@@ -1,26 +1,13 @@
-import {
-  QBadge,
-  QBtn,
-  QCheckbox,
-  QIcon,
-  QSpace,
-  QSpinnerComment,
-} from "quasar";
+import { QBtn, QCheckbox, QIcon, QSpace, QSpinnerComment } from "quasar";
 import { defineComponent, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { vif } from "../../common/jsx_utils";
 import { c, refvmodel_type } from "../../common/utils";
+import ChatRecord from "../../interface/ChatRecord";
+import router from "../../router/router";
 import use_main_store from "../../store/main_store";
 import { DeletePopup } from "../chat/DeletePopup";
-import router from "../../router/router";
-import ChatRecord from "../../interface/ChatRecord";
-import { vif, vif_fn } from "../../common/jsx_utils";
-import { after_modify_ChatRecord } from "../../impl/ChatRecord";
-
-export const ChatRecordSelectionSeparator = defineComponent({
-  setup() {
-    return () => <div class="border-t border-zinc-700"></div>;
-  },
-});
+import { SeparatorLB } from "./SeparatorLB";
 
 export const Item = defineComponent({
   props: ["record", "index"],
@@ -92,7 +79,7 @@ export const Item = defineComponent({
 export const ChatLBStared = defineComponent({
   setup(props, ctx) {
     const ms = use_main_store();
-    const records = ms.chat_records.meta;
+    const records = ms.chat_records.metas;
     return () => {
       const route = useRoute();
       return (
@@ -109,7 +96,7 @@ export const ChatLBStared = defineComponent({
             <QIcon name="mdi-star-check" size="1.2rem"></QIcon>
             <div>已收藏的对话记录</div>
           </div>
-          <ChatRecordSelectionSeparator />
+          <SeparatorLB />
           <div {...c`container`}>
             {records
               .filter((it) => it.marked === true)
@@ -139,7 +126,7 @@ export const ChatLB = defineComponent({
     return () => {
       // 受制于响应式系统，必须写在里面
       const route = useRoute();
-      const records = ms.chat_records.meta;
+      const records = ms.chat_records.metas;
       return (
         <div {...attrs} class="chat_record_detail">
           <div class="top_btn_group">
@@ -164,7 +151,7 @@ export const ChatLB = defineComponent({
               <div>新会话</div>
             </div>
           </div>
-          <ChatRecordSelectionSeparator />
+          <SeparatorLB />
           <div {...c`container`}>
             {records.map((it, index) => (
               <Item

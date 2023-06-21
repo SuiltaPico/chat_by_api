@@ -5,12 +5,12 @@ import { useRouter } from "vue-router";
 import {
   Maybe,
   as_props
-} from "../../common/utils";
+} from "../../../common/utils";
 import {
   ServerMessage
-} from "../../interface/ChatRecord";
-import BetterBtn from "../BetterBtn";
-import ErrorContainer from "../ErrorContainer";
+} from "../../../interface/ChatRecord";
+import BetterBtn from "../../common/BetterBtn";
+import ErrorContainer from "../../common/ErrorContainer";
 
 type ServerMessageErrorHandlerProps = { message: ServerMessage };
 

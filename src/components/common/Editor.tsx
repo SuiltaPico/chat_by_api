@@ -1,9 +1,9 @@
 // import { editor as monaco_editor } from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { defineComponent, onMounted, ref } from "vue";
-import { as_props } from "../common/utils";
+import { as_props } from "../../common/utils";
 import { QInnerLoading } from "quasar";
-import { tpl } from "../common/jsx_utils";
+import { tpl } from "../../common/jsx_utils";
 
 /** @ts-ignore */
 self.MonacoEnvironment = {

@@ -1,5 +1,6 @@
 @import url(./LeftBar.css);
 @import url(./Chat.css);
+@import url(./settings.css);
 
 @tailwind base;
 @tailwind components;
@@ -14,7 +15,27 @@ body {
 }
 
 #app {
-  @apply scroll-smooth;
+  @apply scroll-smooth text-base;
+  letter-spacing: 0.5px;
+  line-height: 1.75rem;
+}
+
+.list-move, /* apply transition to moving elements */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* ensure leaving items are taken out of layout flow so that moving
+   animations can be calculated correctly. */
+.list-leave-active {
+  position: absolute;
 }
 
 ul,
@@ -93,6 +114,16 @@ pre.hljs {
   outline: none !important;
 }
 
+.q-table {
+  & th {
+    @apply text-base;
+  }
+
+  & tbody td {
+    @apply text-base;
+  }
+}
+
 .default-bg {
   @apply bg-zinc-700;
 }
@@ -120,8 +151,6 @@ pre.hljs {
     @apply grow;
   }
 }
-
-
 
 .fit-width {
   @apply w-[80%] max-[480px]:w-[100vw] max-sm:w-[90vw] md:w-[75%] lg:w-[60%] max-w-[800px] xl:w-[80%];
@@ -163,6 +192,7 @@ pre.hljs {
 
       &.q-textarea .q-field__native {
         padding-bottom: 17px;
+        line-height: 1.2rem;
       }
     }
   }
@@ -189,6 +219,6 @@ pre.hljs {
   }
 
   & > div {
-    @apply fcol gap-2
+    @apply fcol gap-2;
   }
 }

@@ -165,13 +165,13 @@ export const GenetateModeToolbarPopup = defineComponent({
 
 export const GenetateModeToolbar = defineComponent({
   setup() {
-    const ms = use_main_store()
+    const ms = use_main_store();
 
     const model = toRef(ms.chat_body_input, "model");
-    const models = openai_models.chat_completions;
+    const models = toRef(openai_models, "chat_completions");
 
-    return () =>
-      tpl(
+    return () => {
+      return tpl(
         <ToolbarState></ToolbarState>,
         <QSelect
           {...c`min-w-[140px] bg-zinc-800 _hidden sm:flex`}
@@ -186,7 +186,7 @@ export const GenetateModeToolbar = defineComponent({
           label="模型"
           color="secondary"
           dense
-          options={models}
+          options={models.value}
           dark
           filled
         ></QSelect>,
@@ -194,6 +194,7 @@ export const GenetateModeToolbar = defineComponent({
           <GenetateModeToolbarPopup></GenetateModeToolbarPopup>
         </QBtn>
       );
+    };
   },
 });
 export const AddModeToolbar = defineComponent({

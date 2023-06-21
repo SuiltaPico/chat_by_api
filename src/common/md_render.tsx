@@ -15,6 +15,7 @@ import { QBtn, useQuasar } from "quasar";
 import { c, call } from "./utils";
 import copy from "copy-text-to-clipboard";
 import { copy_with_notify } from "./quasar_utils";
+import { escapeHtml } from "markdown-it/lib/common/utils";
 
 export function htmlToVNodes(html: string) {
   const template = document.createElement("template");
@@ -121,7 +122,16 @@ export const create_md = () => {
     html: false,
     highlight,
   });
-  md.renderer.render;
+  md.use((md) => {
+    md.renderer.rules.text = (tokens, idx /*, options, env */) => {
+      const add_space_between_cjk_and_english = (text: string) => {
+        return text
+          .replace(/(\d*\p{Cased_Letter}+\d*)(\p{Other_Letter}+)/gu, "$1 $2")
+          .replace(/(\d*\p{Other_Letter}+\d*)(\p{Cased_Letter}+)/gu, "$1 $2");
+      };
+      return escapeHtml(add_space_between_cjk_and_english(tokens[idx].content));
+    };
+  });
   md.use(markdown_it_katex, {
     displayMode: "html",
     throwOnError: false,

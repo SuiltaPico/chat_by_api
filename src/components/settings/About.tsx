@@ -10,8 +10,8 @@ const md = new MarkdownIt({
 export const About = defineComponent({
   setup() {
     return () => (
-      <div class="fcol gap-5">
-        <div class="text-xl font-bold">关于</div>
+      <div class="settings_item">
+        <div class="title">关于</div>
         <div class="fcol gap-2">
           <div class="frow gap-2">
             <div class="text-md font-bold">版本</div>

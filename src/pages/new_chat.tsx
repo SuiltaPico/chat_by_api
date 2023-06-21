@@ -10,7 +10,7 @@ import { ChatBodyInput } from "../components/ChatBodyInput";
 import {
   create_ServerMessage,
   create_UserMessage
-} from "../impl/ChatRecord";
+} from "../implement/ChatRecord";
 import use_main_store from "../store/main_store";
 
 // const res = await openai.createChatCompletion({

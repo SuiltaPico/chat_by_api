@@ -1,0 +1,44 @@
+.settings_item {
+  @apply fcol gap-5;
+
+  & > .title {
+    @apply text-xl font-bold;
+  }
+
+  & > .section {
+    @apply frow gap-4;
+  }
+}
+
+.api_key_manager_setting {
+  & .q-table__container {
+    @apply my-2 w-full;
+  }
+
+  & .q-table__top {
+    @apply bg-zinc-900;
+  }
+
+  & .q-table__middle {
+    scrollbar-width: thin;
+    @apply text-base;
+
+    & tr {
+      & > td:first-child,
+      & > th:first-child {
+        /* @apply bg-zinc-800; */
+        @apply text-zinc-100;
+      }
+
+      &.q-tr:first-child {
+        @apply text-_secondary;
+        & > td:first-child {
+          @apply text-_secondary;
+        }
+      }
+    }
+  }
+  & .q-table__bottom {
+    @apply _hidden;
+  }
+}

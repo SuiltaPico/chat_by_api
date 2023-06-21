@@ -19,7 +19,7 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const ms = use_main_store();
       // [impl: use_raw_render]
-      ms.curry_chat.clear_cache()
+      ms.curry_chat.clear_cache();
 
       if (!to.params.chatid) {
         next("/");
@@ -28,6 +28,11 @@ const routes: RouteRecordRaw[] = [
       }
     },
     props: true,
+  },
+  {
+    name: "document_manager",
+    path: "/document_manager",
+    component: () => import("../pages/document_manager.tsx"),
   },
   {
     name: "settings",

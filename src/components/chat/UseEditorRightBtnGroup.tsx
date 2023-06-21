@@ -1,10 +1,10 @@
 import { QBtn } from "quasar";
 import { vif } from "../../common/jsx_utils";
 import { c } from "../../common/utils";
-import { after_modify_Message, write_Message_to_ChatRecord } from "../../impl/ChatRecord";
+import { after_modify_Message, write_Message_to_ChatRecord } from "../../implement/ChatRecord";
 import { Message } from "../../interface/ChatRecord";
 import use_main_store from "../../store/main_store";
-import { EditorCompoAPI } from "../Editor";
+import { EditorCompoAPI } from "../common/Editor";
 
 export const UseEditorRightBtnGroup = (
   use_editor: boolean,

@@ -1,16 +1,22 @@
+import { fetch } from "pouchdb";
+import { reactive } from "vue";
+import { create_config_from_apikey } from "./openai/openai_utils";
+import use_main_store from "../store/main_store";
+import { OpenAIApi } from "./openai/openai_api";
+
 export const api_base_url = {
   OpenAI: "https://api.openai.com/v1",
   API2D: "https://oa.api2d.net/v1",
 };
 
-export const openai_models = {
+export const openai_models = reactive({
   chat_completions: [
     "gpt-4",
     // "gpt-4-0314",
-    // "gpt-4-32k",
+    "gpt-4-32k",
     // "gpt-4-32k-0314",
     "gpt-3.5-turbo",
-    "gpt-3.5-turbo-0301",
+    "gpt-3.5-turbo-16k",
   ],
   completions: [
     "text-davinci-003",
@@ -25,4 +31,25 @@ export const openai_models = {
   fine_tunes: ["davinci", "curie", "babbage", "ada"],
   embeddings: ["text-embedding-ada-002", "text-search-ada-doc-001"],
   moderations: ["text-moderation-stable", "text-moderation-latest"],
-} as const;
+});
+
+export async function load_models() {
+  const ms = use_main_store();
+  const apikey = ms.settings.get_enabled_apikey();
+  if (apikey === undefined) return;
+
+  const cfg = create_config_from_apikey(apikey);
+  const openai = new OpenAIApi(cfg);
+
+  try {
+    const models = (await (await openai.get_models({})).json()).data as {
+      id: string;
+    }[];
+
+    openai_models.chat_completions = models
+      .filter((it) => it.id.includes("gpt"))
+      .map((it) => it.id);
+  } catch (e) {
+    console.log(e);
+  }
+}

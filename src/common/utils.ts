@@ -25,6 +25,8 @@ export function try_it(fn: () => any, on_err: (e: any) => void) {
 export function slot<N extends string, V>(name: N, value: V) {
   return {
     [name]: value,
+  } as {
+    N: V;
   };
 }
 

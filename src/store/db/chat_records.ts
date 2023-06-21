@@ -4,7 +4,7 @@ import {
   create_ChatRecordForStorageV2,
   delete_ChatRecord,
   after_modify_ChatRecord,
-} from "../../impl/ChatRecord";
+} from "../../implement/ChatRecord";
 import ChatRecord, {
   ChatRecordForStorage,
   ChatRecordMeta,

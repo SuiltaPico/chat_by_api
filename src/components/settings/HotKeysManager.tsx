@@ -36,8 +36,8 @@ export const HotKeysManager = defineComponent({
         hotkeys.submit_keys
       );
       return (
-        <div class="fcol gap-5">
-          <div class="text-xl font-bold">快捷键</div>
+        <div class="settings_item">
+          <div class="title">快捷键</div>
           <ul>
             <li class="gap-2 items-center marker:text-zinc-400">
               <div class="frow gap-2 items-center">

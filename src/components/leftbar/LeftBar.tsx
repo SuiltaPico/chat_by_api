@@ -4,13 +4,15 @@ import {
   arr_or_pack_to_arr,
   as_props,
   c,
+  cl,
   refvmodel_type,
-} from "../common/utils";
-import { ChatLB, ChatLBStared } from "./leftbar/ChatLB";
-import { RouteRecordName, useRouter } from "vue-router";
+} from "../../common/utils";
+import { ChatLB, ChatLBStared } from "./ChatLB";
+import { RouteRecordName, useRoute, useRouter } from "vue-router";
 import { includes, keyBy } from "lodash";
-import use_main_store from "../store/main_store";
+import use_main_store from "../../store/main_store";
 import { QTab, QTabs } from "quasar";
+import { DocumentlibraryLB } from "./DocumentLibraryLB";
 
 export const NoContent = defineComponent({
   setup() {
@@ -81,10 +83,11 @@ export const raw_items = [
   //   route_name: "template",
   // },
   // {
-  //   icon: "mdi-server",
+  //   icon: "mdi-text-box-multiple-outline",
   //   name: "vector_library",
-  //   label: "向量数据库",
-  //   route_name: "vector_library",
+  //   label: "文档库",
+  //   route_name: "document_manager",
+  //   component: () => DocumentlibraryLB,
   // },
   {
     icon: "mdi-cog",
@@ -98,6 +101,11 @@ export const raw_items = [
 
 const items = raw_items.map(build_RawItem);
 export const items_map = keyBy(items, "name");
+
+export function get_item_name_from_route_name(route_name: string) {
+  return items.find((it) => it.route_name.includes(route_name))?.name;
+}
+
 function route_name_to_item_name(name: RouteRecordName | Nil) {
   for (const it of items) {
     if (includes(it.route_name, name)) {
@@ -146,6 +154,7 @@ export const LeftBar = defineComponent({
     //   console.log(items.find((it) => it.name == selected_name.value)?.name);
     // })
     return () => {
+      const route = useRoute();
       return (
         <div {...attrs} class="left_bar">
           <QTabs
@@ -165,7 +174,12 @@ export const LeftBar = defineComponent({
               .filter((it) => !it.hidden)
               .map((it) => (
                 <QTab
-                  {...c`selection_item`}
+                  {...cl([
+                    `selection_item`,
+                    it.route_name.find((it) => it === route.name)
+                      ? "text-_secondary"
+                      : "",
+                  ])}
                   name={it.name}
                   icon={it.icon}
                   ripple={false}

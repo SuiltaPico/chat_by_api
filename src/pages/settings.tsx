@@ -1,7 +1,7 @@
 import { QPage } from "quasar";
 import { defineComponent } from "vue";
 import { c } from "../common/utils";
-import { APIKEYManager } from "../components/settings/APIKEYManager";
+import { APIKEYManager } from "../components/settings/APIKEYManager/APIKEYManager";
 import { About } from "../components/settings/About";
 import { HotKeysManager } from "../components/settings/HotKeysManager";
 

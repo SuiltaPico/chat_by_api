@@ -1,9 +1,11 @@
 import _ from "lodash";
 import Settings, {
+  APIKey,
   APIKeysSetting,
   SettingItem,
 } from "../../interface/Settings";
 import { dbs } from "./db_api";
+import { generate_apikey_id } from "../../implement/Settings";
 
 export const settings_default_value = {
   apikeys: {
@@ -18,6 +20,20 @@ export const settings_default_value = {
 
 export async function init_settings_db() {
   const db = dbs.settings;
+
+  const apikeys: APIKeysSetting = await db.get("apikeys");
+
+  // 修复旧版本中数据库没有储存 id 的情况。
+  let has_null_id = false;
+  apikeys.keys.forEach((it) => {
+    if (it.id === undefined) {
+      it.id = generate_apikey_id();
+      has_null_id = true;
+    }
+  });
+  if (has_null_id) {
+    await set_setting_db("apikeys", apikeys);
+  }
 
   await Promise.all(
     _.chain(settings_default_value)
@@ -88,7 +104,7 @@ export async function set_setting_db<const T extends keyof Settings>(
       throw new DBAPIKEYDuplicateError(duplicate_index_map);
     }
   }
-  
+
   await dbs.settings.put({
     _id: id,
     ...(value as SettingItem),

@@ -27,7 +27,7 @@ import {
 import { copy_with_notify } from "../../common/quasar_utils";
 import { MorePopup, MorePopupBtn } from "./MorePopup";
 import { not_undefined_or, tpl } from "../../common/jsx_utils";
-import BetterBtn from "../BetterBtn";
+import BetterBtn from "../common/BetterBtn";
 import { fill, pullAt } from "lodash";
 
 export const TopBar = defineComponent({

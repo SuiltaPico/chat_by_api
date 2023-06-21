@@ -16,6 +16,7 @@ export interface HotKeySetting {
 export type APIKeySource = APIKey["source"];
 
 interface BaseAPIKey {
+  id: string;
   source: string;
   name: string;
   key: string;

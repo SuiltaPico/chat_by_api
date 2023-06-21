@@ -28,7 +28,7 @@ import {
   create_UserMessage,
   get_Message_index_in_ChatRecord,
   write_Message_to_ChatRecord,
-} from "../impl/ChatRecord";
+} from "../implement/ChatRecord";
 import {
   Message,
   ServerMessage,
@@ -58,7 +58,7 @@ async function generate_next(
   const msg = messages[index] as ServerMessage;
 
   const apply_update_chat_record_messages = async () => {
-    ms.push_to_db_task_queue(async () => {
+    await ms.push_to_db_task_queue(async () => {
       await ms.chat_records.modify(chat_id, async (cr) => {
         write_Message_to_ChatRecord(cr, msg, index);
         return cr;
@@ -110,7 +110,7 @@ async function generate_next(
 }
 
 /** @assert ms.curry_chat.chat_record!  */
-export function ChatItem_Avatar(message: Message, _class?: string) {
+export function ChatItem_Avatar(message: Message, index: number, _class?: string) {
   const ms = use_main_store();
   return (
     <Avatar
@@ -118,10 +118,10 @@ export function ChatItem_Avatar(message: Message, _class?: string) {
       role={message.role}
       onUpdate:role={async (role) => {
         const crid = ms.curry_chat.chat_record!.id;
-        ms.push_to_db_task_queue(() => {
-          return ms.chat_records.modify(crid, async (cr) => {
+        await ms.push_to_db_task_queue(async () => {
+          await ms.chat_records.modify(crid, async (curr_cr) => {
             message.role = role;
-            return cr;
+            write_Message_to_ChatRecord(curr_cr, message, index)
           });
         });
       }}
@@ -272,8 +272,6 @@ export const ChatBody = defineComponent({
                       ),
                     ] as const;
                     messages.push(...generate_mode_messages);
-                    ms.chat_body_input.sended();
-                    scroll_to(document.getElementById("app")!);
                   } else if (mode === "add") {
                     const mode_messages = [
                       create_UserMessage(
@@ -283,14 +281,15 @@ export const ChatBody = defineComponent({
                       ),
                     ];
                     messages.push(...mode_messages);
-                    ms.chat_body_input.sended();
-                    scroll_to(document.getElementById("app")!);
                   }
                 });
               });
 
+              ms.chat_body_input.sended();
+              scroll_to(document.getElementById("app")!);
+
               if (mode === "generate") {
-                await generate_next(
+                generate_next(
                   crid,
                   ms.curry_chat.chat_record.messages,
                   ms.curry_chat.chat_record.messages.length - 1

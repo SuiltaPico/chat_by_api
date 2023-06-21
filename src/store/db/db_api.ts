@@ -8,9 +8,11 @@ import { SettingItem } from "../../interface/Settings";
 import { init_settings_db } from "./settings";
 import { init_chat_record_db } from "./chat_records";
 import { DocumentMetaForStorage } from "../../interface/Document";
+import { init_document_db } from "./document";
 
 export * from "./settings";
 export * from "./chat_records";
+export * from "./document";
 
 PouchDB.plugin(PouchDBFind);
 
@@ -36,5 +38,6 @@ async function compact_dbs() {
 export async function init_db() {
   await init_chat_record_db();
   await init_settings_db();
+  await init_document_db();
   await compact_dbs();
 }

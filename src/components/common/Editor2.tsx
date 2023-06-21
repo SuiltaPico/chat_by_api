@@ -1,6 +1,6 @@
 import { defineComponent, onMounted, ref } from "vue";
-import { as_props, c } from "../common/utils";
-import { tpl } from "../common/jsx_utils";
+import { as_props, c } from "../../common/utils";
+import { tpl } from "../../common/jsx_utils";
 import { QEditor } from "quasar";
 import { EditorCompoAPI } from "./Editor";
 
@@ -30,7 +30,7 @@ export const Editor2 = defineComponent<
   ]),
   emits: ["update:content", "update:click"],
   setup(props, ctx) {
-    const editor_container_ref = ref<QEditor>();
+    const editor_container_ref = ref<HTMLTextAreaElement>();
     const content = ref("");
 
     ctx.expose({
@@ -51,7 +51,10 @@ export const Editor2 = defineComponent<
         if (!model) return false;
       },
       set_readonly(readonly) {
-        return false;
+        const model = editor_container_ref.value;
+        if (!model) return false;
+
+        model.readOnly = readonly;
       },
       get_value() {
         const model = editor_container_ref.value;
@@ -60,19 +63,17 @@ export const Editor2 = defineComponent<
       },
     } as EditorCompoAPI);
     return () => (
-      <QEditor
-        {...c`whitespace-pre-wrap overflow-y-scroll`}
+      <textarea
+        {...c`bg-zinc-800 whitespace-pre-wrap overflow-y-scroll`}
         {...ctx.attrs}
         ref={editor_container_ref}
-        definitions={{}}
-        toolbar={[]}
-        modelValue={content.value}
-        onUpdate:modelValue={(it) => {
-          content.value = it;
-          ctx.emit("update:content", it);
+        value={content.value}
+        onInput={(e) => {
+          if (!e || !e.target) return;
+          content.value = (e.target as any).value;
+          ctx.emit("update:content", (e.target as any).value);
         }}
-        dark
-      ></QEditor>
+      ></textarea>
     );
   },
 });

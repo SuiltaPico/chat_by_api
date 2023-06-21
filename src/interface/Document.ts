@@ -12,26 +12,67 @@ export interface ImageOCRDocumentSource {
 
 export type DocumentSource = TextDocumentSource | ImageOCRDocumentSource;
 
-export interface DocumentMeta {
-  id: string;
-  name: string;
-  content: string;
-  created: number;
-  last_modified: number;
-  from: DocumentSource;
+export interface EmbeddedAPIVectorSource {
+  type: "EmbeddedAPI";
+  api_id: string;
 }
 
-export type Document = DocumentMeta & {
-  vector: Float32Array[];
+/** 向量的来源的信息。 */
+export type VectorSource = EmbeddedAPIVectorSource;
+
+/** 向量元信息。 */
+export interface VectorMeta {
+  /** 向量来源。 */
+  source: VectorSource;
+  /** 向量长度。 */
+  length: string;
+  /** 是否为文档最新内容生成的向量。 */
+  is_latest: boolean;
+  /** 向量的创建时间。 */
+  created: number;
+}
+
+/** 向量，包含向量数据和元信息。 */
+export type Vector = VectorMeta & {
+  vector: Float32Array;
 };
 
+interface BaseDocumentMeta<T> {
+  type: string;
+  id: string;
+  name: string;
+  content: T;
+  created: number;
+  last_modified: number;
+  source: DocumentSource;
+  vectors: VectorMeta[];
+}
+
+export interface TextDocumentMeta extends BaseDocumentMeta<string> {
+  type: "text";
+}
+
+/** 文档元信息。 */
+export type DocumentMeta = TextDocumentMeta;
+
+/** 没有 `id` 的文档元信息。 */
 export type DocumentMetaForStorage = Omit<DocumentMeta, "id">;
 
+/** 文档。包含向量数据。
+ *
+ * 文档主要的属性是内容和向量集。`vectors` 是一些文档内容通过嵌入模型生成的向量。 */
+export type Document = Omit<DocumentMeta, "vectors"> & {
+  vectors: Vector[];
+};
+
+export type DocumentForStorage = Omit<Document, "id">;
+
+/** 文档集合。 */
 export interface DocumentCollection {
   id: string;
   name: string;
   description?: string;
-  documents: Document[];
+  documents_id: string[];
   created: number;
   last_modified: number;
 }

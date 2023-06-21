@@ -9,7 +9,7 @@ import {
 } from "../../common/jsx_utils";
 import { Maybe, as_props, c, refvmodel_type } from "../../common/utils";
 import { Message } from "../../interface/ChatRecord";
-import BetterBtn from "../BetterBtn";
+import BetterBtn from "../common/BetterBtn";
 import { isNil } from "lodash";
 import { DeletePopup } from "./DeletePopup";
 

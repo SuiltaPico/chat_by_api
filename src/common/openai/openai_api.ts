@@ -1,5 +1,5 @@
 import { CreateChatCompletionRequest } from "openai";
-import { OpenAIRequestConfig } from "../interface/ChatRecord";
+import { OpenAIRequestConfig } from "../../interface/ChatRecord";
 
 export interface ConfigurationParameters {
   apiKey?:
@@ -143,6 +143,36 @@ class BaseAPI {
 const openai_base = "https://api.openai.com/v1";
 
 export class OpenAIApi extends BaseAPI {
+  async get_models(options: {
+    /** @default `/models` */
+    path?: string;
+    params?: Record<string, string | undefined>;
+  }) {
+    const { path: _path, params } = options;
+    const path = _path ?? "/models";
+
+    const headers = {
+      ...this.configuration.baseOptions.headers,
+      "Content-Type": "application/json",
+    };
+
+    const final_url = new URL(
+      (this.configuration.basePath ?? openai_base) + path
+    );
+
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined) {
+          final_url.searchParams.append(key, value);
+        }
+      }
+    }
+
+    return fetch(final_url, {
+      method: "GET",
+      headers,
+    });
+  }
   async createChatCompletion(options: {
     /** @default `/chat/completions` */
     path?: string;
@@ -156,8 +186,6 @@ export class OpenAIApi extends BaseAPI {
       ...this.configuration.baseOptions.headers,
       "Content-Type": "application/json",
     };
-
-    console.log((this.configuration.basePath ?? openai_base) + path);
 
     const final_url = new URL(
       (this.configuration.basePath ?? openai_base) + path

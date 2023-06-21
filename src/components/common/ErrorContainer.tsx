@@ -1,7 +1,7 @@
 import hj from "highlight.js";
 import { defineComponent } from "vue";
-import { insert_slot, not_undefined_or } from "../common/jsx_utils";
-import { as_props } from "../common/utils";
+import { insert_slot, not_undefined_or } from "../../common/jsx_utils";
+import { as_props } from "../../common/utils";
 
 type ErrorContainerProps = { title?: string; content?: string; raw?: string };
 
