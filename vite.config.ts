@@ -103,7 +103,7 @@ export default defineConfig({
   },
   css: {
     postcss: {
-      plugins: [tailwindcss_nesting, tailwindcss, autoprefixer],
+      plugins: [tailwindcss_nesting, tailwindcss(), autoprefixer],
     },
   },
   optimizeDeps: {

@@ -1,3 +1,7 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
 .left_drawer > .left_bar {
   @apply frow flex-nowrap h-full text-zinc-300;
     & > .selection_container {

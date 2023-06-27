@@ -29,6 +29,10 @@ import { createPinia } from "pinia";
 import { plugin as Slicksort } from 'vue-slicksort';
 
 import "./styles/style.css";
+// import "./styles/chat.css";
+// import "./styles/LeftBar.css";
+// import "./styles/documents.css";
+// import "./styles/settings.css";
 
 import router from "./router/router";
 

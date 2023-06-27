@@ -1,3 +1,7 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
 .chat_body {
   @apply fcol relative grow text-zinc-100 h-min flex-nowrap w-full;
   & > .chat_items_container {

@@ -1,3 +1,7 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
 .add_d_dialog {
   & > .q-dialog__inner > .wraper {
     @apply bg-zinc-900 frow gap-8 text-zinc-200 p-6 flex-wrap
