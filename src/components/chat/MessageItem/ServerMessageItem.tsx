@@ -1,11 +1,11 @@
 import { cloneDeep, defer } from "lodash";
-import { QBtn, QSpace, useQuasar } from "quasar";
+import { QBtn, QIcon, QSpace, useQuasar } from "quasar";
 import { defineComponent, onMounted, ref } from "vue";
 import {
   generate_next,
   openai_chat_completion,
 } from "../../../common/generate";
-import { vif } from "../../../common/jsx_utils";
+import { vif, vif_fn } from "../../../common/jsx_utils";
 import { create_md } from "../../../common/md_render";
 import { copy_with_notify } from "../../../common/quasar_utils";
 import {
@@ -36,6 +36,7 @@ import { MorePopup, MorePopupBtn } from "../MorePopup";
 import { UseEditorRightBtnGroup } from "../UseEditorRightBtnGroup";
 import { ServerMessageErrorHandler } from "./ServerMessageErrorHandler";
 import { EditorLite } from "../../common/EditorLite";
+import BetterBtn from "../../common/BetterBtn";
 
 const md = create_md();
 
@@ -187,6 +188,24 @@ export const ServerMessageItem = defineComponent<
                   message={message}
                   onRegenerate={handle_regenerate}
                 ></ServerMessageErrorHandler>
+                {vif_fn(
+                  index === ms.curry_chat.chat_record!.messages.length - 1,
+                  () => (
+                    <div class="fcol gap-4 mt-2">
+                      <div class="w-full h-[1px] bg-zinc-300" />
+                      <div class="frow gap-3">
+                        <BetterBtn onClick={handle_continue_to_generate}>
+                          <QIcon name="mdi-fast-forward" size="1rem"></QIcon>
+                          <div>继续生成</div>
+                        </BetterBtn>
+                        <BetterBtn class="bg-zinc-200 bg-opacity-20" onClick={handle_regenerate}>
+                          <QIcon name="mdi-refresh" size="1rem"></QIcon>
+                          <div>重新生成</div>
+                        </BetterBtn>
+                      </div>
+                    </div>
+                  )
+                )}
               </div>
             )}
 
