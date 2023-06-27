@@ -1,9 +1,87 @@
 import { chain } from "lodash";
 import { ChatCompletionRequestMessage } from "openai";
-import { Ref } from "vue";
-import { OpenAIRequestConfig } from "../interface/ChatRecord";
+import { Ref, ref, toRef } from "vue";
+import {
+  Message,
+  OpenAIRequestConfig,
+  ServerMessage,
+  ServerMessagesError,
+} from "../interface/ChatRecord";
 import { Configuration, OpenAIApi } from "./openai/openai_api";
-import { non_empty_else, scroll_if_close_to } from "./utils";
+import {
+  non_empty_else,
+  parse_param_to_Record,
+  scroll_if_close_to,
+} from "./utils";
+import use_main_store from "../store/memory/main_store";
+import {
+  Messages_to_OpenAI_Messages,
+  write_Message_to_ChatRecord,
+} from "../implement/ChatRecord";
+
+/** 根据 `messages` 生成下一个消息，位于 `messages[index]` 的消息视为服务器写入的去向。`messages[index]` 消息会写入 id 为 `chat_record_id` 的对话记录 。 */
+export async function generate_next(
+  chat_record_id: string,
+  messages: Message[],
+  index: number
+) {
+  const ms = use_main_store();
+
+  const msg = messages[index] as ServerMessage;
+
+  console.log(msg.content);
+
+  const apply_update_chat_record_messages = async () => {
+    await ms.push_to_db_task_queue(async () => {
+      await ms.chat_records.modify(chat_record_id, async (curr_cr) => {
+        write_Message_to_ChatRecord(curr_cr, msg, index);
+      });
+    });
+  };
+
+  const settings = ms.settings.settings;
+
+  if (ms.settings.is_no_apikeys()) {
+    msg.error = {
+      err_type: "no_api_key",
+    };
+    await apply_update_chat_record_messages();
+    return;
+  }
+
+  const first_apikey = settings.apikeys.keys[0];
+  let additional_option = {};
+  if (first_apikey.source === "Custom") {
+    additional_option = {
+      api_base_path: first_apikey.base,
+      params: parse_param_to_Record(first_apikey.param),
+    };
+  }
+
+  const stop_ref = toRef(ms.chat_records.get_app_meta(chat_record_id), "stop");
+
+  try {
+    await openai_chat_completion({
+      api_key: first_apikey.key,
+      params: {},
+      ...additional_option,
+      messages: Messages_to_OpenAI_Messages(messages),
+      async on_status_changed(status) {
+        ms.chat_records.get_app_meta(chat_record_id).status = status;
+      },
+      async on_update(clip) {
+        msg.content += clip;
+        await apply_update_chat_record_messages();
+      },
+      stop_next_ref: stop_ref,
+      open_ai_request_config: ms.chat_body_input.generate_OpenAIRequestConfig(),
+    });
+  } catch (e) {
+    msg.error = e as ServerMessagesError;
+    await apply_update_chat_record_messages();
+    return;
+  }
+}
 
 export type GenerateStatus = "init" | "connecting" | "generating" | "finished";
 

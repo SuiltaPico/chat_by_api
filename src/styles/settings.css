@@ -12,33 +12,38 @@
 
 .api_key_manager_setting {
   & .q-table__container {
-    @apply my-2 w-full;
-  }
+    @apply my-2 w-full border-zinc-800 border rounded-lg;
 
-  & .q-table__top {
-    @apply bg-zinc-900;
-  }
+    & > .q-table__top {
+      @apply bg-zinc-800;
+    }
 
-  & .q-table__middle {
-    scrollbar-width: thin;
-    @apply text-base;
+    & > .q-table__middle {
+      scrollbar-width: thin;
+      @apply text-base;
 
-    & tr {
-      & > td:first-child,
-      & > th:first-child {
-        /* @apply bg-zinc-800; */
-        @apply text-zinc-100;
-      }
+      & tr {
+        & > td,
+        & > th {
+          @apply border-zinc-600;
+        }
 
-      &.q-tr:first-child {
-        @apply text-_secondary;
-        & > td:first-child {
+        & > td:first-child,
+        & > th:first-child {
+          /* @apply bg-zinc-800; */
+          @apply text-zinc-100 border-zinc-600;
+        }
+
+        &.q-tr:first-child {
           @apply text-_secondary;
+          & > td:first-child {
+            @apply text-_secondary;
+          }
         }
       }
     }
-  }
-  & .q-table__bottom {
-    @apply _hidden;
+    & > .q-table__bottom {
+      @apply _hidden;
+    }
   }
 }

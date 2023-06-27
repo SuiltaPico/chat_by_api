@@ -162,13 +162,22 @@ export function get_Message_index_in_ChatRecord(
   message: Message,
   index_in_cache: number
 ) {
-  // console.log(chat_record.messages);
+  return get_Message_index_by_id(
+    chat_record.messages,
+    index_in_cache,
+    message.record_id
+  );
+}
 
+/** 获取 `message` 在 `chat_record.messages` 中最有可能的索引。 */
+export function get_Message_index_by_id(
+  messages: Message[],
+  index_in_cache: number,
+  message_id?: number
+) {
   // 数据可能编辑过，位置可能会发生变化，根据 `record_id` 来写入最稳妥。
-  if (message.record_id != undefined) {
-    const finded_index = chat_record.messages.findIndex(
-      (m) => m.record_id === message.record_id
-    );
+  if (message_id != undefined) {
+    const finded_index = messages.findIndex((m) => m.record_id === message_id);
     if (finded_index !== -1) {
       return finded_index;
     }
@@ -183,11 +192,6 @@ export function write_Message_to_ChatRecord(
   message: Message,
   index_in_cache: number
 ) {
-  // console.log(
-  //   index_in_cache,
-  //   get_Message_index_in_ChatRecord(chat_record, message, index_in_cache)
-  // );
-
   chat_record.messages[
     get_Message_index_in_ChatRecord(chat_record, message, index_in_cache)
   ] = message;

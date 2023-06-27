@@ -1,7 +1,8 @@
 import { defineComponent, ref } from "vue";
-import use_main_store from "../../store/main_store";
+import use_main_store from "../../store/memory/main_store";
 import { HotKeys } from "../../common/key_event";
 import { QSelect } from "quasar";
+import { SettingItem } from "./SettingItem";
 
 export const HotKeysManager = defineComponent({
   setup() {
@@ -36,38 +37,42 @@ export const HotKeysManager = defineComponent({
         hotkeys.submit_keys
       );
       return (
-        <div class="settings_item">
-          <div class="title">快捷键</div>
-          <ul>
-            <li class="gap-2 items-center marker:text-zinc-400">
-              <div class="frow gap-2 items-center">
-                <div>发送消息:</div>
-                <QSelect
-                  modelValue={submit_keys_selected.value}
-                  onUpdate:modelValue={async (new_keys) => {
-                    submit_keys_loading.value = true;
-                    settings.hot_keys.submit_keys.value[0].keys =
-                      new_keys.split(" + ");
-                    await ms.push_to_db_task_queue(
-                      async () =>
-                        await ms.settings.set_setting(
-                          "hot_keys",
-                          settings.hot_keys
-                        )
-                    );
-                    submit_keys_loading.value = false;
-                  }}
-                  options={submit_keys_options}
-                  loading={submit_keys_loading.value}
-                  color="secondary"
-                  dark
-                  filled
-                  dense
-                ></QSelect>
-              </div>
-            </li>
-          </ul>
-        </div>
+        <SettingItem>
+          {{
+            title: () => "快捷键",
+            default: () => (
+              <ul>
+                <li class="gap-2 items-center marker:text-zinc-400">
+                  <div class="frow gap-2 items-center">
+                    <div>发送消息:</div>
+                    <QSelect
+                      modelValue={submit_keys_selected.value}
+                      onUpdate:modelValue={async (new_keys) => {
+                        submit_keys_loading.value = true;
+                        settings.hot_keys.submit_keys.value[0].keys =
+                          new_keys.split(" + ");
+                        await ms.push_to_db_task_queue(
+                          async () =>
+                            await ms.settings.set_setting(
+                              "hot_keys",
+                              settings.hot_keys
+                            )
+                        );
+                        submit_keys_loading.value = false;
+                      }}
+                      options={submit_keys_options}
+                      loading={submit_keys_loading.value}
+                      color="secondary"
+                      dark
+                      filled
+                      dense
+                    ></QSelect>
+                  </div>
+                </li>
+              </ul>
+            ),
+          }}
+        </SettingItem>
       );
     };
   },

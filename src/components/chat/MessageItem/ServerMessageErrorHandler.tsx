@@ -2,13 +2,8 @@ import _, { bind, get } from "lodash";
 import { QBtn, QIcon } from "quasar";
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
-import {
-  Maybe,
-  as_props
-} from "../../../common/utils";
-import {
-  ServerMessage
-} from "../../../interface/ChatRecord";
+import { Maybe, as_props } from "../../../common/utils";
+import { ServerMessage } from "../../../interface/ChatRecord";
 import BetterBtn from "../../common/BetterBtn";
 import ErrorContainer from "../../common/ErrorContainer";
 
@@ -36,14 +31,17 @@ export const ServerMessageErrorHandler = defineComponent<
       const err_str = JSON.stringify(err);
       if (err === undefined) return;
 
+      function handle_regenerate() {
+        ctx.emit("regenerate");
+      }
+
+      function add_new_apikey() {
+        router.push({ name: "settings" });
+      }
+
       const regenerate_btn = (
         <div>
-          <BetterBtn
-            onClick={() => {
-              console.log("regenerate");
-              ctx.emit("regenerate");
-            }}
-          >
+          <BetterBtn onClick={handle_regenerate}>
             <div class="frow items-center gap-2">
               <QIcon name="mdi-refresh" />
               <div>尝试重新生成</div>
@@ -139,6 +137,20 @@ export const ServerMessageErrorHandler = defineComponent<
             </ErrorContainer>
           );
         } else if (err.type === "invalid_request_error") {
+          if (err.code === "context_length_exceeded") {
+            const re =
+              /This model's maximum context length is (?<max>\d+) tokens\. However, your messages resulted in (?<curr>\d+) tokens\. Please reduce the length of the messages\./gm;
+            const { max, curr } = re.exec(err.message!)?.groups!;
+            return (
+              <ErrorContainer
+                title="消息过长"
+                content={`该模型的最大上下文长度为 ${max} 个 Token。但是，您的消息产生了 ${curr} 个 Token。请尝试通过删除消息来减少消息的长度。`}
+                raw={err_str}
+              >
+                {regenerate_btn}
+              </ErrorContainer>
+            );
+          }
           return (
             <ErrorContainer
               title="API-KEY 无效"
@@ -162,13 +174,7 @@ export const ServerMessageErrorHandler = defineComponent<
             content="请前往 “设置 -> API-KEY 管理” 添加你的 API-KEY。"
           >
             <div>
-              <QBtn
-                color="primary"
-                unelevated
-                onClick={() => {
-                  router.push({ name: "settings" });
-                }}
-              >
+              <QBtn color="primary" unelevated onClick={add_new_apikey}>
                 立即前往
               </QBtn>
             </div>

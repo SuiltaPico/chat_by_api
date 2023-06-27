@@ -6,12 +6,12 @@ import { c } from "../common/utils";
 import type { Message } from "../interface/ChatRecord";
 
 import { useRouter } from "vue-router";
-import { ChatBodyInput } from "../components/ChatBodyInput";
+import { ChatBodyInput } from "../components/framework/ChatBodyInput/ChatBodyInput";
 import {
   create_ServerMessage,
-  create_UserMessage
+  create_UserMessage,
 } from "../implement/ChatRecord";
-import use_main_store from "../store/main_store";
+import use_main_store from "../store/memory/main_store";
 
 // const res = await openai.createChatCompletion({
 //   model: "gpt-3.5-turbo",

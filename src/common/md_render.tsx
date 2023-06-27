@@ -12,7 +12,7 @@ import {
 } from "vue";
 import Token from "markdown-it/lib/token";
 import { QBtn, useQuasar } from "quasar";
-import { c, call } from "./utils";
+import { add_space_between_cjk_and_english, c, call } from "./utils";
 import copy from "copy-text-to-clipboard";
 import { copy_with_notify } from "./quasar_utils";
 import { escapeHtml } from "markdown-it/lib/common/utils";
@@ -124,11 +124,6 @@ export const create_md = () => {
   });
   md.use((md) => {
     md.renderer.rules.text = (tokens, idx /*, options, env */) => {
-      const add_space_between_cjk_and_english = (text: string) => {
-        return text
-          .replace(/(\d*\p{Cased_Letter}+\d*)(\p{Other_Letter}+)/gu, "$1 $2")
-          .replace(/(\d*\p{Other_Letter}+\d*)(\p{Cased_Letter}+)/gu, "$1 $2");
-      };
       return escapeHtml(add_space_between_cjk_and_english(tokens[idx].content));
     };
   });

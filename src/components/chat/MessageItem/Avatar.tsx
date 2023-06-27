@@ -1,8 +1,8 @@
 import { cond, constant, eq, partial, stubTrue } from "lodash";
 import { QIcon } from "quasar";
 import { defineComponent } from "vue";
-import { any, c, cl } from "../../common/utils";
-import { Role } from "../../interface/ChatRecord";
+import { any, c, cl } from "../../../common/utils";
+import { Role } from "../../../interface/ChatRecord";
 
 export const Avatar = defineComponent({
   props: ["role"],
@@ -17,10 +17,13 @@ export const Avatar = defineComponent({
       [part_eq("system"), constant("user")],
       [stubTrue, constant("user")],
     ]);
+
+    function handle_switch_role() {
+      ctx.emit("update:role", next(props.role));
+    }
+
     const emit_attr = any({
-      onClick: () => {
-        ctx.emit("update:role", next(props.role));
-      },
+      onClick: handle_switch_role,
     });
 
     return () => {

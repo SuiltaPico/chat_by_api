@@ -10,7 +10,7 @@ import {
 import { ChatLB, ChatLBStared } from "./ChatLB";
 import { RouteRecordName, useRoute, useRouter } from "vue-router";
 import { includes, keyBy } from "lodash";
-import use_main_store from "../../store/main_store";
+import use_main_store from "../../store/memory/main_store";
 import { QTab, QTabs } from "quasar";
 import { DocumentlibraryLB } from "./DocumentLibraryLB";
 

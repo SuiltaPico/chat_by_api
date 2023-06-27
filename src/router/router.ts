@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import routes from "./routes";
 import { once } from "lodash";
 import { get_item_name_from_route_name } from "../components/leftbar/LeftBar";
-import use_main_store from "../store/main_store";
+import use_main_store from "../store/memory/main_store";
 
 const router = createRouter({
   routes,

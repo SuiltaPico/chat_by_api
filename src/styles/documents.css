@@ -1,0 +1,21 @@
+.add_d_dialog {
+  & > .q-dialog__inner > .wraper {
+    @apply bg-zinc-900 frow gap-8 text-zinc-200 p-6 flex-wrap
+      min-w-[50vw] min-h-[40vh] max-sm:min-w-[90vw];
+    & > .select_mode_item {
+      @apply fcol gap-6 grow;
+      & > .title {
+        @apply frow gap-2 items-center text-xl mb-1;
+        & > .q-icon {
+          @apply text-[1.4rem];
+        }
+      }
+      & > section > .title {
+        @apply frow gap-2 items-center text-lg text-zinc-300;
+        & > .q-icon {
+          @apply text-[1.2rem];
+        }
+      }
+    }
+  }
+}

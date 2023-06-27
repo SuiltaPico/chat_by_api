@@ -1,13 +1,17 @@
 export interface TextDocumentSource {
+  type: "Text";
   row: number;
   col: number;
+  resource_id?: string;
 }
 
 export interface ImageOCRDocumentSource {
+  type: "ImageOCR";
   x: number;
   y: number;
   width: number;
   height: number;
+  resource_id?: string;
 }
 
 export type DocumentSource = TextDocumentSource | ImageOCRDocumentSource;
@@ -37,6 +41,14 @@ export type Vector = VectorMeta & {
   vector: Float32Array;
 };
 
+export interface DocumentLink {
+  document_id: string;
+  /** 关联率。0~1 */
+  relevance_rate: number;
+  created: number;
+  last_modified: number;
+}
+
 interface BaseDocumentMeta<T> {
   type: string;
   id: string;
@@ -45,6 +57,7 @@ interface BaseDocumentMeta<T> {
   created: number;
   last_modified: number;
   source: DocumentSource;
+  links: DocumentLink[];
   vectors: VectorMeta[];
 }
 

@@ -1,34 +1,28 @@
 import { QBtn, QDialog, QIcon, QInput, QSelect, QSpace } from "quasar";
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
 import { defineComponent, ref } from "vue";
-import { insert_slot, not_undefined_or, tpl } from "../../common/jsx_utils";
-import { APIKey, APIKeySource } from "../../interface/Settings";
+import { not_undefined_or, tpl, vif_fn } from "../../common/jsx_utils";
+import { passwd_attr, passwd_slot } from "../../common/quasar_utils";
 import {
   any,
   as_props,
   batch_set_ref,
   c,
   carr,
-  promise_with_ref,
+  cl,
+  generate_random_name,
   refvmodel,
 } from "../../common/utils";
-import { passwd_attr, passwd_slot } from "../../common/quasar_utils";
-import use_main_store from "../../store/main_store";
-import { DBAPIKEYDuplicateError } from "../../store/db/db_api";
-import { chain, debounce } from "lodash";
-import {
-  uniqueNamesGenerator,
-  adjectives,
-  colors,
-  animals,
-} from "unique-names-generator";
-import ErrorContainer from "./ErrorContainer";
-import BetterBtn from "./BetterBtn";
 import { generate_apikey_id } from "../../implement/Settings";
-
-const gen_random_name = () =>
-  uniqueNamesGenerator({
-    dictionaries: [adjectives, colors, animals],
-  });
+import { APIKey, APIKeySource } from "../../interface/Settings";
+import use_main_store from "../../store/memory/main_store";
+import BetterBtn from "./BetterBtn";
+import ErrorContainer from "./ErrorContainer";
 
 export type DialogMode = "add" | "modify";
 export interface DialogExpose {
@@ -70,7 +64,7 @@ export const ModifyAPIKEYDialog = defineComponent<
 
     const mode = props.mode;
 
-    const name = ref<string>(gen_random_name());
+    const name = ref<string>(generate_random_name());
     const key = ref<string>("");
 
     const base = ref<string>("");
@@ -96,6 +90,46 @@ export const ModifyAPIKEYDialog = defineComponent<
       },
     } satisfies DialogExpose);
 
+    function handle_submit() {
+      let result: APIKey | undefined;
+      if (new_key_type.value === "OpenAI") {
+        result = {
+          id: generate_apikey_id(),
+          source: new_key_type.value,
+          name: name.value,
+          key: key.value,
+        };
+      } else if (new_key_type.value === "Custom") {
+        result = {
+          id: generate_apikey_id(),
+          source: new_key_type.value,
+          name: name.value,
+          key: key.value,
+          base: base.value,
+          param: param.value,
+        };
+      }
+      try {
+        ctx.emit("submit", result, () => {
+          ctx.emit("update:modelValue", false);
+        });
+        batch_set_ref("", name, key, base, param);
+      } catch (e) {
+        ctx.emit("update:error_info", String(e));
+      }
+    }
+
+    function handle_open_complex_layout() {
+      complex_layout.value = true;
+      new_key_type.value = "Custom";
+      key_input.value?.focus();
+    }
+
+    function handle_close_complex_layout() {
+      complex_layout.value = false;
+      new_key_type.value = "OpenAI";
+    }
+
     return () => {
       return (
         <QDialog
@@ -105,25 +139,18 @@ export const ModifyAPIKEYDialog = defineComponent<
           <div class="fcol text-zinc-100 bg-zinc-900 p-10 px-10 gap-6 rounded-xl">
             <div class="frow gap-2 items-center">
               <QBtn
-                {...carr([
-                  complex_layout.value && mode === "add" ? "" : "hidden",
-                ])}
+                {...cl(complex_layout.value && mode === "add" ? "" : "hidden")}
                 icon="mdi-arrow-left"
                 flat
                 padding="0.5rem"
-                onClick={() => {
-                  complex_layout.value = false;
-                  new_key_type.value = "OpenAI";
-                }}
+                onClick={handle_close_complex_layout}
               ></QBtn>
-              {not_undefined_or(() => {
-                if (mode === "add") {
-                  return <div class="text-xl font-bold">添加新的 API-KEY</div>;
-                }
-                if (mode === "modify") {
-                  return <div class="text-xl font-bold">更改 API-KEY</div>;
-                }
-              })}
+              {vif_fn(mode === "add", () => (
+                <div class="text-xl font-bold">添加新的 API-KEY</div>
+              ))}
+              {vif_fn(mode === "modify", () => (
+                <div class="text-xl font-bold">更改 API-KEY</div>
+              ))}
             </div>
             <ErrorContainer
               class={["darker", props.error_info.length === 0 ? "hidden" : ""]}
@@ -168,7 +195,7 @@ export const ModifyAPIKEYDialog = defineComponent<
                       {...any({
                         class: "cursor-pointer",
                         onClick() {
-                          name.value = gen_random_name();
+                          name.value = generate_random_name();
                         },
                       })}
                     ></QIcon>
@@ -198,11 +225,7 @@ export const ModifyAPIKEYDialog = defineComponent<
               >
                 <div
                   class="text-xs text-zinc-400 underline cursor-pointer select-none"
-                  onClick={() => {
-                    complex_layout.value = true;
-                    new_key_type.value = "Custom";
-                    key_input.value?.focus();
-                  }}
+                  onClick={handle_open_complex_layout}
                 >
                   不是 OpenAI 的 API-KEY?
                 </div>
@@ -242,34 +265,7 @@ export const ModifyAPIKEYDialog = defineComponent<
                 unelevated
                 loading={adding.value}
                 disable={key.value.length === 0}
-                onClick={async () => {
-                  let result: APIKey | undefined;
-                  if (new_key_type.value === "OpenAI") {
-                    result = {
-                      id: generate_apikey_id(),
-                      source: new_key_type.value,
-                      name: name.value,
-                      key: key.value,
-                    };
-                  } else if (new_key_type.value === "Custom") {
-                    result = {
-                      id: generate_apikey_id(),
-                      source: new_key_type.value,
-                      name: name.value,
-                      key: key.value,
-                      base: base.value,
-                      param: param.value,
-                    };
-                  }
-                  try {
-                    ctx.emit("submit", result, () => {
-                      ctx.emit("update:modelValue", false);
-                    });
-                    batch_set_ref("", name, key, base, param);
-                  } catch (e) {
-                    ctx.emit("update:error_info", String(e));
-                  }
-                }}
+                onClick={handle_submit}
               >
                 {mode === "add" ? "添加" : "更改"}
               </QBtn>

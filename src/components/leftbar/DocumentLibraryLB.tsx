@@ -2,7 +2,7 @@ import { QIcon, QSpace } from "quasar";
 import { defineComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { c } from "../../common/utils";
-import use_main_store from "../../store/main_store";
+import use_main_store from "../../store/memory/main_store";
 import { SeparatorLB } from "./SeparatorLB";
 
 export const DocumentlibraryLB = defineComponent({

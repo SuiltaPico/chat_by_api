@@ -3,4 +3,5 @@ export default {
   _secondary: "#2fc2ae",
   _negative2: "#E05151",
   _negative: "#F76D6D",
+  _info: "#3a84da",
 };

@@ -1,17 +1,9 @@
 import _ from "lodash";
-import {
-  QBtn,
-  QIcon
-} from "quasar";
+import { QBtn, QIcon } from "quasar";
 import { defineComponent, ref } from "vue";
 import { tpl } from "../../../common/jsx_utils";
-import {
-  c,
-  promise_with_ref,
-  refvmodel_type
-} from "../../../common/utils";
-import { DBAPIKEYDuplicateError } from "../../../store/db/db_api";
-import use_main_store from "../../../store/main_store";
+import { c, promise_with_ref, refvmodel_type } from "../../../common/utils";
+import use_main_store from "../../../store/memory/main_store";
 import {
   DialogExpose,
   ModifyAPIKEYDialog,
@@ -35,33 +27,13 @@ export const APIKEYManager = defineComponent({
 
     async function apply_apikey_editing() {
       _.debounce(async () => {
-        await promise_with_ref(
-          async () => {
-            const settings = ms.settings.settings;
-            await ms.push_to_db_task_queue(
-              async () =>
-                await ms.settings.set_setting("apikeys", settings.apikeys)
-            );
-          },
-          frozen_key_editing,
-          (e) => {
-            if (e instanceof DBAPIKEYDuplicateError) {
-              add_new_dialog_error_info.value =
-                "[更改失败]：API-KEY 名称重复，第";
-              console.log(e.map);
-              add_new_dialog_error_info.value += _.chain(e.map)
-                .mapValues(
-                  (it, name) =>
-                    `${it
-                      .map((i) => i + 1)
-                      .join("，")} 处使用了相同的名称 ${name}。`
-                )
-                .values()
-                .join("")
-                .value();
-            }
-          }
-        );
+        await promise_with_ref(async () => {
+          const settings = ms.settings.settings;
+          await ms.push_to_db_task_queue(
+            async () =>
+              await ms.settings.set_setting("apikeys", settings.apikeys)
+          );
+        }, frozen_key_editing);
       }, 100)();
     }
 

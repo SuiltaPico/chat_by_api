@@ -1,4 +1,4 @@
-import { QBtn } from "quasar";
+import { QBtn, QIcon } from "quasar";
 import { defineComponent } from "vue";
 import update_log from "../../common/update_log";
 import MarkdownIt from "markdown-it";
@@ -32,11 +32,11 @@ export const About = defineComponent({
           </details>
           <details open>
             <summary>这个网站安全吗？</summary>
-            <div class="fcol gap-4 m-2">
-              <div>
-                <b>是的</b>。这个网站其实就是一个本地的
+            <div class="fcol gap-4 m-2 mdblock">
+              <p>
+                <strong>是的</strong>。这个网站其实就是一个本地的
                 APP，你的个人信息只会储存在你的浏览器缓存里。网站的源码会一直保证开放，如果你认为存疑，请亲自检查和构建。
-              </div>
+              </p>
             </div>
           </details>
           <details open>
@@ -51,9 +51,9 @@ export const About = defineComponent({
             <summary>更新日志</summary>
             <div class="p-4">
               {update_log.map((it) => (
-                <div>
-                  <div class="font-bold">{it.version}</div>
-                  <div class="p-2" v-html={md.render(it.content)}></div>
+                <div class="mdblock">
+                  <h2>{it.version}</h2>
+                  <div class="p-2 mdblock" v-html={md.render(it.content)}></div>
                 </div>
               ))}
             </div>

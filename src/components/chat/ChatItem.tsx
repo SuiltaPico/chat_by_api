@@ -6,10 +6,10 @@ import { as_props, c, refvmodel_type } from "../../common/utils";
 import { get_Message_uuid } from "../../implement/ChatRecord";
 import ChatRecord, { Message } from "../../interface/ChatRecord";
 import { ChatRecordOperatingMode } from "../../pages/chat";
-import use_main_store from "../../store/main_store";
+import use_main_store from "../../store/memory/main_store";
 import BetterBtn from "../common/BetterBtn";
-import { ServerMessageItem } from "./ServerMessageItem/ServerMessageItem";
-import { UserMessageItem } from "./UserMessageItem";
+import { ServerMessageItem } from "./MessageItem/ServerMessageItem";
+import { UserMessageItem } from "./MessageItem/UserMessageItem";
 
 export type ChatItemProps = {
   message: Message;
@@ -61,6 +61,7 @@ export const ChatItem = defineComponent<
     watch(operating_mode, () => {
       no_thumbnail.value = false;
     });
+
     return () => {
       const { message, index } = props;
       return (

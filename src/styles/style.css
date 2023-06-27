@@ -1,5 +1,6 @@
 @import url(./LeftBar.css);
-@import url(./Chat.css);
+@import url(./chat.css);
+@import url(./documents.css);
 @import url(./settings.css);
 
 @tailwind base;
@@ -160,6 +161,11 @@ pre.hljs {
   @apply md:w-[85%] w-[90%] lg:w-[90%] max-w-[1100px] xl:w-[80%];
 }
 
+._editor_area {
+  padding-bottom: 17px;
+  line-height: 1.2rem;
+}
+
 .chat_body_input_container {
   @apply fcol frow gap-3 max-[480px]:gap-2 bg-zinc-800 bg-opacity-[.9]
     p-3 max-[480px]:px-2.5 max-[480px]:pt-2.5 rounded-lg
@@ -191,8 +197,7 @@ pre.hljs {
       }
 
       &.q-textarea .q-field__native {
-        padding-bottom: 17px;
-        line-height: 1.2rem;
+        @apply _editor_area;
       }
     }
   }
@@ -220,5 +225,109 @@ pre.hljs {
 
   & > div {
     @apply fcol gap-2;
+  }
+}
+
+.mdblock {
+  @apply gap-0 fcol w-full overflow-hidden;
+
+  & > * {
+    @apply mt-4;
+
+    &:first-child {
+      @apply mt-0;
+    }
+  }
+
+  & > p > strong {
+    @apply text-white;
+  }
+
+  & > ul,
+  & > ol {
+    @apply mt-0;
+    & > li {
+      @apply mt-2;
+    }
+  }
+
+  & > h1 + p {
+    @apply mt-2;
+  }
+
+  & > h1,
+  & > h2,
+  & > h3,
+  & > h4,
+  & > h5,
+  & > h6 {
+    @apply text-white py-0 mb-1;
+    line-height: 1.8em;
+    & + p {
+      @apply mt-0;
+    }
+    & + ul,
+    & + ol {
+      & > li:first-child {
+        @apply mt-0;
+      }
+    }
+  }
+
+  & > h1 {
+    @apply text-[1.5rem] mt-6 pt-2 mb-2;
+    @apply after:block after:h-[2px] after:w-full after:bg-zinc-400 after:mt-4;
+    & + h2 {
+      @apply mt-6;
+    }
+  }
+
+  & > h2 {
+    @apply text-[1.4rem] mt-11 mb-2;
+    &:first-child {
+      @apply after:block after:h-[2px] after:w-full after:bg-zinc-400 after:mt-3 after:mb-2;
+    }
+    & + h3 {
+      @apply mt-1;
+    }
+  }
+
+  & > h3 {
+    @apply text-[1.3rem] mt-8 mb-2;
+    & + h4 {
+      @apply mt-1;
+    }
+  }
+
+  & > h4,
+  & > h5,
+  & > h6 {
+    @apply frow items-center before:inline-block before:mr-[6px] before:w-[4px] before:h-[0.9em];
+  }
+
+  & > h4 {
+    @apply text-[1.25rem] mt-6 before:bg-teal-500 mb-2.5;
+  }
+
+  & > h5 {
+    @apply before:bg-cyan-500;
+    @apply text-[1.2rem] mt-4 mb-2.5;
+  }
+
+  & > h6 {
+    @apply before:bg-blue-500;
+    @apply text-base mt-4 mb-2.5;
+  }
+
+  & > p {
+    & > code {
+      @apply bg-zinc-700 py-1 px-1 mx-1 rounded;
+    }
+  }
+
+  & > p > code,
+  & > pre {
+    line-height: 1.5rem;
+    letter-spacing: 0px;
   }
 }

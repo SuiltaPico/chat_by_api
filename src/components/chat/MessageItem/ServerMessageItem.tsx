@@ -1,7 +1,10 @@
 import { cloneDeep, defer } from "lodash";
 import { QBtn, QSpace, useQuasar } from "quasar";
 import { defineComponent, onMounted, ref } from "vue";
-import { openai_chat_completion } from "../../../common/generate";
+import {
+  generate_next,
+  openai_chat_completion,
+} from "../../../common/generate";
 import { vif } from "../../../common/jsx_utils";
 import { create_md } from "../../../common/md_render";
 import { copy_with_notify } from "../../../common/quasar_utils";
@@ -14,6 +17,7 @@ import {
 import {
   Messages_to_OpenAI_Messages,
   after_modify_Message,
+  create_UserMessageV2,
   write_Message_to_ChatRecord,
 } from "../../../implement/ChatRecord";
 import ChatRecord, {
@@ -26,76 +30,20 @@ import {
   ChatItem_select_box,
   ChatRecordOperatingMode,
 } from "../../../pages/chat";
-import use_main_store from "../../../store/main_store";
+import use_main_store from "../../../store/memory/main_store";
 import { Editor, EditorCompoAPI } from "../../common/Editor";
 import { MorePopup, MorePopupBtn } from "../MorePopup";
 import { UseEditorRightBtnGroup } from "../UseEditorRightBtnGroup";
 import { ServerMessageErrorHandler } from "./ServerMessageErrorHandler";
-import { Editor2 } from "../../common/Editor2";
+import { EditorLite } from "../../common/EditorLite";
 
 const md = create_md();
 
 // TODO:合并 regenerate 和 generate_next
-async function regenerate(
-  chat_id: string,
-  _messages: Message[],
-  index: number
-) {
-  const ms = use_main_store();
+async function regenerate(id: string, raw_messages: Message[], index: number) {
   /** 切除且克隆后的信息。 */
-  const messages = cloneDeep(_messages.slice(0, index + 1));
-  const msg = messages[index] as ServerMessage;
-
-  /** 更新 `_messages[index]` 的消息。 */
-  const apply_update_chat_record_messages = async () => {
-    await ms.push_to_db_task_queue(async () => {
-      await ms.chat_records.modify(chat_id, async (curr_cr) => {
-        write_Message_to_ChatRecord(curr_cr, msg, index);
-      });
-    });
-  };
-
-  const settings = ms.settings.settings;
-  const stop_next_ref = ref(async () => {});
-
-  if (settings.apikeys.keys.length === 0) {
-    msg.error = {
-      err_type: "no_api_key",
-    };
-    await apply_update_chat_record_messages();
-    return;
-  }
-
-  const first_apikey = settings.apikeys.keys[0];
-  let additional_option = {};
-  if (first_apikey.source === "Custom") {
-    additional_option = {
-      api_base_path: first_apikey.base,
-      params: parse_param_to_Record(first_apikey.param),
-    };
-  }
-
-  try {
-    await openai_chat_completion({
-      api_key: first_apikey.key,
-      params: {},
-      ...additional_option,
-      messages: Messages_to_OpenAI_Messages(messages),
-      async on_status_changed(status) {
-        ms.curry_chat.status = status;
-      },
-      async on_update(clip) {
-        msg.content += clip;
-        await apply_update_chat_record_messages();
-      },
-      stop_next_ref,
-      open_ai_request_config: ms.chat_body_input.generate_OpenAIRequestConfig(),
-    });
-  } catch (e) {
-    msg.error = e as ServerMessagesError;
-    await apply_update_chat_record_messages();
-    return;
-  }
+  const messages = cloneDeep(raw_messages.slice(0, index + 1));
+  await generate_next(id, messages, index);
 }
 
 export type ServerMessageItemProps = {
@@ -132,6 +80,72 @@ export const ServerMessageItem = defineComponent<
       content_editor.value?.force_set_value(props.message.content);
     });
 
+    async function do_regenerate(crid: string) {
+      await ms.push_to_db_task_queue(async () => {
+        await ms.chat_records.modify(crid, async (curr_cr) => {
+          props.message.content = "";
+          props.message.error = undefined;
+          props.message.request_config =
+            ms.chat_body_input.generate_OpenAIRequestConfig();
+          write_Message_to_ChatRecord(curr_cr, props.message, props.index);
+          after_modify_Message(curr_cr, props.message);
+        });
+      });
+      await regenerate(
+        ms.curry_chat.chat_record!.id,
+        ms.curry_chat.chat_record!.messages,
+        props.index
+      );
+    }
+
+    function handle_open_editor(close_popup: () => void) {
+      ctx.emit("update:use_editor", true);
+      close_popup();
+
+      defer(() => {
+        content_editor.value?.force_set_value(props.message.content);
+      });
+    }
+
+    function handle_copy() {
+      copy_with_notify(qs, props.message.content);
+    }
+
+    function handle_copy_text_directly() {
+      more_popup_showing.value = false;
+
+      const s = getSelection();
+
+      if (!mdblock.value) return;
+
+      s?.selectAllChildren(mdblock.value);
+
+      if (s) {
+        copy_with_notify(qs, s.toString());
+        s.empty();
+      }
+    }
+
+    async function handle_regenerate() {
+      more_popup_showing.value = false;
+      await do_regenerate(ms.curry_chat.chat_record!.id);
+    }
+
+    async function handle_continue_to_generate() {
+      more_popup_showing.value = false;
+      const messages = cloneDeep(
+        ms.curry_chat.chat_record!.messages.slice(0, props.index + 1)
+      );
+      messages.push({
+        message_type: "user",
+        role: "system",
+        created: 0,
+        last_modified: 0,
+        content: ms.settings.settings.behaviors.continue_to_generate_prompt,
+      });
+      await generate_next(ms.curry_chat.chat_record!.id, messages, props.index);
+    }
+
     return () => {
       const { message, index, use_editor } = props;
       const rendered_content = ms.curry_chat.use_markdown_render
@@ -140,24 +154,6 @@ export const ServerMessageItem = defineComponent<
       // const use_raw_render = toRef(ms.curry_chat.use_raw_render, index, true);
 
       const curry_chat = ms.curry_chat;
-
-      async function do_regenerate(crid: string) {
-        await ms.push_to_db_task_queue(async () => {
-          ms.chat_records.modify(crid, async (curr_cr) => {
-            message.content = "";
-            message.error = undefined;
-            message.request_config =
-              ms.chat_body_input.generate_OpenAIRequestConfig();
-            write_Message_to_ChatRecord(curr_cr, message, index);
-            after_modify_Message(curr_cr, message);
-          });
-        });
-        await regenerate(
-          ms.curry_chat.chat_record!.id,
-          ms.curry_chat.chat_record!.messages,
-          index
-        );
-      }
 
       return (
         <div class="chat_item">
@@ -175,21 +171,21 @@ export const ServerMessageItem = defineComponent<
             {ChatItem_Avatar(message, index)}
             {vif(
               use_editor,
-              <Editor2
+              <EditorLite
                 class="editor"
                 init_language="markdown"
                 ref={content_editor}
-              ></Editor2>
+              ></EditorLite>
             )}
             {vif(
               !use_editor,
-              <div class="content">
+              <div class="content_container">
                 <div class="mdblock" ref={mdblock}>
                   {rendered_content}
                 </div>
                 <ServerMessageErrorHandler
                   message={message}
-                  onRegenerate={() => do_regenerate(curry_chat.chat_record!.id)}
+                  onRegenerate={handle_regenerate}
                 ></ServerMessageErrorHandler>
               </div>
             )}
@@ -207,54 +203,30 @@ export const ServerMessageItem = defineComponent<
                   <QBtn
                     icon="mdi-content-copy"
                     flat
-                    onClick={() => {
-                      copy_with_notify(qs, message.content);
-                    }}
+                    onClick={handle_copy}
                   ></QBtn>
                   <QBtn icon="mdi-dots-horizontal" flat>
                     <MorePopup
                       {...refvmodel_type(more_popup_showing, "show")}
                       message={message}
                       onDelete={() => ctx.emit("delete")}
-                      onEdit={(close_popup) => {
-                        ctx.emit("update:use_editor", true);
-                        close_popup();
-
-                        defer(() => {
-                          content_editor.value?.force_set_value(
-                            message.content
-                          );
-                        });
-                      }}
+                      onEdit={handle_open_editor}
                     >
                       <MorePopupBtn
-                        class="text-secondary"
+                        class="text-_secondary"
+                        label="继续生成"
+                        icon="mdi-fast-forward"
+                        onClick={handle_continue_to_generate}
+                      ></MorePopupBtn>
+                      <MorePopupBtn
                         label="重新生成"
                         icon="mdi-refresh"
-                        onClick={() => {
-                          more_popup_showing.value = false;
-                          do_regenerate(curry_chat.chat_record!.id);
-                        }}
+                        onClick={handle_regenerate}
                       ></MorePopupBtn>
                       <MorePopupBtn
                         label="直接复制文本"
                         icon="mdi-raw-off"
-                        onClick={() => {
-                          more_popup_showing.value = false;
-
-                          const s = getSelection();
-
-                          if (!mdblock.value) {
-                            return;
-                          }
-
-                          s?.selectAllChildren(mdblock.value);
-
-                          if (s) {
-                            copy_with_notify(qs, s.toString());
-                            s.empty();
-                          }
-                        }}
+                        onClick={handle_copy_text_directly}
                       ></MorePopupBtn>
                     </MorePopup>
                   </QBtn>

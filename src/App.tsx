@@ -8,23 +8,35 @@ import {
   QPageContainer,
   QTooltip,
 } from "quasar";
-import { defineComponent, ref } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 
 import { RouterView, useRouter } from "vue-router";
 
 import { LeftBar } from "./components/leftbar/LeftBar";
-import use_main_store from "./store/main_store";
-import { Maybe, c, refvmodel } from "./common/utils";
+import use_main_store from "./store/memory/main_store";
+import { Maybe, c, refvmodel, refvmodel_type } from "./common/utils";
 import { vif } from "./common/jsx_utils";
 import { ChatRecordOperatingMode } from "./pages/chat";
 import { nanoid } from "nanoid";
+import { RiskWarningDialog } from "./components/framework/RiskWarningDialog";
 
 export default defineComponent({
   setup() {
     const ms = use_main_store();
+    // @ts-ignore
+    window.ms = ms;
     const router = useRouter();
     const show_left_bar = ref(false);
     const select_all = ref(false);
+
+    const show_risk_warning_dialog = ref(false);
+
+    onMounted(() => {
+      if (ms.client_info.engine.name === "Gecko") {
+        console.log(navigator.userAgent);
+        show_risk_warning_dialog.value = true;
+      }
+    });
 
     return () => {
       const route = router.currentRoute.value;
@@ -82,6 +94,9 @@ export default defineComponent({
           </QDrawer>
           <QPageContainer>
             <RouterView />
+            <RiskWarningDialog
+              {...refvmodel_type(show_risk_warning_dialog, "modelValue")}
+            ></RiskWarningDialog>
           </QPageContainer>
           <QInnerLoading
             showing={ms.is_initializing}

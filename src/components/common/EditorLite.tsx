@@ -1,16 +1,8 @@
-import { defineComponent, onMounted, ref } from "vue";
-import { as_props, c } from "../../common/utils";
-import { tpl } from "../../common/jsx_utils";
-import { QEditor } from "quasar";
-import { EditorCompoAPI } from "./Editor";
+import { defineComponent, ref } from "vue";
+import { as_props } from "../../common/utils";
+import { EditorCompoAPI, EditorProps } from "./Editor";
 
-interface EditorProps {
-  init_theme?: string;
-  init_language?: string;
-  init_readonly?: boolean;
-}
-
-export const Editor2 = defineComponent<
+export const EditorLite = defineComponent<
   EditorProps,
   {},
   {},
@@ -61,10 +53,15 @@ export const Editor2 = defineComponent<
         if (!model) return false;
         return content.value;
       },
+      focus() {
+        const model = editor_container_ref.value;
+        if (!model) return false;
+        return model.focus();
+      },
     } as EditorCompoAPI);
     return () => (
       <textarea
-        {...c`bg-zinc-800 whitespace-pre-wrap overflow-y-scroll`}
+        class="bg-zinc-800 whitespace-pre-wrap overflow-y-scroll p-2 resize-none _editor_area focus:outline-none"
         {...ctx.attrs}
         ref={editor_container_ref}
         value={content.value}

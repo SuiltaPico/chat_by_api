@@ -13,7 +13,7 @@ import {
   cl
 } from "../../../common/utils";
 import { APIKey } from "../../../interface/Settings";
-import use_main_store from "../../../store/main_store";
+import use_main_store from "../../../store/memory/main_store";
 import BetterBtn from "../../common/BetterBtn";
 
 export const APIKEYTable = defineComponent<
@@ -38,7 +38,7 @@ export const APIKEYTable = defineComponent<
       const settings = ms.settings.settings;
       return (
         <QTable
-          {...c`!bg-zinc-900 !text-zinc-200`}
+          {...c`!bg-zinc-800 !text-zinc-200`}
           title="API-KEY"
           dark
           columns={[
@@ -77,7 +77,7 @@ export const APIKEYTable = defineComponent<
             body(props: { row: APIKey; rowIndex: number }) {
               return (
                 <QTr key={props.row.id}>
-                  <QTd {...c`frow items-center gap-4 !py-8`} key="name">
+                  <QTd {...c`frow items-center gap-4 !py-3 !h-[66px]`} key="name">
                     <QBadge
                       {...cl(props.rowIndex == 0 ? "" : "bg-zinc-500")}
                       rounded
@@ -87,8 +87,8 @@ export const APIKEYTable = defineComponent<
                       {props.rowIndex == 0 ? "正在使用" : "未启用"}
                     </QTooltip>
                   </QTd>
-                  <QTd key="source">{props.row.source}</QTd>
-                  <QTd {...c`frow gap-x-3 !h-max !py-3`} key="operation">
+                  <QTd {...c`!max-h-[66px]`} key="source">{props.row.source}</QTd>
+                  <QTd {...c`frow gap-x-3 !h-[66px] !py-3 items-center border-b`} key="operation">
                     <BetterBtn
                       class="min-w-[5.3rem] bg-_primary bg-opacity-90 text-zinc-200"
                       onClick={() => {

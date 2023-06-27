@@ -1,11 +1,11 @@
-import { QBtn, QCheckbox, QIcon, QSpace, QSpinnerComment } from "quasar";
+import { QBtn, QCheckbox, QIcon, QSpace, QSpinnerBars, QSpinnerComment, QSpinnerFacebook } from "quasar";
 import { defineComponent, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { vif } from "../../common/jsx_utils";
-import { c, refvmodel_type } from "../../common/utils";
+import { any, c, refvmodel_type } from "../../common/utils";
 import ChatRecord from "../../interface/ChatRecord";
 import router from "../../router/router";
-import use_main_store from "../../store/main_store";
+import use_main_store from "../../store/memory/main_store";
 import { DeletePopup } from "../chat/DeletePopup";
 import { SeparatorLB } from "./SeparatorLB";
 
@@ -21,7 +21,7 @@ export const Item = defineComponent({
         <div class="item" onClick={() => ctx.emit("click")}>
           <div class="frow gap-1 items-center">
             {vif(
-              record.status === undefined,
+              ms.chat_records.get_app_meta(record.id).status === "finished",
               <QIcon
                 {...c`pt-[0.1rem]`}
                 name="mdi-message-outline"
@@ -29,12 +29,12 @@ export const Item = defineComponent({
               ></QIcon>
             )}
             {vif(
-              record.status === "generating",
-              <QSpinnerComment
-                {...c`pt-[0.1rem]`}
+              ms.chat_records.get_app_meta(record.id).status !== "finished",
+              <QSpinnerFacebook
+                {...c`pt-[0.1rem] w-[1.0rem] h-[1.0rem] text-_secondary`}
                 name="mdi-message-outline"
                 size="1rem"
-              ></QSpinnerComment>
+              ></QSpinnerFacebook>
             )}
           </div>
           <div class="text">{record.name}</div>

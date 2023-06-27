@@ -1,9 +1,10 @@
+// 在客户端中启用。
+
 // import { editor as monaco_editor } from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { defineComponent, onMounted, ref } from "vue";
-import { as_props } from "../../common/utils";
-import { QInnerLoading } from "quasar";
 import { tpl } from "../../common/jsx_utils";
+import { as_props } from "../../common/utils";
 
 /** @ts-ignore */
 self.MonacoEnvironment = {
@@ -22,9 +23,10 @@ export interface EditorCompoAPI {
   force_set_value(value: string): false | undefined;
   change_lang(value: string): Promise<false | undefined>;
   set_readonly(readonly: boolean): false | undefined;
+  focus(): false | void;
 }
 
-interface EditorProps {
+export interface EditorProps {
   init_theme?: string;
   init_language?: string;
   init_readonly?: boolean;
@@ -108,14 +110,18 @@ export const Editor = defineComponent<
         if (!editor) return "";
         return editor.getModel()!.getValue();
       },
+      focus() {
+        if (!editor) return;
+        return editor.focus();
+      },
     } as EditorCompoAPI);
-    return () => tpl(
-      <div
-        {...ctx.attrs}
-        ref={editor_container_ref}
-        onClick={(e) => ctx.emit("update:click", e)}
-      >
-      </div>
-    );
+    return () =>
+      tpl(
+        <div
+          {...ctx.attrs}
+          ref={editor_container_ref}
+          onClick={(e) => ctx.emit("update:click", e)}
+        ></div>
+      );
   },
 });

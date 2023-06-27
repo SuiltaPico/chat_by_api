@@ -1,5 +1,11 @@
 import _, { fromPairs } from "lodash";
 import { type } from "os";
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
 import { AllowedComponentProps, Ref, VNode } from "vue";
 
 /** 欺骗类型系统的面具。
@@ -67,6 +73,8 @@ export function refvmodel_type<const T, const N extends string = "modelValue">(
 export function as_props<T extends {}>() {
   return <const U extends (keyof T)[]>(props: U) => props as any;
 }
+
+export const as_emits = as_props;
 
 /** 将其它参数设置为 `new_value` 。*/
 export function batch_set_ref<T, U extends T>(new_value: U, ...arr: Ref<T>[]) {
@@ -183,4 +191,43 @@ export function call<T extends () => any>(
 
 export function parse_param_to_Record(param: string) {
   return fromPairs(param.split("&").map((it) => it.split("=")));
+}
+
+export function add_space_between_cjk_and_english(text: string) {
+  return text
+    .replace(/([\d_-]*\p{Cased_Letter}+[\d_-]*)(\p{Other_Letter}+)/gu, "$1 $2")
+    .replace(/([\d_-]*\p{Other_Letter}+[\d_-]*)(\p{Cased_Letter}+)/gu, "$1 $2");
+}
+
+/** 执行 `fn` 后，按顺序执行 `pp_fns` 所有函数，然后返回 `fn` 的值 */
+export function run_and_pps<T extends (...args: any) => any>(
+  fn: T,
+  pp_fns: (() => any)[]
+) {
+  return async (...args: Parameters<T>) => {
+    const result = await fn.apply({}, args);
+    for (let index = 0; index < pp_fns.length; index++) {
+      const pp_fn = pp_fns[index];
+      await pp_fn();
+    }
+    return result;
+  };
+}
+
+/** 执行 `fn` 后，执行 `pp_fn`，然后返回 `fn` 的值 */
+export function run_and_pp<T extends (...args: any) => any>(
+  fn: T,
+  pp_fn: () => any
+): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>> {
+  return async (...args: Parameters<T>) => {
+    const result = await fn.apply({}, args);
+    await pp_fn();
+    return result;
+  };
+}
+
+export function generate_random_name() {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, colors, animals],
+  });
 }
