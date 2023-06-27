@@ -1,5 +1,12 @@
 export default [
   {
+    version: "3.0.0-delta-2",
+    content: `
+### Fixed
+* 修复了未完成的功能错误出现的bug。
+`,
+  },
+  {
     version: "3.0.0-delta",
     content: `
 ### Added

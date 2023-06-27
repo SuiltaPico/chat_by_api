@@ -16,7 +16,7 @@ export default defineComponent({
             <HotKeysManager></HotKeysManager>
             <Behaviors></Behaviors>
             <APIKEYManager></APIKEYManager>
-            <Data></Data>
+            {/* <Data></Data> */}
             <About></About>
           </div>
         </QPage>

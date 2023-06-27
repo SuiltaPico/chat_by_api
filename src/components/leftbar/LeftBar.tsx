@@ -82,13 +82,13 @@ export const raw_items = [
   //   label: "模板",
   //   route_name: "template",
   // },
-  {
-    icon: "mdi-text-box-multiple-outline",
-    name: "vector_library",
-    label: "文档库",
-    route_name: "document_manager",
-    component: () => DocumentlibraryLB,
-  },
+  // {
+  //   icon: "mdi-text-box-multiple-outline",
+  //   name: "vector_library",
+  //   label: "文档库",
+  //   route_name: "document_manager",
+  //   component: () => DocumentlibraryLB,
+  // },
   {
     icon: "mdi-cog",
     name: "settings",
