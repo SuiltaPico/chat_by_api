@@ -1,7 +1,7 @@
-@import url("./LeftBar.css");
-@import url("./chat.css");
-@import url("./documents.css");
-@import url("./settings.css");
+@import url("@/styles/LeftBar.css");
+@import url("@/styles/chat.css");
+@import url("@/styles/documents.css");
+@import url("@/styles/settings.css");
 
 @tailwind base;
 @tailwind components;

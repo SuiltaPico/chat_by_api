@@ -1,6 +1,6 @@
 export default [
   {
-    version: "3.0.0-delta-4",
+    version: "3.0.0-delta-5",
     content: `
 ### Fixed
 * 修复了未完成的功能错误出现的bug。
