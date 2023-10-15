@@ -191,11 +191,28 @@ export async function openai_chat_completion(config: {
         .filter((it) => it.length > 0)
         .map((it) => {
           try {
-            if (it === "data: [DONE]" || it === "") {
+            it = it.trimStart();
+            if (it === "data: [DONE]") {
               return {};
+            } else if (it.match(/^data:\s*$/)) {
+              return {
+                choices: [
+                  {
+                    delta: {
+                      content: "",
+                    },
+                  },
+                ],
+              };
+            } else if (it.match(/^data:\s*/)) {
+              return JSON.parse(it.slice(6).trim());
             }
-            return JSON.parse(it.slice(6));
-          } catch {
+            return JSON.parse(it);
+          } catch (e) {
+            // @ts-ignore
+            window.a = it;
+            console.log(e);
+
             return openai_steam_error_to_error(it);
           }
         })
