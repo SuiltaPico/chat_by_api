@@ -191,7 +191,7 @@ export async function openai_chat_completion(config: {
         .filter((it) => it.length > 0)
         .map((it) => {
           try {
-            if (it === "data: [DONE]") {
+            if (it === "data: [DONE]" || it === "") {
               return {};
             }
             return JSON.parse(it.slice(6));
