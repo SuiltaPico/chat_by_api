@@ -166,6 +166,8 @@ export async function openai_chat_completion(config: {
   const decoder = new TextDecoder();
   const reader = body.getReader();
 
+  let buffer = "";
+
   async function readStream() {
     while (true) {
       if (stop_next) return;
@@ -181,59 +183,39 @@ export async function openai_chat_completion(config: {
       }
       done = res.done;
       value = res.value;
-      // console.log(done, value);
+
       if (done) break;
       const raw_result = decoder.decode(value);
-      // console.log(raw_result);
+      buffer += raw_result;
 
-      const msg_clip = chain(raw_result)
-        .split("\n\n")
-        .filter((it) => it.length > 0)
-        .map((it) => {
-          try {
-            it = it.trimStart();
-            if (it === "data: [DONE]") {
-              return {};
-            } else if (it.match(/^data:\s*$/)) {
-              return {
-                choices: [
-                  {
-                    delta: {
-                      content: "",
-                    },
-                  },
-                ],
-              };
-            } else if (it.match(/^data:\s*/)) {
-              return JSON.parse(it.slice(6).trim());
-            }
-            return JSON.parse(it);
-          } catch (e) {
+      const splited = buffer.split("\n\n");
+
+      let result_buf = "";
+      for (let index = 0; index < splited.length; index++) {
+        const maybe_json = splited[index].trimStart();
+        if (maybe_json === "" || maybe_json === "data: [DONE]") {
+          if (result_buf) {
             // @ts-ignore
-            window.a = it;
-            console.log(e);
+            window.e = result_buf;
+            console.log(result_buf);
 
-            return openai_steam_error_to_error(it);
+            return openai_steam_error_to_error(result_buf);
           }
-        })
-        .reduce((acc, it) => {
-          if (it.err_type) {
-            throw it;
-          }
+        } else if (maybe_json.match(/^data:\s*/)) {
           try {
-            const delta = it.choices[0].delta;
-            if (delta.content) {
-              acc += delta.content;
-            }
-          } catch {}
-          return acc;
-        }, "")
-        .value();
+            const result = JSON.parse(maybe_json.slice(6).trim()).choices[0]
+              .delta;
+            result_buf += result;
+          } catch (e) {
+            buffer = maybe_json;
+          }
 
-      if (stop_next) return;
+          if (stop_next) return;
+        }
+      }
 
       scroll_if_close_to(document.getElementById("app")!, 32);
-      await on_update(msg_clip);
+      await on_update(result_buf);
     }
   }
 
