@@ -193,7 +193,9 @@ export async function openai_chat_completion(config: {
       let result_buf = "";
       for (let index = 0; index < splited.length; index++) {
         const maybe_json = splited[index].trimStart();
-        if (maybe_json === "" || maybe_json === "data: [DONE]") {
+        if (maybe_json === "") {
+          continue
+        } else if (maybe_json === "data: [DONE]") {
           if (result_buf) {
             // @ts-ignore
             window.e = result_buf;
@@ -205,7 +207,7 @@ export async function openai_chat_completion(config: {
           try {
             const result = JSON.parse(maybe_json.slice(6).trim()).choices[0]
               .delta;
-            result_buf += result;
+            result_buf += result.content ?? "";
           } catch (e) {
             buffer = maybe_json;
           }
