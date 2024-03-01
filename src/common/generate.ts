@@ -187,36 +187,49 @@ export async function openai_chat_completion(config: {
       if (done) break;
       const raw_result = decoder.decode(value);
       buffer += raw_result;
+      console.log(raw_result);
 
       const splited = buffer.split("\n\n");
 
       let result_buf = "";
+      let remained = undefined;
+      let is_stop = false;
       for (let index = 0; index < splited.length; index++) {
         const maybe_json = splited[index].trimStart();
         if (maybe_json === "") {
-          continue
+          continue;
         } else if (maybe_json === "data: [DONE]") {
-          if (result_buf) {
-            // @ts-ignore
-            window.e = result_buf;
-            console.log(result_buf);
-
-            return openai_steam_error_to_error(result_buf);
-          }
+          is_stop = true;
+          continue;
         } else if (maybe_json.match(/^data:\s*/)) {
           try {
             const result = JSON.parse(maybe_json.slice(6).trim()).choices[0]
               .delta;
             result_buf += result.content ?? "";
           } catch (e) {
-            buffer = maybe_json;
+            if (index == splited.length - 1) {
+              remained = maybe_json;
+            }
           }
 
           if (stop_next) return;
+        } else {
+          // @ts-ignore
+          window.e = maybe_json;
+          console.log(maybe_json);
+
+          return openai_steam_error_to_error(maybe_json);
         }
       }
 
+      if (remained !== undefined) {
+        buffer = remained;
+      } else {
+        buffer = "";
+      }
+
       scroll_if_close_to(document.getElementById("app")!, 32);
+      console.log(result_buf);
       await on_update(result_buf);
     }
   }
