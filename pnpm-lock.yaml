@@ -50,6 +50,12 @@ dependencies:
   markdown-it-highlightjs:
     specifier: ^4.0.1
     version: 4.0.1
+  markdown-it-sub:
+    specifier: ^2.0.0
+    version: 2.0.0
+  markdown-it-sup:
+    specifier: ^2.0.0
+    version: 2.0.0
   monaco-editor:
     specifier: ^0.38.0
     version: 0.38.0
@@ -2468,6 +2474,14 @@ packages:
     resolution: {integrity: sha512-EPXwFEN6P5nqR3G4KjT20r20xbGYKMMA/360hhSYFmeoGXTE6hsLtJAiB/8ID8slVH4CWHHEL7GX0YenyIstVQ==}
     dependencies:
       highlight.js: 11.9.0
+    dev: false
+
+  /markdown-it-sub@2.0.0:
+    resolution: {integrity: sha512-iCBKgwCkfQBRg2vApy9vx1C1Tu6D8XYo8NvevI3OlwzBRmiMtsJ2sXupBgEA7PPxiDwNni3qIUkhZ6j5wofDUA==}
+    dev: false
+
+  /markdown-it-sup@2.0.0:
+    resolution: {integrity: sha512-5VgmdKlkBd8sgXuoDoxMpiU+BiEt3I49GItBzzw7Mxq9CxvnhE/k09HFli09zgfFDRixDQDfDxi0mgBCXtaTvA==}
     dev: false
 
   /markdown-it@13.0.2:

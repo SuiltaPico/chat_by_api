@@ -2,6 +2,10 @@ import MarkdownIt from "markdown-it";
 // import markdown_it_highlightjs from "markdown-it-highlightjs";
 import markdown_it_katex from "@vscode/markdown-it-katex";
 import markdown_it_footnote from "markdown-it-footnote";
+// @ts-ignore
+import markdown_it_sub from "markdown-it-sub";
+// @ts-ignore
+import markdown_it_sup from "markdown-it-sup";
 import hljs from "highlight.js";
 import { isNil, range } from "lodash";
 import { escapeHtml } from "markdown-it/lib/common/utils";
@@ -131,7 +135,9 @@ export const create_md = () => {
     displayMode: "html",
     throwOnError: false,
   });
-  md.use(markdown_it_footnote)
+  md.use(markdown_it_footnote);
+  md.use(markdown_it_sub);
+  md.use(markdown_it_sup);
   return {
     md,
     render(src: string) {

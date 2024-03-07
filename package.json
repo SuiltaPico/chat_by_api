@@ -26,6 +26,8 @@
     "markdown-it": "^13.0.1",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-highlightjs": "^4.0.1",
+    "markdown-it-sub": "^2.0.0",
+    "markdown-it-sup": "^2.0.0",
     "monaco-editor": "^0.38.0",
     "nanoid": "^4.0.2",
     "openai": "^3.3.0",
