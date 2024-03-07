@@ -111,6 +111,11 @@ export async function openai_chat_completion(config: {
       max_tokens,
     },
   } = config;
+
+  if (!messages[messages.length - 1].content || messages[messages.length - 1].content === "") {
+    messages.splice(messages.length - 1, 1)
+  }
+
   let stop_next = false;
 
   stop_next_ref.value = () => {
