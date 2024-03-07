@@ -34,24 +34,43 @@ export const default_openai_models = {
 
 export const openai_models = ref(cloneDeep(default_openai_models));
 
-export async function load_models() {
+export async function load_models(custom_models: string[]) {
   const ms = use_main_store();
   const apikey = ms.settings.get_enabled_apikey();
-  if (apikey === undefined) return;
+  if (apikey === undefined) {
+    openai_models.value = cloneDeep(default_openai_models);
+    openai_models.value.chat_completions = [
+      ...openai_models.value.chat_completions,
+      ...custom_models,
+    ];
+    return
+  };
 
   const cfg = create_config_from_apikey(apikey);
   const openai = new OpenAIApi(cfg);
+  
 
   try {
     const models = (await (await openai.get_models({})).json()).data as {
       id: string;
     }[];
 
-    openai_models.value.chat_completions = models
-      .filter((it) => it.id.match(/gpt|claude|ERNIE|PaLM|gemini|chatglm|qwen|SparkDesk|hunyuan/i))
-      .map((it) => it.id);
+    openai_models.value.chat_completions = [
+      ...models
+        .filter((it) =>
+          it.id.match(
+            /gpt|claude|ERNIE|PaLM|gemini|chatglm|qwen|SparkDesk|hunyuan|llama|chat/i
+          )
+        )
+        .map((it) => it.id),
+      ...custom_models,
+    ];
   } catch (e) {
     console.log(e);
     openai_models.value = cloneDeep(default_openai_models);
+    openai_models.value.chat_completions = [
+      ...openai_models.value.chat_completions,
+      ...custom_models,
+    ];
   }
 }

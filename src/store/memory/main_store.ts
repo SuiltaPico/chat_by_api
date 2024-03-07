@@ -62,7 +62,12 @@ const use_main_store = defineStore("main", () => {
   push_to_db_task_queue(async () => {
     await init_db();
     await sync_from_db();
-    load_models();
+    const models_src = settings.settings.custom_model.models;
+    const models = []
+    if (models_src) {
+      models.push(...models_src.split(/ +/))
+    }
+    load_models(models);
   });
 
   const is_initializing = ref(true);
@@ -177,7 +182,12 @@ const use_main_store = defineStore("main", () => {
     settings: settings_default_value as Settings,
     async set_setting<T extends keyof Settings>(id: T, value: Settings[T]) {
       if (id === "apikeys") {
-        load_models();
+        const models_src = settings.settings.custom_model.models;
+        const models = []
+        if (models_src) {
+          models.push(...models_src.split(/ +/))
+        }
+        load_models(models);
       }
       await db_apis.settings.set_setting(id, value);
       await settings.sync();

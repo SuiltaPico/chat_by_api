@@ -4,11 +4,12 @@ export default interface Settings {
   apikeys: APIKeysSetting;
   hot_keys: HotKeySetting;
   behaviors: BehabiorSetting;
+  custom_model: CustomModelSetting;
 }
 
 // 注意，增加新类型的时候注意去 db_api.ts 更新 api
 // export type SettingItem = APIKeysSetting | OpenAISetting | HotKeySetting;
-export type SettingItem = APIKeysSetting | HotKeySetting | BehabiorSetting;
+export type SettingItem = APIKeysSetting | HotKeySetting | BehabiorSetting | CustomModelSetting;
 
 export interface HotKeySetting {
   submit_keys: HotKeys;
@@ -47,4 +48,8 @@ export interface APIKeysSetting {
 
 export interface BehabiorSetting {
   continue_to_generate_prompt: string;
+}
+
+export interface CustomModelSetting {
+  models?: string;
 }

@@ -20,6 +20,9 @@ export const settings_default_value = {
   behaviors: {
     continue_to_generate_prompt: "请根据上下文，续写你之前生成的内容。",
   },
+  custom_model: {
+    models: "",
+  },
 } satisfies Settings;
 
 export function create_settings_db_api(db: PouchDB.Database<SettingItem>) {
