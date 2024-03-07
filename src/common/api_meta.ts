@@ -48,7 +48,7 @@ export async function load_models() {
     }[];
 
     openai_models.value.chat_completions = models
-      .filter((it) => it.id.includes("gpt"))
+      .filter((it) => it.id.match(/gpt|claude|ERNIE|PaLM|gemini|chatglm|qwen|SparkDesk|hunyuan|/i))
       .map((it) => it.id);
   } catch (e) {
     console.log(e);
