@@ -76,20 +76,20 @@ export const Inputer = defineComponent<
           ></QInput>
           {not_undefined_or(() => {
             const cr = ms.curry_chat.chat_record;
-            if (cr === undefined) return;
+            const btn = (
+              <BetterBtn
+                class="w-[3.4rem] h-[2.9rem] bg-_primary text-white"
+                onClick={() => {
+                  emit("submit");
+                }}
+              >
+                <QIcon name="mdi-send"></QIcon>
+              </BetterBtn>
+            );
+            if (cr === undefined) return btn;
 
             const app_meta = ms.chat_records.get_app_meta(cr.id);
-            if (app_meta.status === "finished")
-              return (
-                <BetterBtn
-                  class="w-[3.4rem] h-[2.9rem] bg-_primary text-white"
-                  onClick={() => {
-                    emit("submit");
-                  }}
-                >
-                  <QIcon name="mdi-send"></QIcon>
-                </BetterBtn>
-              );
+            if (app_meta.status === "finished") return btn;
             return (
               <BetterBtn
                 class="bg-_negative2 text-white"
