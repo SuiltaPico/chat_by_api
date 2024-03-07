@@ -1,23 +1,23 @@
-import { defineComponent, ref } from "vue";
-import ChatRecord, { UserMessage } from "../../../interface/ChatRecord";
-import { as_props, c, cl, refvmodel_type } from "../../../common/utils";
-import use_main_store from "../../../store/memory/main_store";
+import { defer } from "lodash";
 import { QBtn, QIcon, QSpace, useQuasar } from "quasar";
+import { defineComponent, ref } from "vue";
+import { generate_next } from "../../../common/generate";
+import { vif, vif_fn } from "../../../common/jsx_utils";
+import { copy_with_notify } from "../../../common/quasar_utils";
+import { as_props, c, refvmodel_type } from "../../../common/utils";
+import { create_ServerMessage } from "../../../implement/ChatRecord";
+import ChatRecord, { UserMessage } from "../../../interface/ChatRecord";
 import {
   ChatItem_Avatar,
   ChatItem_select_box,
   ChatRecordOperatingMode,
 } from "../../../pages/chat";
-import { copy_with_notify } from "../../../common/quasar_utils";
-import { MorePopup, MorePopupBtn } from "../MorePopup";
-import { tpl, vif, vif_fn } from "../../../common/jsx_utils";
-import { Editor, EditorCompoAPI } from "../../common/Editor";
-import { UseEditorRightBtnGroup } from "../UseEditorRightBtnGroup";
-import { cloneDeep, defer } from "lodash";
-import { EditorLite } from "../../common/EditorLite";
+import use_main_store from "../../../store/memory/main_store";
 import BetterBtn from "../../common/BetterBtn";
-import { create_ServerMessage } from "../../../implement/ChatRecord";
-import { generate_next } from "../../../common/generate";
+import { EditorCompoAPI } from "../../common/Editor";
+import { EditorLite } from "../../common/EditorLite";
+import { MorePopup, MorePopupBtn } from "../MorePopup";
+import { UseEditorRightBtnGroup } from "../UseEditorRightBtnGroup";
 
 export type UserMessageItemProps = {
   message: UserMessage;

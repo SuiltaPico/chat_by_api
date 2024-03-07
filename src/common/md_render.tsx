@@ -1,8 +1,12 @@
 import MarkdownIt from "markdown-it";
 // import markdown_it_highlightjs from "markdown-it-highlightjs";
-import hljs from "highlight.js";
 import markdown_it_katex from "@vscode/markdown-it-katex";
+import markdown_it_footnote from "markdown-it-footnote";
+import hljs from "highlight.js";
 import { isNil, range } from "lodash";
+import { escapeHtml } from "markdown-it/lib/common/utils";
+import Token from "markdown-it/lib/token";
+import { QBtn, useQuasar } from "quasar";
 import {
   VNode,
   VNodeArrayChildren,
@@ -10,12 +14,8 @@ import {
   createTextVNode,
   createVNode,
 } from "vue";
-import Token from "markdown-it/lib/token";
-import { QBtn, useQuasar } from "quasar";
-import { add_space_between_cjk_and_english, c, call } from "./utils";
-import copy from "copy-text-to-clipboard";
 import { copy_with_notify } from "./quasar_utils";
-import { escapeHtml } from "markdown-it/lib/common/utils";
+import { add_space_between_cjk_and_english, c, call } from "./utils";
 
 export function htmlToVNodes(html: string) {
   const template = document.createElement("template");
@@ -131,6 +131,7 @@ export const create_md = () => {
     displayMode: "html",
     throwOnError: false,
   });
+  md.use(markdown_it_footnote)
   return {
     md,
     render(src: string) {
