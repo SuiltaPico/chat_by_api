@@ -14,6 +14,8 @@ export const default_openai_models = {
   chat_completions: [
     "gpt-4",
     "gpt-4-32k",
+    "gpt-4o",
+    "gpt-4o-mini",
     "gpt-3.5-turbo",
     "gpt-3.5-turbo-16k",
   ],

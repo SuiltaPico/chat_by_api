@@ -75,7 +75,7 @@ const use_main_store = defineStore("main", () => {
   const chat_body_input = reactive({
     mode: "generate" as ChatBodyInputMode,
     promot: "",
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     brief_mode: false,
     require_next: false,
     /** 在使用 `ChatBodyInput` 组件发送消息后，对 `promot` 的清理和请求生成的控制。 */
