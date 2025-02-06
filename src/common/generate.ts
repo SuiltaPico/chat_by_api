@@ -210,7 +210,7 @@ export async function openai_chat_completion(config: {
           try {
             const result = JSON.parse(maybe_json.slice(6).trim()).choices[0]
               .delta;
-            result_buf += result.content ?? "";
+            result_buf += (result.content ?? "") + (result.reasoning_content ?? "");
           } catch (e) {
             if (index == splited.length - 1) {
               remained = maybe_json;
